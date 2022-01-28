@@ -1,0 +1,28 @@
+IMAGE ?= simsi_transfer
+DATA ?= $(HOME)/git/picked_group_fdr/data/example/
+OUT_DIR ?= $(DATA)
+
+LOCAL_DIR ?= /root/data
+MQ_EVIDENCE_FILE ?= $(LOCAL_DIR)/evidence.txt
+
+INTERACTIVE := $(shell [ -t 0 ] && echo 1)
+MEMORY_LIMIT ?= 8gb
+CPU_LIMIT ?= 4
+PERC_TEST_FDR ?= 0.01
+PERC_TRAIN_FDR ?= 0.01
+
+ifdef INTERACTIVE
+	USE_TTY= -t
+else
+	USE_TTY=
+endif
+
+DOCKER_CMD ?= docker run -i ${USE_TTY} \
+					-v "$(DATA)":/root/data/ \
+					--memory=$(MEMORY_LIMIT) \
+					--cpus=$(CPU_LIMIT) \
+
+
+# clean up err.out file when restarting a job
+rm_err_file:
+	rm -f $(DATA)err.out
