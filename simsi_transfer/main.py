@@ -29,9 +29,9 @@ Generated:
 
 
 # python -m simsi_transfer.main --mq_txt_folder /media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/combined/txt/ --raw_folder /media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/ --output_folder /media/kusterlab/users_files/Firas_Hamood/PhD/Cluster_Tester/simsi_output
-def main():
-    if len(sys.argv) > 1:
-        mq_txt_folder, raw_folder, pvals, output_folder, num_threads = parse_args()
+def main(argv):
+    if len(argv) > 0:
+        mq_txt_folder, raw_folder, pvals, output_folder, num_threads = parse_args(argv)
     else:
         mq_txt_folder, raw_folder, pvals, output_folder, num_threads = user_input()
 
@@ -130,4 +130,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

@@ -112,7 +112,7 @@ def open_maracluster_clusters(mainpath, pval):
     return maracluster_df
 
 
-def parse_args():
+def parse_args(argv):
     import argparse
     apars = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -138,7 +138,7 @@ def parse_args():
                           ''')
 
     # ------------------------------------------------
-    args = apars.parse_args()
+    args = apars.parse_args(argv)
 
     return Path(args.mq_txt_folder), Path(args.raw_folder), parse_stringencies(args.stringencies), Path(args.output_folder), args.num_threads
 
