@@ -1,3 +1,4 @@
+from sys import platform
 import subprocess
 from typing import List
 from pathlib import Path
@@ -13,7 +14,10 @@ def cluster_mzml_files(mzml_files: List[Path], pvals: List[float], maracluster_f
     batch_file = create_batch_file(maracluster_folder, mzml_files)
     
     pvals_string = ",".join(map(str, pvals))
-    cluster_command = f'OMP_NUM_THREADS={num_threads} maracluster batch -b {batch_file} -c {pvals_string} -f {maracluster_folder} 2>&1'
+    num_threads_string = f"OMP_NUM_THREADS={num_threads}"
+    if "win" in platform:
+        num_threads_string = f"set OMP_NUM_THREADS={num_threads} &&"
+    cluster_command = f'{num_threads_string} maracluster batch -b {batch_file} -c {pvals_string} -f {maracluster_folder} 2>&1'
     process = subprocess.run(
         cluster_command,
         shell=True,
