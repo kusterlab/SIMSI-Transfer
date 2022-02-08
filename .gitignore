@@ -3,3 +3,5 @@ __pycache__
 tests/integrations_tests
 .idea
 simsi_output
+build
+dist

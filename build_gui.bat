@@ -1,1 +1,2 @@
-pyinstaller gui.py --noconfirm --name="SIMSI-Transfer"
+:::: pyinstaller gui.py --noconfirm --onedir --name="SIMSI-Transfer"
+pyinstaller --noconfirm SIMSI-Transfer.spec

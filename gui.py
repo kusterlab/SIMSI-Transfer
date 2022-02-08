@@ -136,6 +136,9 @@ class MainWindow(QtWidgets.QWidget):
         
 
 if __name__ == '__main__':
+    if sys.platform.startswith('win'):
+        # On Windows calling this function is necessary when combined with pyinstaller
+        multiprocessing.freeze_support()
     app = QtWidgets.QApplication(sys.argv)
     w = MainWindow()
     w.show()
