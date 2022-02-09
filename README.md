@@ -4,10 +4,8 @@ Tool for increasing PSM gain from MaxQuant output file. Requires "Experiment" se
 
 
 Stuff left to do:
-- Argparse instead of input()
+- Remove input()
 - Implement masking analysis for FDR estimation (?)
-- Add mzML conversion step to pipeline (?)
-- SIMSI-GUI
 
 # Building the GUI on Windows
 
@@ -30,32 +28,11 @@ activate simsi_transfer_gui
 conda install -c conda-forge nomkl numpy pandas pyqt pyinstaller
 ```
 
-3. We need to install scipy through `pip`, because the conda version depends on the MKL library again. Here, we also need an older version of scipy (see [here](https://stackoverflow.com/questions/62581504/why-do-i-have-modulenotfounderror-no-module-named-scipy-special-cython-specia))
-
-```
-pip install scipy==1.4.1
-```
-
 ## Building a self-contained executable
 
-Use the `build.bat` script to create a self-contained executable. Note that we need some adjustments to the command line for [hidden imports](https://stackoverflow.com/questions/57108026/pyinstaller-modulenotfounderror-no-module-named-sklearn-utils-cython-blas) for `sklearn`.
+Use the `build_gui.bat` script to create a self-contained executable.
 
 
-## Reducing size of the executable
+### Reducing size of the executable
 
-Using UPX (https://upx.github.io/) reduces the DLL file sizes:
-
-Compress everything except these DLLs:
-
-* msvcp140.dll
-* VCRUNTIME140.dll
-* PyQt5\Qt\plugins\platforms\windows.dll
-* scipy\_lib\_uarray\_uarray.cp36-win_amd64.pyd
-
-```
-call upx.bat
-```
-
-We can exclude some other modules/DLLs to reduce the file size even further:
-
-* OpenGL and EGL can be excluded if we remove the DLL loading in `C:\ProgramData\Anaconda3\envs\simsi_transfer_gui\Lib\site-packages\mPyInstaller\utils\hooks\qt.py` (lines 609-622)
+Download UPX (https://upx.github.io/) to reduce the DLL file sizes, change the path in `build_gui.bat` to point to the UPX **folder**.
