@@ -1,6 +1,7 @@
 import re
 import math
 import os
+from sys import platform
 import subprocess
 from pathlib import Path
 
@@ -19,6 +20,9 @@ def purge_mrc_files(raw_file, mode='mzML'):
     :return: raw file name without path or extension
     """
     rx = r'.+/'
+    if "win" in platform:
+        rx = r'.+\\'
+    
     while True:
         if re.search(rx, raw_file):
             raw_file = re.sub(rx, '', raw_file)

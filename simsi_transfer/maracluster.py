@@ -1,3 +1,4 @@
+from sys import platform
 import subprocess
 from typing import List
 from pathlib import Path
@@ -13,7 +14,17 @@ def cluster_mzml_files(mzml_files: List[Path], pvals: List[float], maracluster_f
     batch_file = create_batch_file(maracluster_folder, mzml_files)
     
     pvals_string = ",".join(map(str, pvals))
-    cluster_command = f'OMP_NUM_THREADS={num_threads} maracluster batch -b {batch_file} -c {pvals_string} -f {maracluster_folder} 2>&1'
+    num_threads_string = f"OMP_NUM_THREADS={num_threads}"
+    if "win" in platform:
+        num_threads_string = f"set OMP_NUM_THREADS={num_threads} &&"
+        
+    exec_path = Path(__file__).parent.absolute() # get path of parent directory of current file
+    # TODO: add linux binary that works on most distros to utils folder
+    # exec_bin = f"{exec_path}/utils/maracluster/linux64/maracluster"
+    exec_bin = "maracluster"
+    if "win" in platform:
+        exec_bin = f"{exec_path}\\utils\\maracluster\\win64\\maracluster"
+    cluster_command = f'{num_threads_string} {exec_bin} batch -b {batch_file} -c {pvals_string} -f {maracluster_folder} 2>&1'
     process = subprocess.run(
         cluster_command,
         shell=True,

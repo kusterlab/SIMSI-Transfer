@@ -1,3 +1,7 @@
 __pycache__
 *.pyc
 tests/integrations_tests
+.idea
+simsi_output
+build
+dist
