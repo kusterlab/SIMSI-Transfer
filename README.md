@@ -9,7 +9,6 @@ python -m simsi_transfer.main --mq_txt_folder </path/to/txt/folder> --raw_folder
 
 
 Stuff left to do:
-- Remove input()
 - Implement masking analysis for FDR estimation (?)
 
 # Building the GUI on Windows
