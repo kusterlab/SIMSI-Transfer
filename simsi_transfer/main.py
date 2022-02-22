@@ -83,7 +83,6 @@ def main(argv):
 
     print(f'{datetime.now()}:\tOpening MaxQuant summary.txt file')
     summarytxt = open_summary_txt(mq_txt_folder)
-    print(summarytxt)
 
     statistics = dict()
 
