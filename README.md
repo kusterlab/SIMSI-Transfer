@@ -1,4 +1,4 @@
-# clustering_transfer_tool
+# SIMSI-Transfer
 
 Tool for increasing PSM gain from MaxQuant output file. Requires "Experiment" set in MaxQuant!
 
