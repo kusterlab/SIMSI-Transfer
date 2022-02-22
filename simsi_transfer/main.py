@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 
 from .IO_functions import export_summary_file, open_msms_txt, open_msmsscans_txt, open_maracluster_clusters, \
-    user_input, parse_args, open_summary_txt, open_evidence_txt, export_simsi_evidence_file
+    parse_args, open_summary_txt, open_evidence_txt, export_simsi_evidence_file
 from .processing_functions import generate_summary_file, flag_ambiguous_clusters, transfer, \
     count_clustering_parameters, count_phos, build_evidence, remove_unidentified_scans
 
@@ -30,10 +30,7 @@ Generated:
 
 # python -m simsi_transfer.main --mq_txt_folder /media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/combined/txt/ --raw_folder /media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/ --output_folder /media/kusterlab/users_files/Firas_Hamood/PhD/Cluster_Tester/simsi_output
 def main(argv):
-    if len(argv) > 0:
-        mq_txt_folder, raw_folder, pvals, output_folder, num_threads = parse_args(argv)
-    else:
-        mq_txt_folder, raw_folder, pvals, output_folder, num_threads = user_input()
+    mq_txt_folder, raw_folder, pvals, output_folder, num_threads = parse_args(argv)
 
     starttime = datetime.now()
 

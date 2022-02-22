@@ -143,34 +143,6 @@ def parse_args(argv):
     return Path(args.mq_txt_folder), Path(args.raw_folder), parse_stringencies(args.stringencies), Path(args.output_folder), args.num_threads
 
 
-def user_input():
-    print()
-    mq_txt_folder = Path(
-        input('Full path to MaxQuant combined/txt/ folder, containing msms.txt and msmsscans.txt files: '))
-    print()
-
-    if mq_txt_folder == Path(''):
-        a = '/media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/combined/txt'
-        b = '/media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/'
-        c = [-15]
-        d = '/media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/simsi_output'
-        return a, b, c, d, 3
-
-    mzml_folder = Path(input('Full path to folder containing .mzML converted raw files: '))
-    print()
-    output_folder = Path(input('Full path to desired SIMSI output folder: '))
-    while True:
-        print()
-        print('Clustering thresholds at which to produce cluster files, listed as comma separated list: ')
-        stringencies = input('(default -20,-15,-10): ')
-        stringencies = parse_stringencies(stringencies)
-        break
-    print()
-    num_threads = int(input('Number of threads: '))
-    print()
-    return mq_txt_folder, mzml_folder, stringencies, output_folder, num_threads
-
-
 def parse_stringencies(stringencies):
     if stringencies == '':
         stringencies = [-20, -15, -10]
