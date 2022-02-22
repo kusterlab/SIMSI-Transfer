@@ -75,8 +75,9 @@ def open_msms_txt(mainpath):
     """
     msmstxt = pd.read_csv(mainpath / Path('msms.txt'), sep='\t',
                           usecols=['Raw file', 'Scan number', 'Sequence', 'Modified sequence', 'Length',
-                                   'Modifications', 'Missed cleavages', 'Proteins', 'Gene Names', 'Protein Names', 'Charge',
-                                   'Mass error [ppm]', 'PIF', 'Precursor Intensity', 'PEP', 'Score', 'Delta score', 'Reverse']).rename(
+                                   'Modifications', 'Missed cleavages', 'Proteins', 'Gene Names', 'Protein Names',
+                                   'Charge', 'Mass error [ppm]', 'PIF', 'Precursor Intensity', 'PEP', 'Score',
+                                   'Delta score', 'Reverse']).rename(
         columns={'Scan number': 'scanID'})
     return msmstxt
 
@@ -88,10 +89,10 @@ def open_evidence_txt(mainpath):
     :return: truncated evidence.txt dataframe
     """
     evidence = pd.read_csv(mainpath / Path('evidence.txt'), sep='\t',
-                           usecols=['Sequence', 'Modified sequence', 'Leading proteins', 'Raw file', 'Charge', 'Calibrated retention time',
-                                    'Retention time', 'Retention length', 'Calibrated retention time start',
-                                    'Calibrated retention time finish', 'Retention time calibration', 'Type', 'Intensity', 'Reverse'
-                                    ])
+                           usecols=['Sequence', 'Modified sequence', 'Leading proteins', 'Raw file', 'Charge',
+                                    'Calibrated retention time', 'Retention time', 'Retention length',
+                                    'Calibrated retention time start', 'Calibrated retention time finish',
+                                    'Retention time calibration', 'Type', 'Intensity', 'Reverse'])
     return evidence
 
 
@@ -101,8 +102,14 @@ def open_summary_txt(mainpath):
     :param mainpath: Processing path containing the 'combined' folder from MQ search
     :return: truncated msmsscans.txt dataframe
     """
-    return pd.read_csv(mainpath / Path('summary.txt'), sep='\t',
-                       usecols=['Raw file', 'Experiment', 'Fraction'])
+    try:
+        return pd.read_csv(mainpath / Path('summary.txt'), sep='\t',
+                           usecols=['Raw file', 'Experiment', 'Fraction'])
+    except ValueError:
+        temp = pd.read_csv(mainpath / Path('summary.txt'), sep='\t',
+                           usecols=['Raw file', 'Experiment'])
+        temp['Fraction'] = 1
+        return temp
 
 
 def open_maracluster_clusters(mainpath, pval):
@@ -118,29 +125,27 @@ def parse_args(argv):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     apars.add_argument('--mq_txt_folder', default=None, metavar="DIR", required=True,
-                     help='''Path to MaxQuant combined/txt output folder.
-                          ''')
+                       help='''Path to MaxQuant combined/txt output folder.''')
 
     apars.add_argument('--raw_folder', default=None, metavar="DIR", required=True,
-                     help='''Full path to folder containing .raw or .mzML files.
-                          ''')
+                       help='''Full path to folder containing .raw or .mzML files.''')
 
     apars.add_argument('--stringencies', default="-20,-15,-10", metavar="S",
-                     help='''Clustering thresholds at which to produce cluster files, listed as comma separated list.
+                       help='''Clustering thresholds at which to produce cluster files, listed as comma separated list.
                           ''')
 
     apars.add_argument('--output_folder', default="./simsi_output", metavar="DIR",
-                     help='''Full path to desired SIMSI output folder.
-                          ''')
+                       help='''Full path to desired SIMSI output folder.''')
 
     apars.add_argument('--num_threads', type=int, default=multiprocessing.cpu_count(), metavar='N',
-                     help='''Number of threads, by default this is equal to the number of CPU cores available on the device.
+                       help='''Number of threads, by default this is equal to the number of CPU cores available on the device.
                           ''')
 
     # ------------------------------------------------
     args = apars.parse_args(argv)
 
-    return Path(args.mq_txt_folder), Path(args.raw_folder), parse_stringencies(args.stringencies), Path(args.output_folder), args.num_threads
+    return Path(args.mq_txt_folder), Path(args.raw_folder), parse_stringencies(args.stringencies), Path(
+        args.output_folder), args.num_threads
 
 
 def parse_stringencies(stringencies):
