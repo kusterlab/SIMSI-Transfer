@@ -1,7 +1,12 @@
 from sys import platform
 import subprocess
+import logging
 from typing import List
 from pathlib import Path
+
+from .utils import subprocess_with_logger as subprocess
+
+logger = logging.getLogger(__name__)
 
 
 def cluster_mzml_files(mzml_files: List[Path], pvals: List[float], maracluster_folder: Path, num_threads: int = 1, cleanup: bool = True):
@@ -13,7 +18,7 @@ def cluster_mzml_files(mzml_files: List[Path], pvals: List[float], maracluster_f
         
     batch_file = create_batch_file(maracluster_folder, mzml_files)
     
-    pvals_string = ",".join(map(str, pvals))
+    pvals_string = ",".join(map(lambda x : str(-1*x), pvals))
     num_threads_string = f"OMP_NUM_THREADS={num_threads}"
     if "win" in platform:
         num_threads_string = f"set OMP_NUM_THREADS={num_threads} &&"
@@ -25,10 +30,7 @@ def cluster_mzml_files(mzml_files: List[Path], pvals: List[float], maracluster_f
     if "win" in platform:
         exec_bin = f"{exec_path}\\utils\\maracluster\\win64\\maracluster"
     cluster_command = f'{num_threads_string} {exec_bin} batch -b {batch_file} -c {pvals_string} -f {maracluster_folder} 2>&1'
-    process = subprocess.run(
-        cluster_command,
-        shell=True,
-        check=True)
+    process = subprocess.run(cluster_command)
 
 
 def create_batch_file(maracluster_folder: Path, mzml_files: List[Path]):

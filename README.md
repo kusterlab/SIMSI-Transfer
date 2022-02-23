@@ -4,7 +4,7 @@ Tool for increasing PSM gain from MaxQuant output file. Requires "Experiment" se
 
 Example usage:
 ```shell
-python -m simsi_transfer.main --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder>
+python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder>
 ```
 
 

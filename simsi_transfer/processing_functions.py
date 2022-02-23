@@ -4,12 +4,16 @@ import os
 from sys import platform
 import subprocess
 from pathlib import Path
+import logging
+import datetime
 
 import pandas as pd
 import numpy as np
-#from numba import jit  # Dont use numba.
-import datetime
+
 from .merging_functions import merge_with_msmsscanstxt, merge_with_msmstxt, merge_with_summarytxt
+
+
+logger = logging.getLogger(__name__)
 
 
 def purge_mrc_files(raw_file, mode='mzML'):
@@ -283,15 +287,15 @@ def count_clustering_parameters(summary, rawtrans=False):
     mulclus = max(summary[summary['clusterID'].duplicated(keep=False)]['clusterID'])
     pho_mics = summary[summary['mod_ambiguous'] == 1]['clusterID'].nunique(dropna=True)
     raw_mics = summary[summary['raw_ambiguous'] == 1]['clusterID'].nunique(dropna=True)
-    print(f'Scans: {str(scans)}')
-    print(f'MaxQuant IDs: {str(dids)}')
-    print(f'SIMSI IDs: {str(tids)}')
+    logger.info(f'Scans: {str(scans)}')
+    logger.info(f'MaxQuant IDs: {str(dids)}')
+    logger.info(f'SIMSI IDs: {str(tids)}')
     if rawtrans:
-        print(f'Isomeric SIMSI IDs: {str(lostphos)}')
-    print(f'All clusters: {str(totclus)}')
-    print(f'Clusters > 1: {str(mulclus)}')
-    print(f'PTM-isomeric clusters : {str(pho_mics)}')
-    print(f'Ambiguous clusters: {str(raw_mics)}')
+        logger.info(f'Isomeric SIMSI IDs: {str(lostphos)}')
+    logger.info(f'All clusters: {str(totclus)}')
+    logger.info(f'Clusters > 1: {str(mulclus)}')
+    logger.info(f'PTM-isomeric clusters : {str(pho_mics)}')
+    logger.info(f'Ambiguous clusters: {str(raw_mics)}')
     if rawtrans:
         return {'scans': scans, 'dids': dids, 'tids': tids, 'lostphos': lostphos, 'totclus': totclus,
                 'mulclus': mulclus, 'pho_mics': pho_mics, 'raw_mics': raw_mics}
@@ -369,8 +373,6 @@ def calculate_evidence_columns(summary, tmt):
     # TODO: Check every column; what is needed and is something missing?
 
     a = datetime.datetime.now()
-    print(a)
-    print()
     evidence_id = pd.Series([name for name, unused_df in summary_grouped])
 
     def csv_list(x):

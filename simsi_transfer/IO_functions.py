@@ -1,9 +1,15 @@
 import os
-import pandas as pd
+import logging
 import glob
-from pathlib import Path
-from .processing_functions import purge_mrc_files
 import multiprocessing
+from pathlib import Path
+
+import pandas as pd
+
+from .processing_functions import purge_mrc_files
+
+
+logger = logging.getLogger(__name__)
 
 
 def export_summary_file(summary_file, mainpath, pval, state):
@@ -130,8 +136,9 @@ def parse_args(argv):
     apars.add_argument('--raw_folder', default=None, metavar="DIR", required=True,
                        help='''Full path to folder containing .raw or .mzML files.''')
 
-    apars.add_argument('--stringencies', default="-20,-15,-10", metavar="S",
-                       help='''Clustering thresholds at which to produce cluster files, listed as comma separated list.
+    apars.add_argument('--stringencies', default="20,15,10", metavar="S",
+                       help='''Clustering thresholds at which to produce cluster files, listed as comma separated list. 
+                               The higher the stringency value, the more strict the clustering is.
                           ''')
 
     apars.add_argument('--output_folder', default="./simsi_output", metavar="DIR",
@@ -150,18 +157,13 @@ def parse_args(argv):
 
 def parse_stringencies(stringencies):
     if stringencies == '':
-        stringencies = [-20, -15, -10]
+        stringencies = [20, 15, 10]
     else:
         try:
             stringencies = [int(i) for i in stringencies.split(',')]
         except ValueError:
-            print('This is not a stringency list. Please input the list in the following format:')
-            print('-30,-25,-20,-15,-10,-5')
+            logger.error('This is not a stringency list. Please input the list in the following format: 30,25,20,15,10,5')
 
-        if max(stringencies) > 0:
-            print('Positive clustering threshold detected, assuming following values:')
-            stringencies = [abs(i) * -1 for i in stringencies]
-            print(stringencies)
     return stringencies
 
 

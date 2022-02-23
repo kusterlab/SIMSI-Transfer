@@ -4,10 +4,14 @@ import sys
 import re
 from typing import List
 from pathlib import Path
+import logging
 
 import pandas as pd
 import numpy as np
 from pyteomics import mzml
+
+
+logger = logging.getLogger(__name__)
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
@@ -131,16 +135,15 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, num_threads
     for mzml_file in mzml_files:
         output_file = f'{output_path}/ext_{mzml_file.name}.txt'
         if Path(output_file).is_file():
-            print(f"Found extracted reporter ions at {output_file}, skipping extraction")
+            logger.info(f"Found extracted reporter ions at {output_file}, skipping extraction")
             continue
         
-        print(time.strftime("%H:%M:%S", time.localtime()))
-        print('Performing extraction for ' + mzml_file.name)
+        logger.info('Performing extraction for ' + mzml_file.name)
         fileframe = pd.DataFrame(columns=dfcol)
         with mzml.read(str(mzml_file)) as reader:
             for i, item in enumerate(reader):
                 if i % 1000 == 0:
-                    print(f"Processing spectrum {i}")
+                    logger.info(f"Processing spectrum {i}")
                 
                 if item['ms level'] != extraction_level:
                     continue
@@ -166,8 +169,7 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, num_threads
         fileframe['raw_file'] = mzml_file.name
 
         # TMT correction
-        print(time.strftime("%H:%M:%S", time.localtime()))
-        print('Extraction done, correcting TMT reporters for ' + mzml_file.name)
+        logger.info('Extraction done, correcting TMT reporters for ' + mzml_file.name)
         fileframe[tmt_corr_col] = pd.DataFrame(fileframe[tmt_raw_col].apply(
             lambda tmt: np.linalg.lstsq(correction_normalized, tmt, rcond=None)[0].round(2), axis=1).tolist(),
                                                columns=tmt_corr_col, index=fileframe[tmt_corr_col].index)

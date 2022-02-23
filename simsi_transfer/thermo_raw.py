@@ -3,7 +3,8 @@ from sys import platform
 from typing import Optional
 from pathlib import Path
 import logging
-import subprocess
+
+from .utils import subprocess_with_logger as subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip 
         output_path = input_path.stem + ".mzML"
     
     if output_path.is_file():
-        print(f"Found converted file at {output_path}, skipping conversion")
+        logger.info(f"Found converted file at {output_path}, skipping conversion")
         return output_path
     
     if gzip:
@@ -34,8 +35,8 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip 
     
     exec_path = Path(__file__).parent.absolute() # get path of parent directory of current file
     exec_command = f"{mono} {exec_path}/utils/ThermoRawFileParser/ThermoRawFileParser.exe {gzip} --msLevel {msLevel} -i {input_path} -b {output_path}.tmp"
-    print(f"Converting thermo rawfile to mzml with the command: '{exec_command}'")
-    subprocess.run(exec_command, shell=True, check=True)
+    logger.info(f"Converting thermo rawfile to mzml with the command: '{exec_command}'")
+    subprocess.run(exec_command)
     
     # only rename the file now, so that we don't have a partially converted file if something fails
     os.rename(f"{output_path}.tmp", output_path)
@@ -77,7 +78,7 @@ def get_raw_files(raw_folder: Path):
     """
     raw_files = []
     if not raw_folder.is_dir():
-        raise ValueError('Failed converting raw files, {raw_folder} is not a directory.')
+        raise ValueError(f'Failed converting raw files, {raw_folder} is not a directory.')
     
     extension = ".raw"
     raw_files = [f for f in raw_folder.iterdir() if f.suffix.lower() == extension]
@@ -87,9 +88,9 @@ def get_raw_files(raw_folder: Path):
         raw_files = [f for f in raw_folder.iterdir() if f.suffix.lower() == extension]
     
     if len(raw_files) == 0:
-        raise ValueError('Failed converting raw files, {raw_folder} did not contain any .mzML or .raw files.')
+        raise ValueError(f'Failed converting raw files, {raw_folder} did not contain any .mzML or .raw files.')
         
-    print(f"Found {len(raw_files)} raw files in the search directory")
+    logger.info(f"Found {len(raw_files)} raw files in the search directory")
     return raw_files
             
 
@@ -99,4 +100,4 @@ if __name__ == "__main__":
     if len(argv) == 2:
         converter = convert_raw_mzml(argv[1], msLevel = "2")
     else:
-        print("Please specify a rawfile")
+        logger.error("Please specify a rawfile")
