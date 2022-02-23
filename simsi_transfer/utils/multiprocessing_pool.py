@@ -7,6 +7,7 @@ import logging
 from multiprocessing import Pool
 import traceback
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,6 +46,10 @@ class JobPool:
       self.pool.terminate()
       self.pool.join()
       sys.exit()
+  
+  def stopPool(self):
+    self.pool.terminate()
+    self.pool.join()
 
 
 def init_worker(warningFilter):

@@ -28,14 +28,24 @@ class Worker(QObject):
         self.extra_params = extra_params
         
     def run(self):
-        try:
-            simsi_transfer.main(['--mq_txt_folder', self.mq_txt_dir, '--raw_folder', self.raw_dir, '--output_folder', self.output_dir] + self.extra_params.split())
-        except SystemExit as e:
-            logger.info(f"Error while running SIMSI-Transfer, exited with error code {e}.")
-        except Exception as e:
-            logger.info(f"Error while running SIMSI-Transfer: {e}")
+        self.p = multiprocessing.Process(target=run_simsi_transfer, args=(self.mq_txt_dir, self.raw_dir, self.output_dir, self.extra_params))
+        self.p.start()
+        self.p.join()
+        #simsi_transfer.main(['--mq_txt_folder', self.mq_txt_dir, '--raw_folder', self.raw_dir, '--output_folder', self.output_dir] + self.extra_params.split())
         self.finished.emit()
+    
+    def terminate(self):
+        self.p.terminate()
 
+
+def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, extra_params):
+    try:
+        simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir] + extra_params.split())
+    except SystemExit as e:
+        logger.info(f"Error while running SIMSI-Transfer, exited with error code {e}.")
+    except Exception as e:
+        logger.info(f"Error while running SIMSI-Transfer: {e}")
+    
 
 # https://stackoverflow.com/questions/28655198/best-way-to-display-logs-in-pyqt#60528393
 class QTextEditLogger(logging.Handler, QObject):
@@ -171,15 +181,15 @@ class MainWindow(QtWidgets.QWidget):
         self.mq_txt_dir_browse_button.setEnabled(enable)
         self.raw_dir_browse_button.setEnabled(enable)
         self.output_dir_browse_button.setEnabled(enable)
-        self.run_button.setEnabled(enable)
+        #self.run_button.setEnabled(enable)
         # Cannot stop a QThread if it doesn't have an own event loop
-        #self.run_button.clicked.disconnect()
-        #if enable:
-        #    self.run_button.setText("Run")
-        #    self.run_button.clicked.connect(self.run_simsi_transfer)
-        #else:
-        #    self.run_button.setText("Stop")
-        #    self.run_button.clicked.connect(self.stop_simsi_transfer)
+        self.run_button.clicked.disconnect()
+        if enable:
+            self.run_button.setText("Run")
+            self.run_button.clicked.connect(self.run_simsi_transfer)
+        else:
+            self.run_button.setText("Stop")
+            self.run_button.clicked.connect(self.stop_simsi_transfer)
         
     def run_simsi_transfer(self):
         mq_txt_dir = self.mq_txt_dir_line_edit.text()
@@ -204,8 +214,7 @@ class MainWindow(QtWidgets.QWidget):
         )
     
     def stop_simsi_transfer(self):
-        self.thread.exit()
-        
+        self.worker.terminate()
 
 if __name__ == '__main__':
     if sys.platform.startswith('win'):

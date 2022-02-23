@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def main(argv):
     mq_txt_folder, raw_folder, pvals, output_folder, num_threads = parse_args(argv)
-
+    
     starttime = datetime.now()
 
     mq_txt_folder, raw_folder, output_folder = Path(mq_txt_folder), Path(raw_folder), Path(output_folder)
