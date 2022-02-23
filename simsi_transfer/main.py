@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 def main(argv):
-    print(argv)
     mq_txt_folder, raw_folder, pvals, output_folder, num_threads = parse_args(argv)
 
     starttime = datetime.now()

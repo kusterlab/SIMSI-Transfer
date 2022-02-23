@@ -3,6 +3,7 @@ import logging
 import glob
 import multiprocessing
 from pathlib import Path
+import argparse
 
 import pandas as pd
 
@@ -10,6 +11,12 @@ from .processing_functions import purge_mrc_files
 
 
 logger = logging.getLogger(__name__)
+
+
+class ArgumentParserWithLogger(argparse.ArgumentParser):
+    def error(self, message):
+        logger.error(f"Error parsing input arguments: {message}")
+        super().error(message)
 
 
 def export_summary_file(summary_file, mainpath, pval, state):
@@ -126,8 +133,7 @@ def open_maracluster_clusters(mainpath, pval):
 
 
 def parse_args(argv):
-    import argparse
-    apars = argparse.ArgumentParser(
+    apars = ArgumentParserWithLogger(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     apars.add_argument('--mq_txt_folder', default=None, metavar="DIR", required=True,

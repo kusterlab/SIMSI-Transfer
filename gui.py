@@ -6,6 +6,7 @@ import logging
 import time
 import datetime
 import multiprocessing
+import argparse
 
 import simsi_transfer.main as simsi_transfer
 
@@ -13,6 +14,7 @@ import numpy as np
 
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
 
 class Worker(QObject):
@@ -26,7 +28,12 @@ class Worker(QObject):
         self.extra_params = extra_params
         
     def run(self):
-        simsi_transfer.main(['--mq_txt_folder', self.mq_txt_dir, '--raw_folder', self.raw_dir, '--output_folder', self.output_dir] + self.extra_params.split())
+        try:
+            simsi_transfer.main(['--mq_txt_folder', self.mq_txt_dir, '--raw_folder', self.raw_dir, '--output_folder', self.output_dir] + self.extra_params.split())
+        except SystemExit as e:
+            logger.info(f"Error while running SIMSI-Transfer, exited with error code {e}.")
+        except Exception as e:
+            logger.info(f"Error while running SIMSI-Transfer: {e}")
         self.finished.emit()
 
 
@@ -143,10 +150,10 @@ class MainWindow(QtWidgets.QWidget):
         layout.addRow(self.run_button)
     
     def _add_log_textarea(self, layout):    
-        logger = QTextEditLogger(self)
-        logging.getLogger().addHandler(logger)
+        self.logger = QTextEditLogger(self)
+        logging.getLogger().addHandler(self.logger)
         
-        layout.addRow(logger.widget)
+        layout.addRow(self.logger.widget)
         
     def get_mq_txt_dir(self):
         mq_txt_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select MaxQuant combined/txt folder' , '', QtWidgets.QFileDialog.ShowDirsOnly)
