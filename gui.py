@@ -7,35 +7,15 @@ import time
 import datetime
 import multiprocessing
 import argparse
+from logging.handlers import QueueListener
 
 import simsi_transfer.main as simsi_transfer
+import simsi_transfer.utils.multiprocessing_pool as pool
 
 import numpy as np
 
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
-
-
-class Worker(QObject):
-    finished = pyqtSignal()
-    
-    def __init__(self, mq_txt_dir, raw_dir, output_dir, extra_params, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.mq_txt_dir = mq_txt_dir
-        self.raw_dir = raw_dir
-        self.output_dir = output_dir
-        self.extra_params = extra_params
-        
-    def run(self):
-        self.p = multiprocessing.Process(target=run_simsi_transfer, args=(self.mq_txt_dir, self.raw_dir, self.output_dir, self.extra_params))
-        self.p.start()
-        self.p.join()
-        #simsi_transfer.main(['--mq_txt_folder', self.mq_txt_dir, '--raw_folder', self.raw_dir, '--output_folder', self.output_dir] + self.extra_params.split())
-        self.finished.emit()
-    
-    def terminate(self):
-        self.p.terminate()
 
 
 def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, extra_params):
@@ -60,7 +40,21 @@ class QTextEditLogger(logging.Handler, QObject):
 
     def emit(self, record):
         self.appendPlainText.emit(self.format(record))
-        
+
+
+# https://stackoverflow.com/questions/53288877/python-multiprocessing-sending-child-process-logging-to-gui-running-in-parent
+class LogEmitter(QObject):
+    sigLog = pyqtSignal(str)
+
+
+class LogHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.emitter = LogEmitter()
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.emitter.sigLog.emit(msg)
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -80,6 +74,17 @@ class MainWindow(QtWidgets.QWidget):
         self._add_log_textarea(layout)
         
         self.setLayout(layout)
+
+        # sets up handler that will be used by QueueListener
+        # which will update the LogDialoag
+        handler = LogHandler()
+        handler.emitter.sigLog.connect(self.log_text_area.widget.appendPlainText)
+        
+        self.q = multiprocessing.Queue()
+        self.ql = QueueListener(self.q, handler)
+        self.ql.start()
+
+        self.pool = pool.JobPool(processes=1, warningFilter="default", queue=self.q)
         
         self.resize(700, self.height())
 
@@ -160,10 +165,10 @@ class MainWindow(QtWidgets.QWidget):
         layout.addRow(self.run_button)
     
     def _add_log_textarea(self, layout):    
-        self.logger = QTextEditLogger(self)
-        logging.getLogger().addHandler(self.logger)
-        
-        layout.addRow(self.logger.widget)
+        self.log_text_area = QTextEditLogger(self)
+        logger.addHandler(self.log_text_area)
+             
+        layout.addRow(self.log_text_area.widget)
         
     def get_mq_txt_dir(self):
         mq_txt_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select MaxQuant combined/txt folder' , '', QtWidgets.QFileDialog.ShowDirsOnly)
@@ -198,23 +203,22 @@ class MainWindow(QtWidgets.QWidget):
         extra_params = self.args_line_edit.text()
         
         self.set_buttons_enabled_state(False)
-        
-        self.thread = QThread(parent=self)
-        self.worker = Worker(mq_txt_dir, raw_dir, output_dir, extra_params)
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        
-        self.thread.start()
-        
-        self.thread.finished.connect(
-            lambda: self.set_buttons_enabled_state(True)
-        )
+        self.pool.applyAsync(run_simsi_transfer, (mq_txt_dir, raw_dir, output_dir, extra_params), callback=self.on_simsi_finished)
     
+    def on_simsi_finished(self, return_code):
+        self.set_buttons_enabled_state(True)
+        
     def stop_simsi_transfer(self):
-        self.worker.terminate()
+        self.pool.stopPool()
+        self.on_simsi_finished(-2)
+        
+        logger.info("SIMSI-Transfer stopped by user")
+        
+        self.pool = pool.JobPool(processes=1, warningFilter="default", queue=self.q)
+    
+    def closeEvent(self, _):
+        self.stop_simsi_transfer()
+
 
 if __name__ == '__main__':
     if sys.platform.startswith('win'):

@@ -5,24 +5,43 @@ import signal
 import warnings
 import logging
 from multiprocessing import Pool
+from logging.handlers import QueueHandler, QueueListener
+import multiprocessing.pool
 import traceback
 
 
 logger = logging.getLogger(__name__)
 
 
+# https://stackoverflow.com/questions/6974695/python-process-pool-non-daemonic
+class NoDaemonProcess(multiprocessing.Process):
+    # make 'daemon' attribute always return False
+    def _get_daemon(self):
+        return False
+    def _set_daemon(self, value):
+        pass
+    daemon = property(_get_daemon, _set_daemon)
+
+
+# We sub-class multiprocessing.pool.Pool instead of multiprocessing.Pool
+# because the latter is only a wrapper function, not a proper class.
+class NestablePool(multiprocessing.pool.Pool):
+    Process = NoDaemonProcess
+
+
 class JobPool:
-  def __init__(self, processes = 1, warningFilter = "default"):
+  def __init__(self, processes = 1, warningFilter = "default", queue = None):
     self.warningFilter = warningFilter
-    self.pool = Pool(processes, self.initWorker)
+    if not queue:
+      queue = multiprocessing.Queue()
+      queue_listener = QueueListener(queue, logger)
+      queue_listener.start()
+    self.pool = NestablePool(processes, worker_init, initargs=(self.warningFilter, queue))
     self.results = []
     
-  def applyAsync(self, f, args):
-    r = self.pool.apply_async(f, args)
+  def applyAsync(self, f, fargs, *args, **kwargs):
+    r = self.pool.apply_async(f, fargs, *args, **kwargs)
     self.results.append(r)
-  
-  def initWorker(self):
-    return init_worker(self.warningFilter)
   
   def checkPool(self, printProgressEvery = -1):
     try:
@@ -52,13 +71,19 @@ class JobPool:
     self.pool.join()
 
 
-def init_worker(warningFilter):
-  # set warningFilter for the child processes
-  warnings.simplefilter(warningFilter)
-  
-  # causes child processes to ignore SIGINT signal and lets main process handle
-  # interrupts instead (https://noswap.com/blog/python-multiprocessing-keyboardinterrupt)
-  signal.signal(signal.SIGINT, signal.SIG_IGN)
+def worker_init(warningFilter, queue=None):
+    if queue:
+        queueHandler = QueueHandler(queue)
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        logger.addHandler(queueHandler)
+    
+    # set warningFilter for the child processes
+    warnings.simplefilter(warningFilter)
+
+    # causes child processes to ignore SIGINT signal and lets main process handle
+    # interrupts instead (https://noswap.com/blog/python-multiprocessing-keyboardinterrupt)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
 def addOne(i):
