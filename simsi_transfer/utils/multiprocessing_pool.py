@@ -25,8 +25,13 @@ class NoDaemonProcess(multiprocessing.Process):
 
 # We sub-class multiprocessing.pool.Pool instead of multiprocessing.Pool
 # because the latter is only a wrapper function, not a proper class.
+# https://stackoverflow.com/questions/6974695/python-process-pool-non-daemonic#54304172
 class NestablePool(multiprocessing.pool.Pool):
-    Process = NoDaemonProcess
+    def Process(self, *args, **kwds):
+        proc = super(NestablePool, self).Process(*args, **kwds)
+        proc.__class__ = NoDaemonProcess
+
+        return proc
 
 
 class JobPool:

@@ -16,6 +16,7 @@ import numpy as np
 
 
 logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, extra_params):
@@ -166,6 +167,7 @@ class MainWindow(QtWidgets.QWidget):
     
     def _add_log_textarea(self, layout):    
         self.log_text_area = QTextEditLogger(self)
+        self.log_text_area.setLevel(logging.INFO)
         logger.addHandler(self.log_text_area)
              
         layout.addRow(self.log_text_area.widget)
@@ -225,7 +227,7 @@ if __name__ == '__main__':
         # On Windows calling this function is necessary when combined with pyinstaller: https://stackoverflow.com/questions/24944558/pyinstaller-built-windows-exe-fails-with-multiprocessing
         multiprocessing.freeze_support()
     else:
-        # On Linux calling this function is necessary when combined with pyinstaller: https://stackoverflow.com/questions/29556291/multiprocessing-with-qt-works-in-windows-but-not-linux
+        # On Linux calling this function is necessary when combined with pyqt: https://stackoverflow.com/questions/29556291/multiprocessing-with-qt-works-in-windows-but-not-linux
         multiprocessing.set_start_method('spawn')
     app = QtWidgets.QApplication(sys.argv)
     w = MainWindow()
