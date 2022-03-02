@@ -154,11 +154,14 @@ def parse_args(argv):
                        help='''Number of threads, by default this is equal to the number of CPU cores available on the device.
                           ''')
 
+    apars.add_argument('--tmt_reporters', default=None, metavar="DIR",
+                       help='''Path to TMT correction factor file, as exported from MaxQuant.''')
+
     # ------------------------------------------------
     args = apars.parse_args(argv)
 
     return Path(args.mq_txt_folder), Path(args.raw_folder), parse_stringencies(args.stringencies), Path(
-        args.output_folder), args.num_threads
+        args.output_folder), args.num_threads, Path(args.tmt_reporters)
 
 
 def parse_stringencies(stringencies):
