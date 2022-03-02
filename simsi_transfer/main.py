@@ -13,19 +13,20 @@ from .processing_functions import generate_summary_file, flag_ambiguous_clusters
     count_clustering_parameters, count_phos, build_evidence, remove_unidentified_scans
 from . import thermo_raw as raw
 from . import maracluster as cluster
-#from . import tmt_extractor
+from . import tmt_extractor
 
 
 logger = logging.getLogger(__name__)
 
 
 def main(argv):
-    mq_txt_folder, raw_folder, pvals, output_folder, num_threads = parse_args(argv)
+    mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file = parse_args(argv)
 
     starttime = datetime.now()
 
-    mq_txt_folder, raw_folder, output_folder = Path(mq_txt_folder), Path(raw_folder), Path(output_folder)
-    
+    mq_txt_folder, raw_folder, output_folder, tmt_correction_file = Path(mq_txt_folder), Path(raw_folder), Path(
+        output_folder), Path(tmt_correction_file)
+
     logger.info(f'Input parameters:')
     logger.info(f"MaxQuant txt folder = {mq_txt_folder}")
     logger.info(f"Raw file folder = {raw_folder}")
@@ -33,7 +34,7 @@ def main(argv):
     logger.info(f"Output folder = {output_folder}")
     logger.info(f"Number of threads = {num_threads}")
     logger.info('')
-    
+
     logger.info(f'Starting SIMSI-Transfer')
     logger.info('')
 
@@ -44,9 +45,8 @@ def main(argv):
     mzml_folder = output_folder / Path('mzML')
     mzml_files = raw.convert_raw_mzml_batch(raw_folder, mzml_folder, num_threads)
 
-    #logger.info(f'Extract reporter ion intensities from .mzML files')
-    #extracted_folder = output_folder / Path('extracted')
-    #tmt_extractor.extract_tmt_reporters(mzml_files, extracted_folder, num_threads)
+    logger.info(f'Extracting correct reporter ion intensities from .mzML files')
+    tmt_extractor.extract_tmt_reporters(mzml_files, output_folder, tmt_correction_file, num_threads)
 
     logger.info(f'Clustering .mzML files')
     maracluster_folder = output_folder / Path('maracluster_output')
@@ -97,7 +97,7 @@ def main(argv):
         logger.info(f'Finished msms.csv assembly.')
 
         statistics[pval] = count_clustering_parameters(summary)
-        
+
         logger.info(f'Starting evidence_transferred.txt building for {pval}.')
         evidence = build_evidence(summary, evidencetxt, tmt)
         export_simsi_evidence_file(evidence, output_folder, pval)
