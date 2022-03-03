@@ -15,7 +15,6 @@ from . import thermo_raw as raw
 from . import maracluster as cluster
 from . import tmt_extractor
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -30,7 +29,7 @@ def main(argv):
     logger.info(f'Input parameters:')
     logger.info(f"MaxQuant txt folder = {mq_txt_folder}")
     logger.info(f"Raw file folder = {raw_folder}")
-    logger.info(f"Stringencies = {','.join(map(str,pvals))}")
+    logger.info(f"Stringencies = {','.join(map(str, pvals))}")
     logger.info(f"Output folder = {output_folder}")
     logger.info(f"Number of threads = {num_threads}")
     logger.info('')
@@ -46,7 +45,8 @@ def main(argv):
     mzml_files = raw.convert_raw_mzml_batch(raw_folder, mzml_folder, num_threads)
 
     logger.info(f'Extracting correct reporter ion intensities from .mzML files')
-    tmt_extractor.extract_tmt_reporters(mzml_files, output_folder, tmt_correction_file, num_threads)
+    extracted_folder = output_folder / Path('extracted')
+    tmt_extractor.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_file, num_threads)
 
     logger.info(f'Clustering .mzML files')
     maracluster_folder = output_folder / Path('maracluster_output')
@@ -56,6 +56,16 @@ def main(argv):
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
     msmsscanstxt, tmt = open_msmsscans_txt(mq_txt_folder)
+
+    corrected_tmt = pd.DataFrame(
+        columns=['raw_file', 'scanID', 'raw_TMT1', 'raw_TMT2', 'raw_TMT3', 'raw_TMT4', 'raw_TMT5', 'raw_TMT6',
+                 'raw_TMT7', 'raw_TMT8', 'raw_TMT9', 'raw_TMT10', 'raw_TMT11', 'raw_TMT12', 'raw_TMT13', 'corr_TMT1',
+                 'corr_TMT2', 'corr_TMT3', 'corr_TMT4', 'corr_TMT5', 'corr_TMT6', 'corr_TMT7', 'corr_TMT8', 'corr_TMT9',
+                 'corr_TMT10', 'corr_TMT11'])
+    for file in os.listdir(extracted_folder):
+        file = pd.read_csv(Path(extracted_folder/file), sep='\t')
+        corrected_tmt.append(file)
+    corrected_tmt = corrected_tmt.reset_index(drop=True)
 
     logger.info(f'Reading in MaxQuant msms.txt file and filtering out decoy hits')
     msmstxt = open_msms_txt(mq_txt_folder)
