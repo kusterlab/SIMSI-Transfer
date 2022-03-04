@@ -1,6 +1,6 @@
 # SIMSI-Transfer
 
-Tool for increasing PSM gain from MaxQuant output file. Requires "Experiment" set in MaxQuant!
+Tool for increasing PSM gain from MaxQuant output file. Requires "Experiment" set in MaxQuant! 
 
 Example usage:
 ```shell
@@ -10,6 +10,7 @@ python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </pa
 
 Stuff left to do:
 - Implement masking analysis for FDR estimation (?)
+- MS3 acquisition handling
 
 # Building the GUI on Windows
 
