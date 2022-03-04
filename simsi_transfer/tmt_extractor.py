@@ -176,15 +176,10 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
                 scanseries = pd.Series(index=dfcol, dtype='float64')
 
                 if extraction_level == 2:
-                    # scanseries['scanID'] = item['params']['scans']  # works for TOPAS data, adjust for other machines
-                    # scanseries['scanID'] = re.search(r'scan=(\d+)"', item['params']['title'])[1]  # works for mgf extracted bailey
                     scanseries['scanID'] = re.search(r'scan=(\d+)', item['id'])[1]
                 else:
                     # supposed to find parent MS2 spectrum for MS3 by looking into precursorList/precursor/spectrumRef
                     scanseries['scanID'] = re.search(r'scan=(\d+)', item['precursorList']['precursor'][0]['spectrumRef'])[1]
-                    # for precursor in item['precursorList']['precursor']:
-                    #     scanseries['scanID'] = re.search(r'scan=(\d+)', precursor['spectrumRef'])[1]  # works for mzml cohort3 set
-                    #     continue
 
                 mz = np.array(item['m/z array'])
                 intensity = np.array(item['intensity array'])
