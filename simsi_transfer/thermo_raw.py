@@ -35,7 +35,7 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip 
     
     exec_path = Path(__file__).parent.absolute() # get path of parent directory of current file
     exec_command = f"{mono} {exec_path}/utils/ThermoRawFileParser/ThermoRawFileParser.exe {gzip} --msLevel {msLevel} -i {input_path} -b {output_path}.tmp"
-    logger.info(f"Converting thermo rawfile to mzml with the command: '{exec_command}'")
+    logger.info(f"Converting thermo rawfile to mzml")
     subprocess.run(exec_command)
     
     # only rename the file now, so that we don't have a partially converted file if something fails
@@ -51,8 +51,9 @@ def convert_raw_mzml_batch(raw_folder: Path, output_folder: Optional[Path] = Non
         output_folder.mkdir(parents=True)
     
     if num_threads > 1:
+        import multiprocessing
         from .utils.multiprocessing_pool import JobPool
-        processingPool = JobPool(processes = num_threads)
+        processingPool = JobPool(processes=num_threads)
     
     mzml_files = []
     for raw_file in raw_files:
