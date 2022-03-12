@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 import logging
 import datetime
+from typing import List
 
 import pandas as pd
 import numpy as np
@@ -336,8 +337,11 @@ def assign_evidence_type(summary: pd.DataFrame, type_column_name: str = 'new_typ
 def assign_missing_precursors(summary: pd.DataFrame, allpeptides: pd.DataFrame):
     missing_precursor = (summary['new_type'] == 'MSMS')
     summary_missing_precursor = summary.loc[missing_precursor]
-    allpeptides_by_raw_file = { raw_file : df_raw_file for raw_file, df_raw_file in allpeptides.groupby('Raw file') }
-    summary.loc[missing_precursor, ['new_type', 'Intensity']] = summary_missing_precursor.apply(lambda x : match_precursor_by_rawfile(x, allpeptides_by_raw_file), axis=1, result_type='expand').to_numpy() # need to convert to numpy, see: https://stackoverflow.com/questions/69954697/why-does-loc-assignment-with-two-sets-of-brackets-result-in-nan-in-a-pandas-dat
+    group_key = ['Raw file', 'Charge']
+    allpeptides_grouped = { group : df_grouped for group, df_grouped in allpeptides.groupby(group_key) }
+    summary.loc[missing_precursor, ['new_type', 'Intensity']] = summary_missing_precursor.apply(
+            lambda x : match_precursor_grouped(x, allpeptides_grouped, group_key), axis=1, result_type='expand'
+        ).to_numpy() # need to convert to numpy array, see: https://stackoverflow.com/questions/69954697/why-does-loc-assignment-with-two-sets-of-brackets-result-in-nan-in-a-pandas-dat
     return summary
 
 
@@ -345,22 +349,20 @@ def get_ppm_diff(mz1, mz2):
     return np.abs(mz1 - mz2)/mz1*1e6
 
 
-def match_precursor_by_rawfile(msms_scan: pd.Series, allpeptides_by_raw_file: pd.core.groupby.DataFrameGroupBy):
-    if msms_scan['Raw file'] not in allpeptides_by_raw_file:
+def match_precursor_grouped(msms_scan: pd.Series, allpeptides_grouped: pd.core.groupby.DataFrameGroupBy, group_key: List[str]):
+    if tuple(msms_scan[group_key]) not in allpeptides_grouped:
         return ['MSMS', np.NaN]
-    allpeptides = allpeptides_by_raw_file[msms_scan['Raw file']]        
+    allpeptides = allpeptides_grouped[tuple(msms_scan[group_key])]
     return match_precursor(msms_scan, allpeptides)
 
 
 def match_precursor(msms_scan: pd.Series, allpeptides: pd.DataFrame):
-    precursors = allpeptides[(allpeptides['Charge'] == msms_scan['Charge']) & \
+    precursors = allpeptides[(get_ppm_diff(allpeptides['m/z'], msms_scan['m/z']) < 20) & \
             (allpeptides['Min scan number'] <= msms_scan['MS scan number']) & \
-            (allpeptides['Max scan number'] >= msms_scan['MS scan number']) & \
-            (get_ppm_diff(allpeptides['m/z'], msms_scan['m/z']) < 20)]
-    if len(precursors.index) > 0:
-        return ['MULTI-MSMS', precursors['Intensity'].values[0]]
-    else:
+            (allpeptides['Max scan number'] >= msms_scan['MS scan number'])]
+    if len(precursors.index) == 0:
         return ['MSMS', np.NaN]
+    return ['MULTI-MSMS', precursors['Intensity'].values[0]]
 
 
 def remove_duplicate_msms(summary: pd.DataFrame):
@@ -394,7 +396,9 @@ def assign_evidence_feature(summary: pd.DataFrame, evidence: pd.DataFrame, allpe
     summary = merge_summary_with_evidence(summary, evidence)
     summary = assign_evidence_type(summary)
     summary = remove_duplicate_msms(summary)
+    logger.info("starting precursor matching")
     summary = assign_missing_precursors(summary, allpeptides)
+    logger.info("finished precursor matching")
     summary = fill_missing_evidence_ids(summary)
     
     if not len(summary) == summary_length_before_processing:
