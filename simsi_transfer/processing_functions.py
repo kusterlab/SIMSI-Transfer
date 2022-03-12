@@ -337,7 +337,7 @@ def assign_missing_precursors(summary: pd.DataFrame, allpeptides: pd.DataFrame):
     missing_precursor = (summary['new_type'] == 'MSMS')
     summary_missing_precursor = summary.loc[missing_precursor]
     allpeptides_by_raw_file = { raw_file : df_raw_file for raw_file, df_raw_file in allpeptides.groupby('Raw file') }
-    summary.loc[missing_precursor, ['new_type', 'Intensity']] = summary_missing_precursor.apply(lambda x : match_precursor(x, allpeptides_by_raw_file), axis=1, result_type='expand').to_numpy() # https://stackoverflow.com/questions/69954697/why-does-loc-assignment-with-two-sets-of-brackets-result-in-nan-in-a-pandas-dat
+    summary.loc[missing_precursor, ['new_type', 'Intensity']] = summary_missing_precursor.apply(lambda x : match_precursor_by_rawfile(x, allpeptides_by_raw_file), axis=1, result_type='expand').to_numpy() # need to convert to numpy, see: https://stackoverflow.com/questions/69954697/why-does-loc-assignment-with-two-sets-of-brackets-result-in-nan-in-a-pandas-dat
     return summary
 
 
@@ -345,8 +345,14 @@ def get_ppm_diff(mz1, mz2):
     return np.abs(mz1 - mz2)/mz1*1e6
 
 
-def match_precursor(msms_scan: pd.Series, allpeptides_by_raw_file: pd.core.groupby.DataFrameGroupBy):
-    allpeptides = allpeptides_by_raw_file[msms_scan['Raw file']]
+def match_precursor_by_rawfile(msms_scan: pd.Series, allpeptides_by_raw_file: pd.core.groupby.DataFrameGroupBy):
+    if msms_scan['Raw file'] not in allpeptides_by_raw_file:
+        return ['MSMS', np.NaN]
+    allpeptides = allpeptides_by_raw_file[msms_scan['Raw file']]        
+    return match_precursor(msms_scan, allpeptides)
+
+
+def match_precursor(msms_scan: pd.Series, allpeptides: pd.DataFrame):
     precursors = allpeptides[(allpeptides['Charge'] == msms_scan['Charge']) & \
             (allpeptides['Min scan number'] <= msms_scan['MS scan number']) & \
             (allpeptides['Max scan number'] >= msms_scan['MS scan number']) & \

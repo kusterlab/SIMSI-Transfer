@@ -9,7 +9,7 @@ registry:
 	docker build -t gitlab.lrz.de:5005/proteomics/clustering_transfer_tool .
 	docker push gitlab.lrz.de:5005/proteomics/clustering_transfer_tool
 
-jump: 
+jump:
 	$(DOCKER_CMD) \
 		$(IMAGE) bash
 
@@ -28,7 +28,7 @@ compress: run_simsi_transfer
 all: compress
 
 
-run_local: 
+run_local:
 	python3 -u -m simsi_transfer "$(DATA)"
 
 clean_data_folder: 
@@ -37,3 +37,7 @@ clean_data_folder:
 
 integration_test:
 	python3 -um simsi_transfer --mq_txt_folder /media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/combined/txt/ --raw_folder /media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/ --output_folder /media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/simsi_output --num_threads 3 --stringencies 20,15
+
+
+test:
+	python3 -m pytest --cov=picked_group_fdr --cov-report html --cov-report term tests/unit_tests
