@@ -437,9 +437,6 @@ def calculate_evidence_columns(summary, tmt):
     # TODO: Sort for keeping best hit at top; best hit definition needed
     # TODO: Check every column; what is needed and is something missing?
 
-    a = datetime.datetime.now()
-    evidence_id = pd.Series([name for name, unused_df in summary_grouped])
-
     def csv_list(x):
         return ";".join(map(str, x))
     
@@ -453,38 +450,35 @@ def calculate_evidence_columns(summary, tmt):
             'Modifications': pd.NamedAgg(column='Modifications', aggfunc='first'),
             'Modified sequence': pd.NamedAgg(column='Modified sequence', aggfunc='first'),
             'Missed cleavages': pd.NamedAgg(column='Missed cleavages', aggfunc='first'),
-            'Proteins': pd.NamedAgg(column='Proteins', aggfunc=csv_list_unique),
-            'Leading proteins': pd.NamedAgg(column='Leading proteins', aggfunc=csv_list_unique),
-            'Gene Names': pd.NamedAgg(column='Gene Names', aggfunc='first'),
+            'Proteins': pd.NamedAgg(column='Proteins', aggfunc=csv_list_unique), # from msms.txt
+            'Leading proteins': pd.NamedAgg(column='Leading proteins', aggfunc=csv_list_unique), # from evidence.txt, NaN if scan not matched to precursor in evidence.txt
+            'Gene Names': pd.NamedAgg(column='Gene Names', aggfunc='first'), # from msms.txt
             'Protein Names': pd.NamedAgg(column='Protein Names', aggfunc='first'),
             'Type': pd.NamedAgg(column='new_type', aggfunc='first'),
             'Raw file': pd.NamedAgg(column='Raw file', aggfunc='first'),
             'Fraction': pd.NamedAgg(column='Fraction', aggfunc='first'),
             'Experiment': pd.NamedAgg(column='Experiment', aggfunc='first'),
             'Charge': pd.NamedAgg(column='Charge', aggfunc='first'),
-            'm/z': pd.NamedAgg(column='m/z', aggfunc='first'),
-            'Mass': pd.NamedAgg(column='Mass', aggfunc='first'),
-            'Mass error [ppm]': pd.NamedAgg(column='Mass error [ppm]', aggfunc=min),
+            'm/z': pd.NamedAgg(column='m/z', aggfunc='first'), # from msmsScans.txt, NaN if charge state in msmsScans is different than in the mzML
+            'Mass': pd.NamedAgg(column='Mass', aggfunc='first'), # from msmsScans.txt, NaN if charge was unknown
+            'Mass error [ppm]': pd.NamedAgg(column='Mass error [ppm]', aggfunc=min), # from msms.txt, NaN if Type=MSMS
+            'Retention time': pd.NamedAgg(column='Retention time', aggfunc='first'), # from msmsScans.txt
             'PEP': pd.NamedAgg(column='PEP', aggfunc=min),
             'MS/MS count': pd.NamedAgg(column='Sequence', aggfunc='size'),
             'MS/MS all scan numbers': pd.NamedAgg(column='scanID', aggfunc=csv_list),
             'MS/MS scan number': pd.NamedAgg(column='scanID', aggfunc='first'),
             'Score': pd.NamedAgg(column='Score', aggfunc=max),
             'Delta score': pd.NamedAgg(column='Delta score', aggfunc=max),
-            'Intensity': pd.NamedAgg(column='Intensity', aggfunc='sum'),            
+            'Intensity': pd.NamedAgg(column='Intensity', aggfunc='sum'), # from evidence.txt, supplemented from allPeptides.txt     
             **{f'Reporter intensity corrected {i}': pd.NamedAgg(column=f'Reporter intensity corrected {i}', aggfunc='sum') for i in range(1, tmt+1)},
             **{f'Reporter intensity {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='sum') for i in range(1, tmt+1)},
             **{f'Reporter intensity count {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='count') for i in range(1, tmt+1)},
             'Reverse': pd.NamedAgg(column='Reverse', aggfunc='first'),
             'summary_ID': pd.NamedAgg(column='summary_ID', aggfunc=csv_list)
         })
-    evidence.insert(len(evidence.columns), 'id', evidence_id) # evidence_ID
-    evidence['id'].fillna(-1, inplace=True) # TODO: find out why this is necessary
-    evidence = evidence.astype({'Length': 'int64', 'Missed cleavages': 'int64', 'Fraction': 'int64', 'Charge': 'int64', 'MS/MS scan number': 'int64', 'id': 'int64'})
+    evidence['id'] = evidence.index # evidence_ID
+    evidence = evidence.astype({'Length': 'int64', 'Missed cleavages': 'int64', 'Fraction': 'int64', 'Charge': 'int64', 'MS/MS scan number': 'int64'})
     evidence['Reverse'].fillna('', inplace=True)
-    score = None
-    delta_score = None
-    intensity = None
     evidence = evidence.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge'])
     return evidence
 
