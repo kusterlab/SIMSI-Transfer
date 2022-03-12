@@ -8,7 +8,7 @@ import logging
 import pandas as pd
 
 from .IO_functions import export_summary_file, open_msms_txt, open_msmsscans_txt, open_maracluster_clusters, \
-    parse_args, open_summary_txt, open_evidence_txt, export_simsi_evidence_file
+    parse_args, open_summary_txt, open_evidence_txt, open_allpeptides_txt, export_simsi_evidence_file
 from .processing_functions import generate_summary_file, flag_ambiguous_clusters, transfer, \
     count_clustering_parameters, count_phos, build_evidence, remove_unidentified_scans
 from . import thermo_raw as raw
@@ -67,6 +67,9 @@ def main(argv):
     # TODO: check if we should also transfer decoys
     evidencetxt = evidencetxt[evidencetxt['Reverse'] != '+']
 
+    logger.info(f'Reading in MaxQuant allPeptides.txt file')
+    allpeptidestxt = open_allpeptides_txt(mq_txt_folder)
+
     logger.info(f'Reading in MaxQuant summary.txt file')
     summarytxt = open_summary_txt(mq_txt_folder)
 
@@ -99,7 +102,7 @@ def main(argv):
         statistics[pval] = count_clustering_parameters(summary)
         
         logger.info(f'Starting evidence_transferred.txt building for {pval}.')
-        evidence = build_evidence(summary, evidencetxt, tmt)
+        evidence = build_evidence(summary, evidencetxt, allpeptidestxt, tmt)
         export_simsi_evidence_file(evidence, output_folder, pval)
         logger.info(f'Finished evidence_transferred.txt building.')
         logger.info('')

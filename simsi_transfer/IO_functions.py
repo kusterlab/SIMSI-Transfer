@@ -66,7 +66,8 @@ def open_msmsscans_txt(mainpath):
             'Reporter intensity 11', 'Reporter intensity corrected 1', 'Reporter intensity corrected 2',
             'Reporter intensity corrected 3', 'Reporter intensity corrected 4', 'Reporter intensity corrected 5',
             'Reporter intensity corrected 6', 'Reporter intensity corrected 7', 'Reporter intensity corrected 8',
-            'Reporter intensity corrected 9', 'Reporter intensity corrected 10', 'Reporter intensity corrected 11']
+            'Reporter intensity corrected 9', 'Reporter intensity corrected 10', 'Reporter intensity corrected 11',
+            'MS scan number']
     try:
         msmsscans = pd.read_csv(mainpath / Path('msmsScans.txt'), sep='\t', usecols=cols).rename(
             columns={'Scan number': 'scanID'})
@@ -106,6 +107,18 @@ def open_evidence_txt(mainpath):
                                     'Calibrated retention time', 'Retention time', 'Retention length',
                                     'Calibrated retention time start', 'Calibrated retention time finish',
                                     'Retention time calibration', 'Type', 'Intensity', 'Reverse'])
+    return evidence
+
+
+def open_allpeptides_txt(mainpath):
+    """
+    Open msms.txt output file and subselect relevant columns
+    :param mainpath: Processing path containing the 'combined' folder from MQ search
+    :return: truncated evidence.txt dataframe
+    """
+    cols = ['Raw file', 'Type', 'Charge', 'm/z', 'Retention time', 'Retention length', 'Min scan number', 'Max scan number', 'Intensity']
+    evidence = pd.read_csv(mainpath / Path('allPeptides.txt'), sep='\t',
+                           usecols=cols)
     return evidence
 
 
