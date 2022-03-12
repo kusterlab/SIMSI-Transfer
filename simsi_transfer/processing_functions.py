@@ -309,7 +309,7 @@ def merge_summary_with_evidence(summary: pd.DataFrame, evidence: pd.DataFrame):
     '''
     take subset of evidence.txt columns that does not overlap with the columns in the summary dataframe
     '''
-    merge_columns = ['evidence_ID', 'Modified sequence', 'Leading proteins', 'Raw file', 'Charge', 'Type', 'Calibrated retention time',
+    merge_columns = ['evidence_ID', 'Modified sequence', 'Raw file', 'Charge', 'Leading proteins', 'Type', 'Calibrated retention time',
                      'Calibrated retention time start', 'Calibrated retention time finish', 'Retention time calibration', 'Intensity']
     evidence = evidence[merge_columns]
     summary = pd.merge(left=summary, right=evidence, left_on=['Modified sequence', 'Raw file', 'Charge'],
@@ -335,13 +335,17 @@ def assign_evidence_type(summary: pd.DataFrame, type_column_name: str = 'new_typ
 
 
 def assign_missing_precursors(summary: pd.DataFrame, allpeptides: pd.DataFrame):
-    missing_precursor = (summary['new_type'] == 'MSMS')
-    summary_missing_precursor = summary.loc[missing_precursor]
+    '''
+    find precursors in allPeptides.txt for transferred MS2 scans in runs where the (peptide, charge) combination was previously not identified
+    currently very slow (~500 MS2 scans / second). The apply function could be parallelized with the multiprocessing or Dask modules
+    '''
     group_key = ['Raw file', 'Charge']
     allpeptides_grouped = { group : df_grouped for group, df_grouped in allpeptides.groupby(group_key) }
-    summary.loc[missing_precursor, ['new_type', 'Intensity']] = summary_missing_precursor.apply(
+    
+    missing_precursor = (summary['new_type'] == 'MSMS')
+    summary.loc[missing_precursor, ['new_type', 'Intensity']] = summary.loc[missing_precursor].apply(
             lambda x : match_precursor_grouped(x, allpeptides_grouped, group_key), axis=1, result_type='expand'
-        ).to_numpy() # need to convert to numpy array, see: https://stackoverflow.com/questions/69954697/why-does-loc-assignment-with-two-sets-of-brackets-result-in-nan-in-a-pandas-dat
+        ).to_numpy() # need to convert to numpy array, see: https://stackoverflow.com/questions/69954697/
     return summary
 
 
@@ -356,8 +360,8 @@ def match_precursor_grouped(msms_scan: pd.Series, allpeptides_grouped: pd.core.g
     return match_precursor(msms_scan, allpeptides)
 
 
-def match_precursor(msms_scan: pd.Series, allpeptides: pd.DataFrame):
-    precursors = allpeptides[(get_ppm_diff(allpeptides['m/z'], msms_scan['m/z']) < 20) & \
+def match_precursor(msms_scan: pd.Series, allpeptides: pd.DataFrame, ppm_tol: float = 20.0):
+    precursors = allpeptides[(get_ppm_diff(allpeptides['m/z'], msms_scan['m/z']) < ppm_tol) & \
             (allpeptides['Min scan number'] <= msms_scan['MS scan number']) & \
             (allpeptides['Max scan number'] >= msms_scan['MS scan number'])]
     if len(precursors.index) == 0:
@@ -396,9 +400,7 @@ def assign_evidence_feature(summary: pd.DataFrame, evidence: pd.DataFrame, allpe
     summary = merge_summary_with_evidence(summary, evidence)
     summary = assign_evidence_type(summary)
     summary = remove_duplicate_msms(summary)
-    logger.info("starting precursor matching")
     summary = assign_missing_precursors(summary, allpeptides)
-    logger.info("finished precursor matching")
     summary = fill_missing_evidence_ids(summary)
     
     if not len(summary) == summary_length_before_processing:

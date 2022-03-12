@@ -12,7 +12,8 @@ def test_assign_missing_precursors(summary_missing_precursors, allpeptides_missi
     summary = pf.assign_missing_precursors(summary_missing_precursors, allpeptides_missing_precursors)
     
     def check_cols(idx, vals):
-        tm.assert_series_equal(summary.loc[idx, ['new_type', 'Intensity']].reset_index(drop=True), pd.Series(vals, name=idx))    
+        tm.assert_series_equal(summary.loc[idx, ['new_type', 'Intensity']].reset_index(drop=True), pd.Series(vals, name=idx))  
+  
     # precursor found previously
     check_cols(0, ['MULTI-MSMS', 1238800.0])
     # precursor found
@@ -79,7 +80,7 @@ def test_cluster_mzml_files():
     assert False
 
 
-# Creating dataframes from strings: https://towardsdatascience.com/dealing-with-extra-white-spaces-while-reading-csv-in-pandas-67b0c2b71e6a
+# Creating dataframes from strings: https://towardsdatascience.com/67b0c2b71e6a
 @pytest.fixture
 def summary_missing_precursors():
     df_string = """new_type; Raw file; Charge;     m/z; Intensity; MS scan number
