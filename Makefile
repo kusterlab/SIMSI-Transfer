@@ -17,6 +17,16 @@ jump:
 build: dependencies
 	docker build -f Dockerfile -t $(IMAGE) . || (exit 1)
 
+package_build:
+	poetry build
+
+publish_test:
+	poetry config repositories.testpypi https://test.pypi.org/legacy/
+	poetry publish -r testpypi
+
+publish:
+	poetry publish
+
 
 run_simsi_transfer: rm_err_file
 	$(DOCKER_CMD) \
