@@ -7,35 +7,26 @@ import time
 import datetime
 import multiprocessing
 import argparse
+from logging.handlers import QueueListener
 
 import simsi_transfer.main as simsi_transfer
+import simsi_transfer.utils.multiprocessing_pool as pool
 
 import numpy as np
 
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
-class Worker(QObject):
-    finished = pyqtSignal()
+def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, extra_params):
+    try:
+        simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir] + extra_params.split())
+    except SystemExit as e:
+        logger.info(f"Error while running SIMSI-Transfer, exited with error code {e}.")
+    except Exception as e:
+        logger.info(f"Error while running SIMSI-Transfer: {e}")
     
-    def __init__(self, mq_txt_dir, raw_dir, output_dir, extra_params, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.mq_txt_dir = mq_txt_dir
-        self.raw_dir = raw_dir
-        self.output_dir = output_dir
-        self.extra_params = extra_params
-        
-    def run(self):
-        try:
-            simsi_transfer.main(['--mq_txt_folder', self.mq_txt_dir, '--raw_folder', self.raw_dir, '--output_folder', self.output_dir] + self.extra_params.split())
-        except SystemExit as e:
-            logger.info(f"Error while running SIMSI-Transfer, exited with error code {e}.")
-        except Exception as e:
-            logger.info(f"Error while running SIMSI-Transfer: {e}")
-        self.finished.emit()
-
 
 # https://stackoverflow.com/questions/28655198/best-way-to-display-logs-in-pyqt#60528393
 class QTextEditLogger(logging.Handler, QObject):
@@ -50,7 +41,21 @@ class QTextEditLogger(logging.Handler, QObject):
 
     def emit(self, record):
         self.appendPlainText.emit(self.format(record))
-        
+
+
+# https://stackoverflow.com/questions/53288877/python-multiprocessing-sending-child-process-logging-to-gui-running-in-parent
+class LogEmitter(QObject):
+    sigLog = pyqtSignal(str)
+
+
+class LogHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.emitter = LogEmitter()
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.emitter.sigLog.emit(msg)
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -70,6 +75,17 @@ class MainWindow(QtWidgets.QWidget):
         self._add_log_textarea(layout)
         
         self.setLayout(layout)
+
+        # sets up handler that will be used by QueueListener
+        # which will update the LogDialoag
+        handler = LogHandler()
+        handler.emitter.sigLog.connect(self.log_text_area.widget.appendPlainText)
+        
+        self.q = multiprocessing.Queue()
+        self.ql = QueueListener(self.q, handler)
+        self.ql.start()
+
+        self.pool = pool.JobPool(processes=1, warningFilter="default", queue=self.q)
         
         self.resize(700, self.height())
 
@@ -150,10 +166,11 @@ class MainWindow(QtWidgets.QWidget):
         layout.addRow(self.run_button)
     
     def _add_log_textarea(self, layout):    
-        self.logger = QTextEditLogger(self)
-        logging.getLogger().addHandler(self.logger)
-        
-        layout.addRow(self.logger.widget)
+        self.log_text_area = QTextEditLogger(self)
+        self.log_text_area.setLevel(logging.INFO)
+        logger.addHandler(self.log_text_area)
+             
+        layout.addRow(self.log_text_area.widget)
         
     def get_mq_txt_dir(self):
         mq_txt_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select MaxQuant combined/txt folder' , '', QtWidgets.QFileDialog.ShowDirsOnly)
@@ -171,15 +188,15 @@ class MainWindow(QtWidgets.QWidget):
         self.mq_txt_dir_browse_button.setEnabled(enable)
         self.raw_dir_browse_button.setEnabled(enable)
         self.output_dir_browse_button.setEnabled(enable)
-        self.run_button.setEnabled(enable)
+        #self.run_button.setEnabled(enable)
         # Cannot stop a QThread if it doesn't have an own event loop
-        #self.run_button.clicked.disconnect()
-        #if enable:
-        #    self.run_button.setText("Run")
-        #    self.run_button.clicked.connect(self.run_simsi_transfer)
-        #else:
-        #    self.run_button.setText("Stop")
-        #    self.run_button.clicked.connect(self.stop_simsi_transfer)
+        self.run_button.clicked.disconnect()
+        if enable:
+            self.run_button.setText("Run")
+            self.run_button.clicked.connect(self.run_simsi_transfer)
+        else:
+            self.run_button.setText("Stop")
+            self.run_button.clicked.connect(self.stop_simsi_transfer)
         
     def run_simsi_transfer(self):
         mq_txt_dir = self.mq_txt_dir_line_edit.text()
@@ -188,31 +205,29 @@ class MainWindow(QtWidgets.QWidget):
         extra_params = self.args_line_edit.text()
         
         self.set_buttons_enabled_state(False)
-        
-        self.thread = QThread(parent=self)
-        self.worker = Worker(mq_txt_dir, raw_dir, output_dir, extra_params)
-        self.worker.moveToThread(self.thread)
-        self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        
-        self.thread.start()
-        
-        self.thread.finished.connect(
-            lambda: self.set_buttons_enabled_state(True)
-        )
+        self.pool.applyAsync(run_simsi_transfer, (mq_txt_dir, raw_dir, output_dir, extra_params), callback=self.on_simsi_finished)
     
-    def stop_simsi_transfer(self):
-        self.thread.exit()
+    def on_simsi_finished(self, return_code):
+        self.set_buttons_enabled_state(True)
         
+    def stop_simsi_transfer(self):
+        self.pool.stopPool()
+        self.on_simsi_finished(-2)
+        
+        logger.info("SIMSI-Transfer stopped by user")
+        
+        self.pool = pool.JobPool(processes=1, warningFilter="default", queue=self.q)
+    
+    def closeEvent(self, _):
+        self.stop_simsi_transfer()
+
 
 if __name__ == '__main__':
     if sys.platform.startswith('win'):
         # On Windows calling this function is necessary when combined with pyinstaller: https://stackoverflow.com/questions/24944558/pyinstaller-built-windows-exe-fails-with-multiprocessing
         multiprocessing.freeze_support()
     else:
-        # On Linux calling this function is necessary when combined with pyinstaller: https://stackoverflow.com/questions/29556291/multiprocessing-with-qt-works-in-windows-but-not-linux
+        # On Linux calling this function is necessary when combined with pyqt: https://stackoverflow.com/questions/29556291/multiprocessing-with-qt-works-in-windows-but-not-linux
         multiprocessing.set_start_method('spawn')
     app = QtWidgets.QApplication(sys.argv)
     w = MainWindow()
