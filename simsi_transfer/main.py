@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(argv):
-    mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file = parse_args(argv)
+    mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file, ms_level = parse_args(argv)
 
     starttime = datetime.now()
 
@@ -32,6 +32,8 @@ def main(argv):
     logger.info(f"Stringencies = {','.join(map(str, pvals))}")
     logger.info(f"Output folder = {output_folder}")
     logger.info(f"Number of threads = {num_threads}")
+    logger.info(f"TMT correction file = {tmt_correction_file}")
+    logger.info(f"TMT MS level = {ms_level}")
     logger.info('')
 
     logger.info(f'Starting SIMSI-Transfer')
@@ -44,28 +46,60 @@ def main(argv):
     mzml_folder = output_folder / Path('mzML')
     mzml_files = raw.convert_raw_mzml_batch(raw_folder, mzml_folder, num_threads)
 
-    logger.info(f'Extracting correct reporter ion intensities from .mzML files')
-    extracted_folder = output_folder / Path('extracted')
-    tmt_extractor.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_file, num_threads)
-
     logger.info(f'Clustering .mzML files')
     maracluster_folder = output_folder / Path('maracluster_output')
     cluster.cluster_mzml_files(mzml_files, pvals, maracluster_folder, num_threads)
 
-    ####################################################################################################################
-
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
-    msmsscanstxt, tmt = open_msmsscans_txt(mq_txt_folder)
+    msmsscanstxt, tmt = open_msmsscans_txt(mq_txt_folder, ms_level)
+    logger.info(msmsscanstxt.columns)
 
-    corrected_tmt = pd.DataFrame(
-        columns=['raw_file', 'scanID', 'raw_TMT1', 'raw_TMT2', 'raw_TMT3', 'raw_TMT4', 'raw_TMT5', 'raw_TMT6',
-                 'raw_TMT7', 'raw_TMT8', 'raw_TMT9', 'raw_TMT10', 'raw_TMT11', 'raw_TMT12', 'raw_TMT13', 'corr_TMT1',
-                 'corr_TMT2', 'corr_TMT3', 'corr_TMT4', 'corr_TMT5', 'corr_TMT6', 'corr_TMT7', 'corr_TMT8', 'corr_TMT9',
-                 'corr_TMT10', 'corr_TMT11'])
-    for file in os.listdir(extracted_folder):
-        file = pd.read_csv(Path(extracted_folder/file), sep='\t')
-        corrected_tmt.append(file)
-    corrected_tmt = corrected_tmt.reset_index(drop=True)
+    if ms_level == 'ms3':
+        logger.info(f'Extracting correct reporter ion intensities from .mzML files')
+        extracted_folder = output_folder / Path('extracted')
+        tmt_extractor.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_file, num_threads)
+
+        corrected_tmt = pd.DataFrame(
+            columns=['raw_file', 'scanID', 'raw_TMT1', 'raw_TMT2', 'raw_TMT3', 'raw_TMT4', 'raw_TMT5', 'raw_TMT6',
+                     'raw_TMT7', 'raw_TMT8', 'raw_TMT9', 'raw_TMT10', 'raw_TMT11', 'raw_TMT12', 'raw_TMT13',
+                     'corr_TMT1',
+                     'corr_TMT2', 'corr_TMT3', 'corr_TMT4', 'corr_TMT5', 'corr_TMT6', 'corr_TMT7', 'corr_TMT8',
+                     'corr_TMT9', 'corr_TMT10', 'corr_TMT11'])
+
+        for file in os.listdir(extracted_folder):
+            file = pd.read_csv(Path(extracted_folder / file), sep='\t')
+            corrected_tmt = corrected_tmt.append(file)
+        corrected_tmt = corrected_tmt.reset_index(drop=True)
+        corrected_tmt = corrected_tmt.rename(columns={
+            'raw_file': 'Raw file',
+            'raw_TMT1': 'Reporter intensity 1',
+            'raw_TMT2': 'Reporter intensity 2',
+            'raw_TMT3': 'Reporter intensity 3',
+            'raw_TMT4': 'Reporter intensity 4',
+            'raw_TMT5': 'Reporter intensity 5',
+            'raw_TMT6': 'Reporter intensity 6',
+            'raw_TMT7': 'Reporter intensity 7',
+            'raw_TMT8': 'Reporter intensity 8',
+            'raw_TMT9': 'Reporter intensity 9',
+            'raw_TMT10': 'Reporter intensity 10',
+            'raw_TMT11': 'Reporter intensity 11',
+            'corr_TMT1': 'Reporter intensity corrected 1',
+            'corr_TMT2': 'Reporter intensity corrected 2',
+            'corr_TMT3': 'Reporter intensity corrected 3',
+            'corr_TMT4': 'Reporter intensity corrected 4',
+            'corr_TMT5': 'Reporter intensity corrected 5',
+            'corr_TMT6': 'Reporter intensity corrected 6',
+            'corr_TMT7': 'Reporter intensity corrected 7',
+            'corr_TMT8': 'Reporter intensity corrected 8',
+            'corr_TMT9': 'Reporter intensity corrected 9',
+            'corr_TMT10': 'Reporter intensity corrected 10',
+            'corr_TMT11': 'Reporter intensity corrected 11'})
+        corrected_tmt['Raw file'] = corrected_tmt['Raw file'].str.replace(r'.mzML$', '')
+        logger.info(corrected_tmt.sample(10))
+
+        msmsscanstxt = pd.merge(left=msmsscanstxt, right=corrected_tmt, on=['Raw file', 'scanID'], how='left',
+                                validate='one_to_one')
+        logger.info(msmsscanstxt.sample(50))
 
     logger.info(f'Reading in MaxQuant msms.txt file and filtering out decoy hits')
     msmstxt = open_msms_txt(mq_txt_folder)
