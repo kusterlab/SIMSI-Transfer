@@ -197,8 +197,7 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
                                                columns=tmt_corr_col, index=fileframe[tmt_corr_col].index)
         fileframe[tmt_corr_col] = fileframe[tmt_corr_col].where(fileframe[tmt_corr_col] > 10, 0)
         fileframe['scanID'] = fileframe['scanID'].astype(int)
-        fileframe.to_csv(
-            output_file, sep='\t', index=False)
+        fileframe.to_csv(output_file, sep='\t', index=False)
 
 
 if __name__ == "__main__":
