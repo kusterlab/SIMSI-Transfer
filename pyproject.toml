@@ -10,6 +10,7 @@ repository = "https://github.com/kusterlab/SIMSI-Transfer"
 keywords = ["mass spectrometry", "missing values", "clustering", "proteomics", "quantification"]
 include = [
   "LICENSE",
+  "THERMO_LICENSE"
 ]
 
 [tool.poetry.dependencies]
