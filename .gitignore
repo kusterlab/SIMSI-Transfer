@@ -6,3 +6,4 @@ simsi_output
 build
 dist
 .coverage
+system_test.sh
