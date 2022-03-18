@@ -53,21 +53,24 @@ def export_simsi_evidence_file(evidence_file, mainpath, pval):
     evidence_file.to_csv(pval_path / Path(f'{pval}_evidence.csv'), sep='\t', index=False, na_rep='NaN')
 
 
-def open_msmsscans_txt(mainpath):
+def open_msmsscans_txt(mainpath, ms_level):
     """
     Open msms.txt output file and subselect relevant columns
     :param mainpath: Processing path containing the 'combined' folder from MQ search
     :return: truncated msmsscans.txt dataframe
     """
-    cols = ['Raw file', 'Scan number', 'm/z', 'Mass', 'Retention time', 'Precursor full scan number',
-            'Reporter intensity 1', 'Reporter intensity 2',
-            'Reporter intensity 3', 'Reporter intensity 4', 'Reporter intensity 5', 'Reporter intensity 6',
-            'Reporter intensity 7', 'Reporter intensity 8', 'Reporter intensity 9', 'Reporter intensity 10',
-            'Reporter intensity 11', 'Reporter intensity corrected 1', 'Reporter intensity corrected 2',
-            'Reporter intensity corrected 3', 'Reporter intensity corrected 4', 'Reporter intensity corrected 5',
-            'Reporter intensity corrected 6', 'Reporter intensity corrected 7', 'Reporter intensity corrected 8',
-            'Reporter intensity corrected 9', 'Reporter intensity corrected 10', 'Reporter intensity corrected 11',
-            'MS scan number']
+    if ms_level == 'ms2':
+        cols = ['Raw file', 'Scan number', 'm/z', 'Mass', 'Retention time', 'Precursor full scan number',
+                'Reporter intensity 1', 'Reporter intensity 2',
+                'Reporter intensity 3', 'Reporter intensity 4', 'Reporter intensity 5', 'Reporter intensity 6',
+                'Reporter intensity 7', 'Reporter intensity 8', 'Reporter intensity 9', 'Reporter intensity 10',
+                'Reporter intensity 11', 'Reporter intensity corrected 1', 'Reporter intensity corrected 2',
+                'Reporter intensity corrected 3', 'Reporter intensity corrected 4', 'Reporter intensity corrected 5',
+                'Reporter intensity corrected 6', 'Reporter intensity corrected 7', 'Reporter intensity corrected 8',
+                'Reporter intensity corrected 9', 'Reporter intensity corrected 10', 'Reporter intensity corrected 11']
+    elif ms_level == 'ms3':
+        cols = ['Raw file', 'Scan number', 'm/z', 'Mass', 'Retention time', 'Precursor full scan number']
+
     try:
         msmsscans = pd.read_csv(mainpath / Path('msmsScans.txt'), sep='\t', usecols=cols).rename(
             columns={'Scan number': 'scanID'})
@@ -167,11 +170,17 @@ def parse_args(argv):
                        help='''Number of threads, by default this is equal to the number of CPU cores available on the device.
                           ''')
 
+    apars.add_argument('--tmt_reporters', default=None, metavar="DIR",
+                       help='''Path to TMT correction factor file, as exported from MaxQuant.''')
+
+    apars.add_argument('--tmt_ms_level', default=None, metavar="S", required=True,
+                       help='''MS level of TMT quantification, either "ms2" or "ms3"''')
+
     # ------------------------------------------------
     args = apars.parse_args(argv)
 
     return Path(args.mq_txt_folder), Path(args.raw_folder), parse_stringencies(args.stringencies), Path(
-        args.output_folder), args.num_threads
+        args.output_folder), args.num_threads, Path(args.tmt_reporters), args.tmt_ms_level
 
 
 def parse_stringencies(stringencies):
