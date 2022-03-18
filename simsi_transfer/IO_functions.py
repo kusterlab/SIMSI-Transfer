@@ -70,6 +70,7 @@ def open_msmsscans_txt(mainpath, ms_level):
                 'Reporter intensity corrected 9', 'Reporter intensity corrected 10', 'Reporter intensity corrected 11']
     elif ms_level == 'ms3':
         cols = ['Raw file', 'Scan number', 'm/z', 'Mass', 'Retention time', 'Precursor full scan number']
+
     try:
         msmsscans = pd.read_csv(mainpath / Path('msmsScans.txt'), sep='\t', usecols=cols).rename(
             columns={'Scan number': 'scanID'})
@@ -109,6 +110,18 @@ def open_evidence_txt(mainpath):
                                     'Calibrated retention time', 'Retention time', 'Retention length',
                                     'Calibrated retention time start', 'Calibrated retention time finish',
                                     'Retention time calibration', 'Type', 'Intensity', 'Reverse'])
+    return evidence
+
+
+def open_allpeptides_txt(mainpath):
+    """
+    Open msms.txt output file and subselect relevant columns
+    :param mainpath: Processing path containing the 'combined' folder from MQ search
+    :return: truncated evidence.txt dataframe
+    """
+    cols = ['Raw file', 'Type', 'Charge', 'm/z', 'Retention time', 'Retention length', 'Min scan number', 'Max scan number', 'Intensity']
+    evidence = pd.read_csv(mainpath / Path('allPeptides.txt'), sep='\t',
+                           usecols=cols)
     return evidence
 
 
