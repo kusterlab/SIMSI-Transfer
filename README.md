@@ -2,6 +2,24 @@
 
 Tool for increasing PSM gain from MaxQuant output file. Requires "Experiment" set in MaxQuant!
 
+## Running SIMSI-Transfer using the GUI
+
+On Windows, you can download the `SIMSI-Transfer_GUI_windows.zip` from the latest release, unzip it and open `SIMSI-Transfer.exe` to start the GUI (no installation necessary).
+
+Alternatively, on all platforms, first install SIMSI-Transfer as explained below. Then install `PyQt5` (`pip install PyQt5`) and run:
+
+```shell
+python gui.py
+```
+
+## Running SIMSI-Transfer from the command line
+
+First install SIMSI-Transfer as explained below, then run SIMSI-Tranfer:
+
+```shell
+python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder>
+```
+
 ## Installation
 
 SIMSI-Tranfer is available on PyPI and can be installed with `pip`:
@@ -10,23 +28,12 @@ SIMSI-Tranfer is available on PyPI and can be installed with `pip`:
 pip install simsi-transfer
 ```
 
-Alternatively, one can install directly from this repository:
+Alternatively, you can install directly from this repository:
 
 ```shell
 git clone https://github.com/kusterlab/SIMSI-Transfer.git
 pip install .
 ```
-
-## Running SIMSI-Transfer
-
-Example usage:
-```shell
-python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder>
-```
-
-
-Stuff left to do:
-- Implement masking analysis for FDR estimation (?)
 
 ## Building the GUI on Windows
 
