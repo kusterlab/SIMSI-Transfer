@@ -2,6 +2,23 @@
 
 Tool for increasing PSM gain from MaxQuant output file. Requires "Experiment" set in MaxQuant!
 
+## Installation
+
+SIMSI-Tranfer is available on PyPI and can be installed with `pip`:
+
+```shell
+pip install simsi-transfer
+```
+
+Alternatively, one can install directly from this repository:
+
+```shell
+git clone https://github.com/kusterlab/SIMSI-Transfer.git
+pip install .
+```
+
+## Running SIMSI-Transfer
+
 Example usage:
 ```shell
 python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder>
@@ -10,12 +27,6 @@ python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </pa
 
 Stuff left to do:
 - Implement masking analysis for FDR estimation (?)
-
-## Installation
-
-```shell
-pip install simsi-transfer
-```
 
 ## Building the GUI on Windows
 
@@ -28,7 +39,7 @@ If that does not work, try the following:
 1. Set up a new environment, either through the Anaconda UI, or by running the following on the command line:
 
 ```
-conda create -n simsi_transfer_gui python=3.6
+conda create -n simsi_transfer_gui python=3.8
 activate simsi_transfer_gui
 ```
 
@@ -36,6 +47,7 @@ activate simsi_transfer_gui
 
 ```
 conda install -c conda-forge nomkl numpy pandas pyqt pyinstaller
+conda install -c bioconda pyteomics
 ```
 
 ### Building a self-contained executable
