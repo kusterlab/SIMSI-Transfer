@@ -17,11 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 def main(argv):
-    mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file, ms_level = parse_args(argv)
+    mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file, ms_level, tmt_requantify = parse_args(argv)
     starttime = datetime.now()
-
-    mq_txt_folder, raw_folder, output_folder, tmt_correction_file = Path(mq_txt_folder), Path(raw_folder), Path(
-        output_folder), Path(tmt_correction_file)
 
     logger.info(f'Input parameters:')
     logger.info(f"MaxQuant txt folder = {mq_txt_folder}")
@@ -48,10 +45,9 @@ def main(argv):
     cluster.cluster_mzml_files(mzml_files, pvals, maracluster_folder, num_threads)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
-    msmsscanstxt, tmt = open_msmsscans_txt(mq_txt_folder, ms_level)
-    logger.info(msmsscanstxt.columns)
+    msmsscanstxt, tmt = open_msmsscans_txt(mq_txt_folder, tmt_requantify)
 
-    if ms_level == 'ms3':
+    if tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
         extracted_folder = output_folder / Path('extracted')
         tmt_extractor.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_file, num_threads)

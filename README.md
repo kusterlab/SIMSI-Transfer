@@ -11,9 +11,15 @@ python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </pa
 Stuff left to do:
 - Implement masking analysis for FDR estimation (?)
 
-# Building the GUI on Windows
+## Installation
 
-## Create a conda environment
+```shell
+pip install simsi-transfer
+```
+
+## Building the GUI on Windows
+
+### Create a conda environment
 
 Try importing `conda_environment.yml` in the Anaconda environment tab.
 
@@ -32,7 +38,7 @@ activate simsi_transfer_gui
 conda install -c conda-forge nomkl numpy pandas pyqt pyinstaller
 ```
 
-## Building a self-contained executable
+### Building a self-contained executable
 
 Use the `build_gui.bat` script to create a self-contained executable.
 

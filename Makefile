@@ -46,7 +46,7 @@ clean_data_folder:
 
 
 integration_test:
-	python3 -um simsi_transfer --mq_txt_folder /media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/combined/txt/ --raw_folder /media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/raw/ --output_folder /media/kusterlab/internal_projects/active/Clustering_Transfers/Cluster_Tester/simsi_output --num_threads 3 --stringencies 20,15
+	python3 -um simsi_transfer --mq_txt_folder ${DATA}/combined/txt/ --raw_folder ${DATA} --output_folder ${DATA}/simsi_output --num_threads 3 --stringencies 20,15 ${EXTRA_ARGS}
 
 
 test:
