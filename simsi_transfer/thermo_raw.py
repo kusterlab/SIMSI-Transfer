@@ -51,8 +51,9 @@ def convert_raw_mzml_batch(raw_folder: Path, output_folder: Optional[Path] = Non
         output_folder.mkdir(parents=True)
     
     if num_threads > 1:
+        import multiprocessing
         from .utils.multiprocessing_pool import JobPool
-        processingPool = JobPool(processes = num_threads)
+        processingPool = JobPool(processes=num_threads)
     
     mzml_files = []
     for raw_file in raw_files:
