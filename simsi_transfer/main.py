@@ -1,11 +1,8 @@
 import sys
-import os
 import warnings
 from pathlib import Path
 from datetime import datetime
 import logging
-
-import pandas as pd
 
 from .IO_functions import export_summary_file, open_msms_txt, open_msmsscans_txt, open_maracluster_clusters, \
     parse_args, open_summary_txt, open_evidence_txt, export_simsi_evidence_file
@@ -70,7 +67,6 @@ def main(argv):
 
     logger.info(f'Reading in MaxQuant evidence.txt file and filtering out decoy hits')
     evidencetxt = open_evidence_txt(mq_txt_folder)
-    # TODO: check if we should also transfer decoys
     evidencetxt = evidencetxt[evidencetxt['Reverse'] != '+']
 
     logger.info(f'Reading in MaxQuant summary.txt file')
