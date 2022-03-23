@@ -2,15 +2,25 @@
 
 Tool for increasing PSM gain from MaxQuant output file. Requires "Experiment" set in MaxQuant! 
 
+For testing SIMSI-Transfer after installation, we recommend downloading the TMT11 MS2 raw files from this publication:  
+Thompson, A., Wölmer, N., Koncarevic, S., Selzer, S. et al., _TMTpro: Design, Synthesis, and Initial Evaluation of a Proline-Based Isobaric 16-Plex Tandem Mass Tag Reagent Set._ Analytical Chemistry 2019, 91, 15941–15950. doi:10.1021/acs.analchem.9b04474
+
+The MaxQuant and SIMSI-Transfer results of the processed dataset can be downloaded from the following DOIs:  
+- MaxQuant output (required as input for SIMSI-Transfer): 10.5281/zenodo.6365902
+- SIMSI-Transfer output: 10.5281/zenodo.6365638
+
+
 Example usage:
 ```shell
 python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder>
 ```
 
+---
 
 Stuff left to do:
 - Implement masking analysis for FDR estimation (?)
-- MS3 acquisition handling
+
+---
 
 # Building the GUI on Windows
 
