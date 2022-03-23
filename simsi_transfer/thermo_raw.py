@@ -9,12 +9,13 @@ from .utils import subprocess_with_logger as subprocess
 logger = logging.getLogger(__name__)
 
 
-def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip = False, msLevel = 2):
+def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip = False, ms_level: str = "2-"):
     """
     Converts a ThermoRaw file to mzML. Adapted from prosit_io/raw/thermo_raw.py
 
     :param input_path: File path of the Thermo Rawfile
     :param output_path: File path of the mzML path
+    :param ms_level: MS levels to keep, "2-" means MS2 and above (e.g. MS3)
     """
     if output_path is None:
         output_path = input_path.stem + ".mzML"
@@ -34,7 +35,7 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip 
         mono = ""
     
     exec_path = Path(__file__).parent.absolute() # get path of parent directory of current file
-    exec_command = f"{mono} {exec_path}/utils/ThermoRawFileParser/ThermoRawFileParser.exe {gzip} --msLevel 2,3 -i {input_path} -b {output_path}.tmp"
+    exec_command = f"{mono} {exec_path}/utils/ThermoRawFileParser/ThermoRawFileParser.exe {gzip} --msLevel \"{ms_level}\" -i \"{input_path}\" -b \"{output_path}.tmp\""
     logger.info(f"Converting thermo rawfile to mzml with the command: '{exec_command}'")
     subprocess.run(exec_command)
     
@@ -44,13 +45,14 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip 
     return output_path
 
 
-def convert_raw_mzml_batch(raw_folder: Path, output_folder: Optional[Path] = None, num_threads: int = 1, gzip = False, msLevel = 2):
+def convert_raw_mzml_batch(raw_folder: Path, output_folder: Optional[Path] = None, num_threads: int = 1, gzip = False, ms_level: str = "2-"):
     raw_files = get_raw_files(raw_folder)
     
     if not output_folder.is_dir():
         output_folder.mkdir(parents=True)
     
     if num_threads > 1:
+        import multiprocessing
         from .utils.multiprocessing_pool import JobPool
         processingPool = JobPool(processes=num_threads)
     
@@ -98,6 +100,6 @@ def get_raw_files(raw_folder: Path):
 if __name__ == "__main__":
     from sys import argv
     if len(argv) == 2:
-        converter = convert_raw_mzml(argv[1], msLevel = "2")
+        converter = convert_raw_mzml(argv[1], ms_level = "2-")
     else:
         logger.error("Please specify a rawfile")

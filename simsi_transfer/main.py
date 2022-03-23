@@ -5,7 +5,7 @@ from datetime import datetime
 import logging
 
 from .IO_functions import export_summary_file, open_msms_txt, open_msmsscans_txt, open_maracluster_clusters, \
-    parse_args, open_summary_txt, open_evidence_txt, export_simsi_evidence_file
+    parse_args, open_summary_txt, open_evidence_txt, open_allpeptides_txt, export_simsi_evidence_file
 from .processing_functions import generate_summary_file, flag_ambiguous_clusters, transfer, \
     count_clustering_parameters, count_phos, build_evidence, remove_unidentified_scans
 from .merging_functions import assemble_corrected_tmt_table, merge_with_corrected_tmt
@@ -17,12 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 def main(argv):
-    mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file, ms_level = parse_args(argv)
-
+    mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file, ms_level, tmt_requantify = parse_args(argv)
     starttime = datetime.now()
-
-    mq_txt_folder, raw_folder, output_folder, tmt_correction_file = Path(mq_txt_folder), Path(raw_folder), Path(
-        output_folder), Path(tmt_correction_file)
 
     logger.info(f'Input parameters:')
     logger.info(f"MaxQuant txt folder = {mq_txt_folder}")
@@ -49,10 +45,9 @@ def main(argv):
     cluster.cluster_mzml_files(mzml_files, pvals, maracluster_folder, num_threads)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
-    msmsscanstxt, tmt = open_msmsscans_txt(mq_txt_folder, ms_level)
-    logger.info(msmsscanstxt.columns)
+    msmsscanstxt, tmt = open_msmsscans_txt(mq_txt_folder, tmt_requantify)
 
-    if ms_level == 'ms3':
+    if tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
         extracted_folder = output_folder / Path('extracted')
         tmt_extractor.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_file, num_threads)
@@ -68,6 +63,9 @@ def main(argv):
     logger.info(f'Reading in MaxQuant evidence.txt file and filtering out decoy hits')
     evidencetxt = open_evidence_txt(mq_txt_folder)
     evidencetxt = evidencetxt[evidencetxt['Reverse'] != '+']
+
+    logger.info(f'Reading in MaxQuant allPeptides.txt file')
+    allpeptidestxt = open_allpeptides_txt(mq_txt_folder)
 
     logger.info(f'Reading in MaxQuant summary.txt file')
     summarytxt = open_summary_txt(mq_txt_folder)
@@ -101,7 +99,7 @@ def main(argv):
         statistics[pval] = count_clustering_parameters(summary)
 
         logger.info(f'Starting evidence_transferred.txt building for {pval}.')
-        evidence = build_evidence(summary, evidencetxt, tmt)
+        evidence = build_evidence(summary, evidencetxt, allpeptidestxt, tmt)
         export_simsi_evidence_file(evidence, output_folder, pval)
         logger.info(f'Finished evidence_transferred.txt building.')
         logger.info('')

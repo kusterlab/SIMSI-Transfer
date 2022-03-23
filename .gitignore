@@ -5,3 +5,5 @@ tests/integrations_tests
 simsi_output
 build
 dist
+.coverage
+system_test.sh
