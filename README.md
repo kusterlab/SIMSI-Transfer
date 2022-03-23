@@ -8,7 +8,6 @@ Thompson, A., Wölmer, N., Koncarevic, S., Selzer, S. et al., _TMTpro: Design, S
 The MaxQuant and SIMSI-Transfer results of the processed dataset can be downloaded from the following DOIs:  
 - MaxQuant output (required as input for SIMSI-Transfer): 10.5281/zenodo.6365902
 - SIMSI-Transfer output: 10.5281/zenodo.6365638
-- 
 
 ## Running SIMSI-Transfer using the GUI
 
