@@ -1,11 +1,7 @@
 import re
 import math
-import os
 from sys import platform
-import subprocess
-from pathlib import Path
 import logging
-import datetime
 from typing import List
 
 import pandas as pd
@@ -114,7 +110,78 @@ def get_single_item(input_list):
         raise IndexError('Multiple elements found in input, should only contain one element')
 
 
-def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
+def transfer_new(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False, adcols=True):
+    '''
+    Main function for transfers by clustering. Transfers identifications for merged dataframe and adds a column for
+    identification type. Transferred columns are Sequence, Modified sequence, Proteins, Gene names, Protein Names,
+    Charge, m/z, and Mass.
+    '''
+    if mask:
+        ident = f'identification_{mask}'
+    else:
+        ident = 'identification'
+    grpdf = sumdf[sumdf[modseq] == sumdf[modseq]].groupby('clusterID')[rawseq].unique().reset_index(
+        name='rawseqs')
+    grpdf2 = sumdf[sumdf[modseq] == sumdf[modseq]].groupby('clusterID')[modseq].unique().reset_index(
+        name='modseqs')
+    grpdf2['phocount'] = grpdf2['modseqs'].apply(get_phospho_counts)
+    grpdf = pd.merge(left=grpdf, right=grpdf2, on='clusterID', how='left')
+    grpdf['setcount'] = grpdf['rawseqs'].str.len()  # set length of sequences without NaN
+    grpdf = grpdf[grpdf['setcount'] == 1]  # Only sets with one sequence are allowed
+    grpdf[ident] = 't'
+    grpdf['representative_transfer_sequence'] = grpdf['rawseqs'].apply(getitem).str.cat(
+        grpdf['phocount'].astype(int).astype(str), sep='.')
+    grpdf['representative_modseq'] = grpdf['modseqs'].apply(getitem)
+    grpdf.drop(columns=['rawseqs', 'setcount'], axis=1, inplace=True)
+    mg1 = sumdf.merge(grpdf, on=['clusterID'], how='left')
+
+    mg1.loc[mg1[modseq] == mg1[modseq], ident] = 'd'
+    mg1.loc[mg1[modseq] != mg1[modseq], rawseq] = mg1['representative_transfer_sequence']
+    mg1.loc[mg1[modseq] != mg1[modseq], modseq] = mg1['representative_modseq']
+    mg1.drop(columns=['representative_transfer_sequence', 'representative_modseq'], axis=1, inplace=True)
+
+    mg1.rename(columns={modseq: 'd_modsequence', 'Proteins': 'd_Proteins', 'Gene Names': 'd_Gene Names',
+                        'Protein Names': 'd_Protein Names'}, inplace=True)
+    grpdf = mg1.groupby('clusterID', as_index=False)[[rawseq, 'd_modsequence', 'd_Proteins', 'd_Gene Names',
+         'd_Protein Names']].agg(lambda x: get_main_object(set(x)))
+    grpdf.dropna(subset=[rawseq], inplace=True)
+    grpdf.drop(columns=[rawseq], inplace=True)
+    grpdf.rename(columns={'d_modsequence': modseq, 'd_Proteins': 'Proteins', 'd_Gene Names': 'Gene Names',
+                          'd_Protein Names': 'Protein Names'}, inplace=True)
+    grpdf[ident] = 't'
+
+    mg1 = pd.merge(left=mg1, right=grpdf, on=['clusterID', ident], how='left')
+    mg1.loc[
+        mg1[ident] == 't', ['d_modsequence', 'd_Proteins', 'd_Gene Names', 'd_Protein Names']] = mg1.loc[
+        mg1[ident] == 't', [modseq, 'Proteins', 'Gene Names', 'Protein Names']].to_numpy()
+
+    mg1.drop(columns={modseq, 'Proteins', 'Gene Names', 'Protein Names'},
+             inplace=True)
+    mg1.rename(columns={'d_modsequence': modseq, 'd_Proteins': 'Proteins', 'd_Gene Names': 'Gene Names',
+                        'd_Protein Names': 'Protein Names'}, inplace=True)
+    if not adcols:
+        mg1.drop(columns={'modseqs', 'phocount'}, inplace=True)
+    return mg1
+
+
+def getitem(x):  # function for extracting single item from list or set
+    if len(x) == 1:
+        return next(iter(x))
+    else:
+        return np.nan
+
+
+def get_phospho_counts(seqlist):
+    if type(seqlist) == float:
+        return np.nan
+    lenlist = list(set([count_phos(x) for x in seqlist]))
+    if len(lenlist) == 1:
+        return lenlist[0]
+    else:
+        return np.nan
+
+
+def transfer_old(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
     """
     Main function for transfers by clustering. Transfers identifications for merged dataframe and adds a column for
     identification type. Transferred columns are Sequence, Modified sequence, Proteins, Gene names, Protein Names,
@@ -141,16 +208,16 @@ def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
     mg1.loc[mg1[modseq] == mg1[modseq], ident] = 'd'
     mg1.loc[mg1[modseq] != mg1[modseq], modseq] = mg1['representative_transfer_sequence']
     mg1.drop(columns=['representative_transfer_sequence'], axis=1, inplace=True)
-    
-    replacement_dict = {rawseq: 'd_Sequence', 
-                        'Modifications': 'd_Modifications', 
-                        'Proteins': 'd_Proteins', 
+
+    replacement_dict = {rawseq: 'd_Sequence',
+                        'Modifications': 'd_Modifications',
+                        'Proteins': 'd_Proteins',
                         'Gene Names': 'd_Gene Names',
-                        'Protein Names': 'd_Protein Names', 
-                        'Charge': 'd_Charge', 
+                        'Protein Names': 'd_Protein Names',
+                        'Charge': 'd_Charge',
                         'm/z': 'd_m/z',
-                        'Mass': 'd_Mass', 
-                        'Missed cleavages': 'd_missed_cleavages', 
+                        'Mass': 'd_Mass',
+                        'Missed cleavages': 'd_missed_cleavages',
                         'Length': 'd_length',
                         'Reverse': 'd_Reverse'}
     mg1.rename(columns=replacement_dict, inplace=True)
@@ -160,7 +227,7 @@ def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
     grpdf.dropna(subset=[modseq], inplace=True)
     grpdf.drop(columns=[modseq], inplace=True)
 
-    replacement_dict_reverse = { v : k for k, v in replacement_dict.items() }
+    replacement_dict_reverse = {v: k for k, v in replacement_dict.items()}
     grpdf.rename(columns=replacement_dict_reverse,
                  inplace=True)
     grpdf[ident] = 't'
