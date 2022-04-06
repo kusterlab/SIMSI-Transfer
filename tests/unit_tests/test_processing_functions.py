@@ -28,6 +28,14 @@ def test_assign_missing_precursors(summary_missing_precursors, allpeptides_missi
     check_cols(5, ['MSMS', np.nan])
     
 
+def test_generate_modified_sequence_annotation_unique_raw_sequence():
+    assert pf.generate_modified_sequence_annotation(['TESTPEPT(Phospho (STY))IDE', 'TES(Phospho (STY))TPEPTIDE', 'T(Phospho (STY))ESTPEPTIDE']) == 'TESTPEPTIDE.1.p1/p3/p8'
+
+
+def test_generate_modified_sequence_annotation_ambiguous_raw_sequence():
+    assert pf.generate_modified_sequence_annotation(['TESTPEPT(Phospho (STY))IDE', 'SET(Phospho (STY))TPEPTIDE', 'T(Phospho (STY))ESTPEPTIDE']) == np.nan
+
+
 def test_purge_mrc_files():
     assert False
 
