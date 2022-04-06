@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 def main(argv):
     mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file, ms_level, tmt_requantify = parse_args(argv)
+    logging.getLogger(".".join(__name__.split(".")[:-1])).addHandler(logging.FileHandler(output_folder / Path('SIMSI.log')))
     starttime = datetime.now()
 
     logger.info(f'Input parameters:')
