@@ -34,10 +34,8 @@ def get_correction_factors(correction_factor_path: Path):
     tmt_masses = np.array([126.127726, 127.124761, 127.131081, 128.128116, 128.134436, 129.131471,
                     129.137790, 130.134825, 130.141145, 131.138180, 131.144499, 132.141535, 132.147854])
 
-    tmt_raw_col = ['raw_TMT1', 'raw_TMT2', 'raw_TMT3', 'raw_TMT4', 'raw_TMT5', 'raw_TMT6', 'raw_TMT7', 'raw_TMT8',
-                   'raw_TMT9', 'raw_TMT10', 'raw_TMT11', 'raw_TMT12', 'raw_TMT13']
-    tmt_corr_col = ['corr_TMT1', 'corr_TMT2', 'corr_TMT3', 'corr_TMT4', 'corr_TMT5', 'corr_TMT6', 'corr_TMT7',
-                    'corr_TMT8', 'corr_TMT9', 'corr_TMT10', 'corr_TMT11']
+    tmt_raw_col = [f'raw_TMT{i}' for i in range(1,14)]
+    tmt_corr_col = [f'corr_TMT{i}' for i in range(1,12)]
 
     if correction_factor_path.is_file():
         correction_dataframe = pd.read_csv(correction_factor_path, sep='\t')
@@ -70,8 +68,12 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
     tmt_upper = tmt_masses + tolerance
     tmt_lower = tmt_masses - tolerance
 
-    dfcol = ['raw_file', 'scanID'] + tmt_raw_col + tmt_corr_col
-    
+    convert_dict_raw = {k: 'float64' for k in tmt_raw_col}
+    convert_dict_corr = {k: 'float64' for k in tmt_corr_col}
+    convert_dict_other = {'raw_file': 'str', 'scanID': 'int'}
+    convert_dict = {**convert_dict_raw, **convert_dict_corr, **convert_dict_other}
+    dfcol = convert_dict.keys()
+
     for mzml_file in mzml_files:
         output_file = f'{output_path}/ext_{mzml_file.name}.txt'
         if Path(output_file).is_file():
@@ -80,6 +82,7 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
         
         logger.info('Performing extraction for ' + mzml_file.name)
         fileframe = pd.DataFrame(columns=dfcol)
+
         with mzml.read(str(mzml_file)) as reader:
             for i, item in enumerate(reader):
                 if i % 10000 == 0:
@@ -102,8 +105,10 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
                     start_idx = int(np.searchsorted(mz, low))
                     end_idx = int(np.searchsorted(mz, upp))
                     scanseries[f'raw_TMT{c + 1}'] = intensity[start_idx:end_idx].sum()
-                fileframe = fileframe.append(scanseries, ignore_index=True)
+                fileframe = pd.concat([fileframe, scanseries.to_frame().T], ignore_index=True)
         fileframe['raw_file'] = mzml_file.name
+
+        fileframe = fileframe.astype(convert_dict)
 
         # TMT correction
         logger.info('Extraction done, correcting TMT reporters for ' + mzml_file.name)
@@ -111,7 +116,6 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
             lambda tmt: np.linalg.lstsq(correction_normalized, tmt, rcond=None)[0].round(2), axis=1).tolist(),
                                                columns=tmt_corr_col, index=fileframe[tmt_corr_col].index)
         fileframe[tmt_corr_col] = fileframe[tmt_corr_col].where(fileframe[tmt_corr_col] > 10, 0)
-        fileframe['scanID'] = fileframe['scanID'].astype(int)
         fileframe.to_csv(output_file, sep='\t', index=False)
 
 

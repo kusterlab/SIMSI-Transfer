@@ -42,7 +42,7 @@ def main(argv):
 
     logger.info(f'Clustering .mzML files')
     maracluster_folder = output_folder / Path('maracluster_output')
-    cluster.cluster_mzml_files(mzml_files, pvals, maracluster_folder, num_threads)
+    # cluster.cluster_mzml_files(mzml_files, pvals, maracluster_folder, num_threads)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
     msmsscanstxt, tmt = open_msmsscans_txt(mq_txt_folder, tmt_requantify)
