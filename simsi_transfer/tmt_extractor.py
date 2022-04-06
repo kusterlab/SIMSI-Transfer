@@ -99,9 +99,6 @@ def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path
 
     with mzml.read(str(mzml_file)) as reader:
         for i, item in enumerate(reader):
-            if i % 10000 == 0:
-                logger.info(f"Processing spectrum {i}")
-
             if item['ms level'] != extraction_level:
                 continue
 

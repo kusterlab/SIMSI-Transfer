@@ -159,7 +159,7 @@ def parse_args(argv):
     apars.add_argument('--output_folder', default="./simsi_output", metavar="DIR",
                        help='''Full path to desired SIMSI output folder.''')
 
-    apars.add_argument('--num_threads', type=int, default=multiprocessing.cpu_count(), metavar='N',
+    apars.add_argument('--num_threads', type=int, default=min(multiprocessing.cpu_count(), 4), metavar='N',
                        help='''Number of threads, by default this is equal to the number of CPU cores available on the device.
                           ''')
 
