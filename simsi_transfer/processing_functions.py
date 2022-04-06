@@ -27,7 +27,7 @@ def purge_mrc_files(raw_file, mode='mzML'):
     rx = r'.+/'
     if "win" in platform:
         rx = r'.+\\'
-    
+
     while True:
         if re.search(rx, raw_file):
             raw_file = re.sub(rx, '', raw_file)
@@ -131,26 +131,25 @@ def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
     else:
         ident = 'identification'
     grpdf = sumdf[sumdf[modseq] == sumdf[modseq]].groupby('clusterID')[modseq].unique().reset_index(
-        name='elements')
-    grpdf['setcount'] = grpdf['elements'].str.len()  # set length of sequences without NaN
-    grpdf = grpdf[grpdf['setcount'] == 1]  # Only sets with one sequence are allowed
-    grpdf[ident] = 't'
-    grpdf['representative_transfer_sequence'] = grpdf['elements'].apply(get_single_item)
-    grpdf.drop(columns=['elements', 'setcount'], axis=1, inplace=True)
+        name='cluster_modified_sequences')
+    grpdf['representative_modified_sequence'] = grpdf['cluster_modified_sequences'].apply(generate_modified_sequence_annotation, axis=1)
+
+    grpdf.loc[grpdf['representative_modified_sequence'].notna(), ident] = 't'
     mg1 = sumdf.merge(grpdf, on=['clusterID'], how='left')
     mg1.loc[mg1[modseq] == mg1[modseq], ident] = 'd'
     mg1.loc[mg1[modseq] != mg1[modseq], modseq] = mg1['representative_transfer_sequence']
+    mg1.loc[mg1[modseq] != mg1[modseq], rawseq] = mg1['representative_transfer_sequence'].str.split('.')[0].cleanup
     mg1.drop(columns=['representative_transfer_sequence'], axis=1, inplace=True)
-    
-    replacement_dict = {rawseq: 'd_Sequence', 
-                        'Modifications': 'd_Modifications', 
-                        'Proteins': 'd_Proteins', 
+
+    replacement_dict = {rawseq: 'd_Sequence',
+                        'Modifications': 'd_Modifications',
+                        'Proteins': 'd_Proteins',
                         'Gene Names': 'd_Gene Names',
-                        'Protein Names': 'd_Protein Names', 
-                        'Charge': 'd_Charge', 
+                        'Protein Names': 'd_Protein Names',
+                        'Charge': 'd_Charge',
                         'm/z': 'd_m/z',
-                        'Mass': 'd_Mass', 
-                        'Missed cleavages': 'd_missed_cleavages', 
+                        'Mass': 'd_Mass',
+                        'Missed cleavages': 'd_missed_cleavages',
                         'Length': 'd_length',
                         'Reverse': 'd_Reverse'}
     mg1.rename(columns=replacement_dict, inplace=True)
@@ -172,6 +171,21 @@ def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
              inplace=True)
     mg1.rename(columns=replacement_dict_reverse, inplace=True)
     return mg1
+
+
+def generate_modified_sequence_annotation(sequence_array):
+    if len(sequence_array) == 1:
+        return sequence_array[0]
+    sequence_array_lower = [re.sub(re.compile(r'([STY])\(Phospho \(STY\)\)'), lambda pat: pat.group(1).lower(), x) for x in sequence_array]
+    sequence_set_raw = {x.upper() for x in sequence_array_lower}
+    if len(sequence_set_raw) != 1:
+        return np.NaN
+    num_mods = len(re.findall(r'[sty]', sequence_array_lower[0]))
+    phospho_positions = {m.start() + 1 for x in sequence_array_lower for m in re.finditer(r'[sty]', x)}
+    phospho_positions = sorted(list(phospho_positions))
+    phopsho_positions_string = "/".join(map(lambda x: f'p{x}', phospho_positions))
+    raw_sequence = list(sequence_set_raw)[0]
+    return f"{raw_sequence}.{num_mods}.{phopsho_positions_string}"
 
 
 def generate_summary_file(msmsscansdf, msmsdf, summarytxt, clusterfile):
@@ -317,7 +331,7 @@ def merge_summary_with_evidence(summary: pd.DataFrame, evidence: pd.DataFrame):
     return summary
 
 
-def assign_evidence_type(summary: pd.DataFrame, type_column_name: str = 'new_type'):   
+def assign_evidence_type(summary: pd.DataFrame, type_column_name: str = 'new_type'):
     '''
     assign the updated Type column by checking if retention time of MS2 scan is within its evidence precursor rt window
     '''
@@ -326,7 +340,7 @@ def assign_evidence_type(summary: pd.DataFrame, type_column_name: str = 'new_typ
                           summary['Retention time'] <= summary['Calibrated retention time finish'] - summary['Retention time calibration']))
     summary.loc[msms_in_rt_window, type_column_name] = 'MULTI-MSMS'
     summary.loc[~msms_in_rt_window, type_column_name] = 'MSMS'
-    
+
     # clear out the retention time columns for MS2 scans without precursor
     del_columns = ['Type', 'Calibrated retention time', 'Calibrated retention time start',
                    'Calibrated retention time finish']
@@ -341,7 +355,7 @@ def assign_missing_precursors(summary: pd.DataFrame, allpeptides: pd.DataFrame):
     '''
     group_key = ['Raw file', 'Charge']
     allpeptides_grouped = { group : df_grouped for group, df_grouped in allpeptides.groupby(group_key) }
-    
+
     missing_precursor = (summary['new_type'] == 'MSMS')
     summary.loc[missing_precursor, ['new_type', 'Intensity']] = summary.loc[missing_precursor].apply(
             lambda x : match_precursor_grouped(x, allpeptides_grouped, group_key), axis=1, result_type='expand'
@@ -384,10 +398,10 @@ def fill_missing_evidence_ids(summary):
     fill the evidence_ID column of MS2 scans without a precursor
     '''
     missing_evidence_id = summary['evidence_ID'].isna()
-    
+
     start_id = int(summary['evidence_ID'].max() + 1)
     end_id = start_id + missing_evidence_id.sum()
-    
+
     summary.loc[missing_evidence_id, 'evidence_ID'] = range(start_id, end_id)
     summary['evidence_ID'] = summary['evidence_ID'].astype(int)
     return summary
@@ -402,18 +416,18 @@ def assign_evidence_feature(summary: pd.DataFrame, evidence: pd.DataFrame, allpe
     summary = remove_duplicate_msms(summary)
     summary = assign_missing_precursors(summary, allpeptides)
     summary = fill_missing_evidence_ids(summary)
-    
+
     if not len(summary) == summary_length_before_processing:
         raise ValueError(
             f'Number of summary entries changed during evidence feature assembly!'
             f'\n{summary_length_before_processing} before assembly,\n{len(summary)} after assembly.'
         )
-    
+
     if not summary['summary_ID'].nunique() == len(summary):
         raise ValueError('Some summary_IDs were detected multiple times!')
-    
+
     # TODO: check if all MULTI-MSMS entries are allocated to the correct PSMs
-    
+
     summary = summary.sort_values(by=['Sequence', 'Modified sequence'])
     summary = summary.drop(columns=['Type'])
     return summary
@@ -439,7 +453,7 @@ def calculate_evidence_columns(summary, tmt):
 
     def csv_list(x):
         return ";".join(map(str, x))
-    
+
     def csv_list_unique(x):
         return ";".join(map(str, list(dict.fromkeys(x))))
 
@@ -469,7 +483,7 @@ def calculate_evidence_columns(summary, tmt):
             'MS/MS scan number': pd.NamedAgg(column='scanID', aggfunc='first'),
             'Score': pd.NamedAgg(column='Score', aggfunc=max),
             'Delta score': pd.NamedAgg(column='Delta score', aggfunc=max),
-            'Intensity': pd.NamedAgg(column='Intensity', aggfunc='sum'), # from evidence.txt, supplemented from allPeptides.txt     
+            'Intensity': pd.NamedAgg(column='Intensity', aggfunc='sum'), # from evidence.txt, supplemented from allPeptides.txt
             **{f'Reporter intensity corrected {i}': pd.NamedAgg(column=f'Reporter intensity corrected {i}', aggfunc='sum') for i in range(1, tmt+1)},
             **{f'Reporter intensity {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='sum') for i in range(1, tmt+1)},
             **{f'Reporter intensity count {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='count') for i in range(1, tmt+1)},
