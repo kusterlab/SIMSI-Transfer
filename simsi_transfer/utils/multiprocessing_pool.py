@@ -9,7 +9,6 @@ from logging.handlers import QueueHandler, QueueListener
 import multiprocessing.pool
 import traceback
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -18,8 +17,10 @@ class NoDaemonProcess(multiprocessing.Process):
     # make 'daemon' attribute always return False
     def _get_daemon(self):
         return False
+
     def _set_daemon(self, value):
         pass
+
     daemon = property(_get_daemon, _set_daemon)
 
 
@@ -35,45 +36,47 @@ class NestablePool(multiprocessing.pool.Pool):
 
 
 class JobPool:
-  def __init__(self, processes = 1, warningFilter = "default", queue = None):
-    self.warningFilter = warningFilter
-    if not queue:
-      queue = multiprocessing.Queue()
-      queue_listener = QueueListener(queue, logger)
-      queue_listener.start()
-    self.pool = NestablePool(processes, worker_init, initargs=(self.warningFilter, queue))
-    self.results = []
-    
-  def applyAsync(self, f, fargs, *args, **kwargs):
-    r = self.pool.apply_async(f, fargs, *args, **kwargs)
-    self.results.append(r)
-  
-  def checkPool(self, printProgressEvery = -1):
-    try:
-      outputs = list()
-      for res in self.results:
-        outputs.append(res.get(timeout = 10000)) # 10000 seconds = ~3 hours
-        if printProgressEvery > 0 and len(outputs) % printProgressEvery == 0:
-          logger.info(f' {len(outputs)} / {len(self.results)} {"%.2f" % (float(len(outputs)) / len(self.results) * 100)}%')
-      self.pool.close()
-      self.pool.join()
-      return outputs
-    except (KeyboardInterrupt, SystemExit):
-      logger.error("Caught KeyboardInterrupt, terminating workers")
-      self.pool.terminate()
-      self.pool.join()
-      sys.exit()
-    except Exception as e:
-      logger.error("Caught Unknown exception, terminating workers")
-      logger.error(traceback.print_exc())
-      logger.error(e)
-      self.pool.terminate()
-      self.pool.join()
-      sys.exit()
-  
-  def stopPool(self):
-    self.pool.terminate()
-    self.pool.join()
+    def __init__(self, processes=1, warningFilter="default", queue=None):
+        self.warningFilter = warningFilter
+        if not queue:
+            queue = multiprocessing.Queue()
+            if sys.platform.startswith('win'):
+                queue_listener = QueueListener(queue, logger)
+                queue_listener.start()
+        self.pool = NestablePool(processes, worker_init, initargs=(self.warningFilter, queue))
+        self.results = []
+
+    def applyAsync(self, f, fargs, *args, **kwargs):
+        r = self.pool.apply_async(f, fargs, *args, **kwargs)
+        self.results.append(r)
+
+    def checkPool(self, printProgressEvery=-1):
+        try:
+            outputs = list()
+            for res in self.results:
+                outputs.append(res.get(timeout=10000))  # 10000 seconds = ~3 hours
+                if printProgressEvery > 0 and len(outputs) % printProgressEvery == 0:
+                    logger.info(
+                        f' {len(outputs)} / {len(self.results)} {"%.2f" % (float(len(outputs)) / len(self.results) * 100)}%')
+            self.pool.close()
+            self.pool.join()
+            return outputs
+        except (KeyboardInterrupt, SystemExit):
+            logger.error("Caught KeyboardInterrupt, terminating workers")
+            self.pool.terminate()
+            self.pool.join()
+            sys.exit()
+        except Exception as e:
+            logger.error("Caught Unknown exception, terminating workers")
+            logger.error(traceback.print_exc())
+            logger.error(e)
+            self.pool.terminate()
+            self.pool.join()
+            sys.exit()
+
+    def stopPool(self):
+        self.pool.terminate()
+        self.pool.join()
 
 
 def worker_init(warningFilter, queue=None):
@@ -82,7 +85,7 @@ def worker_init(warningFilter, queue=None):
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
         logger.addHandler(queueHandler)
-    
+
     # set warningFilter for the child processes
     warnings.simplefilter(warningFilter)
 
@@ -92,12 +95,12 @@ def worker_init(warningFilter, queue=None):
 
 
 def addOne(i):
-  return i+1
+    return i + 1
 
 
 def unitTest():
-  pool = JobPool(4)
-  for i in range(20):
-    pool.applyAsync(addOne, [i])
-  results = pool.checkPool()
-  print(results)
+    pool = JobPool(4)
+    for i in range(20):
+        pool.applyAsync(addOne, [i])
+    results = pool.checkPool()
+    print(results)

@@ -18,6 +18,10 @@ logger = logging.getLogger(__name__)
 
 def main(argv):
     mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file, ms_level, tmt_requantify = parse_args(argv)
+
+    if not output_folder.is_dir():
+        output_folder.mkdir(parents=True)
+
     logging.getLogger(".".join(__name__.split(".")[:-1])).addHandler(logging.FileHandler(output_folder / Path('SIMSI.log')))
     starttime = datetime.now()
 
@@ -34,16 +38,13 @@ def main(argv):
     logger.info(f'Starting SIMSI-Transfer')
     logger.info('')
 
-    if not output_folder.is_dir():
-        output_folder.mkdir(parents=True)
-
     logger.info(f'Converting .raw files')
     mzml_folder = output_folder / Path('mzML')
     mzml_files = raw.convert_raw_mzml_batch(raw_folder, mzml_folder, num_threads)
 
     logger.info(f'Clustering .mzML files')
     maracluster_folder = output_folder / Path('maracluster_output')
-    # cluster.cluster_mzml_files(mzml_files, pvals, maracluster_folder, num_threads)
+    cluster.cluster_mzml_files(mzml_files, pvals, maracluster_folder, num_threads)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
     msmsscanstxt, tmt = open_msmsscans_txt(mq_txt_folder, tmt_requantify)
@@ -86,7 +87,6 @@ def main(argv):
         logger.info(f'Finished file merge.')
 
         logger.info(f'Starting cluster-based identity transfer for {pval}.')
-        summary['phosphogroups'] = summary['Modified sequence'].apply(count_phos)
         summary = flag_ambiguous_clusters(summary)
         summary = transfer(summary)
         export_summary_file(summary, output_folder, pval, state='transferred')

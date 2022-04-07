@@ -132,14 +132,18 @@ def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
         ident = 'identification'
     grpdf = sumdf[sumdf[modseq] == sumdf[modseq]].groupby('clusterID')[modseq].unique().reset_index(
         name='cluster_modified_sequences')
-    grpdf['representative_modified_sequence', 'representative_raw_sequence'] = grpdf['cluster_modified_sequences'].apply(generate_modified_sequence_annotation)
+
+    print(grpdf['cluster_modified_sequences'].apply(generate_modified_sequence_annotation))
+    grpdf[['representative_modified_sequence', 'representative_raw_sequence']] = grpdf[
+        'cluster_modified_sequences'].apply(generate_modified_sequence_annotation)
 
     grpdf.loc[grpdf['representative_modified_sequence'].notna(), ident] = 't'
-    mg1 = sumdf.merge(grpdf, on=['clusterID'], how='left')
+    mg1 = pd.merge(left=sumdf, right=grpdf, on=['clusterID'], how='left')
     mg1.loc[mg1[modseq] == mg1[modseq], ident] = 'd'
-    mg1.loc[mg1[modseq] != mg1[modseq], modseq] = mg1['representative_transfer_sequence']
-    mg1.loc[mg1[modseq] != mg1[modseq], rawseq] = mg1['representative_transfer_sequence'].str.split('.')[0].cleanup
-    mg1.drop(columns=['representative_transfer_sequence'], axis=1, inplace=True)
+    # mg1.loc[mg1[modseq] != mg1[modseq], modseq] = mg1['representative_modified_sequence']
+    # mg1.loc[mg1[modseq] != mg1[modseq], rawseq] = mg1['representative_raw_sequence']
+    mg1.loc[mg1[modseq] != mg1[modseq], [modseq, rawseq]] = mg1[['representative_modified_sequence', 'representative_raw_sequence']]
+    mg1.drop(columns=['representative_modified_sequence', 'representative_raw_sequence'], axis=1, inplace=True)
 
     replacement_dict = {rawseq: 'd_Sequence',
                         'Modifications': 'd_Modifications',
@@ -153,22 +157,19 @@ def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
                         'Length': 'd_length',
                         'Reverse': 'd_Reverse'}
     mg1.rename(columns=replacement_dict, inplace=True)
-    grpdf = mg1.groupby('clusterID', as_index=False)[
-        [modseq] + list(replacement_dict.values())].agg(
+    grpdf = mg1.groupby('clusterID', as_index=False)[[modseq] + list(replacement_dict.values())].agg(
         lambda x: get_main_object(set(x)))
     grpdf.dropna(subset=[modseq], inplace=True)
     grpdf.drop(columns=[modseq], inplace=True)
 
-    replacement_dict_reverse = { v : k for k, v in replacement_dict.items() }
-    grpdf.rename(columns=replacement_dict_reverse,
-                 inplace=True)
+    replacement_dict_reverse = {v: k for k, v in replacement_dict.items()}
+    grpdf.rename(columns=replacement_dict_reverse, inplace=True)
     grpdf[ident] = 't'
     mg1 = pd.merge(left=mg1, right=grpdf, on=['clusterID', ident], how='left')
     mg1.loc[
         mg1[ident] == 't', replacement_dict.values()] = mg1.loc[
         mg1[ident] == 't', replacement_dict.keys()].to_numpy()
-    mg1.drop(columns=replacement_dict.keys(),
-             inplace=True)
+    mg1.drop(columns=replacement_dict.keys(), inplace=True)
     mg1.rename(columns=replacement_dict_reverse, inplace=True)
     return mg1
 
@@ -176,7 +177,7 @@ def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
 def generate_modified_sequence_annotation(sequence_array):
     if len(sequence_array) == 1:
         raw_sequence = sequence_array[0].str.replace(re.compile(r'([STY])\(Phospho \(STY\)\)'), '', regex=True)
-        raw_sequence = raw_sequence.str.replace('_(Acetyl (Protein N-term))', '', regex=False)
+        raw_sequence = raw_sequence.str.replace('(Acetyl (Protein N-term))', '', regex=False)
         raw_sequence = raw_sequence.str.replace('(Oxidation (M))', '', regex=False)
         raw_sequence = raw_sequence.str.replace('_', '', regex=False)
         return pd.Series([sequence_array[0], raw_sequence])
@@ -201,6 +202,8 @@ def generate_summary_file(msmsscansdf, msmsdf, summarytxt, clusterfile):
     :param clusterfile:
     :return:
     """
+    print(clusterfile)
+    raise ValueError
     summary = merge_with_msmsscanstxt(clusterfile, msmsscansdf)
     summary = merge_with_summarytxt(summary, summarytxt)
     summary = merge_with_msmstxt(summary, msmsdf)
