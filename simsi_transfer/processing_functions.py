@@ -132,7 +132,7 @@ def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
         ident = 'identification'
     grpdf = sumdf[sumdf[modseq] == sumdf[modseq]].groupby('clusterID')[modseq].unique().reset_index(
         name='cluster_modified_sequences')
-    grpdf['representative_modified_sequence'] = grpdf['cluster_modified_sequences'].apply(generate_modified_sequence_annotation, axis=1)
+    grpdf['representative_modified_sequence', 'representative_raw_sequence'] = grpdf['cluster_modified_sequences'].apply(generate_modified_sequence_annotation)
 
     grpdf.loc[grpdf['representative_modified_sequence'].notna(), ident] = 't'
     mg1 = sumdf.merge(grpdf, on=['clusterID'], how='left')
@@ -175,17 +175,21 @@ def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
 
 def generate_modified_sequence_annotation(sequence_array):
     if len(sequence_array) == 1:
-        return sequence_array[0]
+        raw_sequence = sequence_array[0].str.replace(re.compile(r'([STY])\(Phospho \(STY\)\)'), '', regex=True)
+        raw_sequence = raw_sequence.str.replace('_(Acetyl (Protein N-term))', '', regex=False)
+        raw_sequence = raw_sequence.str.replace('(Oxidation (M))', '', regex=False)
+        raw_sequence = raw_sequence.str.replace('_', '', regex=False)
+        return pd.Series([sequence_array[0], raw_sequence])
     sequence_array_lower = [re.sub(re.compile(r'([STY])\(Phospho \(STY\)\)'), lambda pat: pat.group(1).lower(), x) for x in sequence_array]
     sequence_set_raw = {x.upper() for x in sequence_array_lower}
     if len(sequence_set_raw) != 1:
-        return np.NaN
+        return pd.Series([np.NaN, np.NaN])
     num_mods = len(re.findall(r'[sty]', sequence_array_lower[0]))
     phospho_positions = {m.start() + 1 for x in sequence_array_lower for m in re.finditer(r'[sty]', x)}
     phospho_positions = sorted(list(phospho_positions))
     phopsho_positions_string = "/".join(map(lambda x: f'p{x}', phospho_positions))
     raw_sequence = list(sequence_set_raw)[0]
-    return f"{raw_sequence}.{num_mods}.{phopsho_positions_string}"
+    return pd.Series([f"{raw_sequence}.{num_mods}.{phopsho_positions_string}", raw_sequence])
 
 
 def generate_summary_file(msmsscansdf, msmsdf, summarytxt, clusterfile):

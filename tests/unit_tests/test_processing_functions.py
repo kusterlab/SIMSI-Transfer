@@ -29,11 +29,11 @@ def test_assign_missing_precursors(summary_missing_precursors, allpeptides_missi
     
 
 def test_generate_modified_sequence_annotation_unique_raw_sequence():
-    assert pf.generate_modified_sequence_annotation(['TESTPEPT(Phospho (STY))IDE', 'TES(Phospho (STY))TPEPTIDE', 'T(Phospho (STY))ESTPEPTIDE']) == 'TESTPEPTIDE.1.p1/p3/p8'
+    assert (pf.generate_modified_sequence_annotation(['TESTPEPT(Phospho (STY))IDE', 'TES(Phospho (STY))TPEPTIDE', 'T(Phospho (STY))ESTPEPTIDE']) == pd.Series(['TESTPEPTIDE.1.p1/p3/p8', 'TESTPEPTIDE'])).all()
 
 
 def test_generate_modified_sequence_annotation_ambiguous_raw_sequence():
-    assert pf.generate_modified_sequence_annotation(['TESTPEPT(Phospho (STY))IDE', 'SET(Phospho (STY))TPEPTIDE', 'T(Phospho (STY))ESTPEPTIDE']) == np.nan
+    assert (pf.generate_modified_sequence_annotation(['TESTPEPT(Phospho (STY))IDE', 'SET(Phospho (STY))TPEPTIDE', 'T(Phospho (STY))ESTPEPTIDE']) == pd.Series([np.nan, np.nan])).all()
 
 
 def test_purge_mrc_files():
