@@ -17,26 +17,6 @@ from .merging_functions import merge_with_msmsscanstxt, merge_with_msmstxt, merg
 logger = logging.getLogger(__name__)
 
 
-def purge_mrc_files(raw_file, mode='mzML'):
-    """
-    Removes full path and file extension from file name in MaRaCluster column, default mzML files (case insensitive)
-    :param raw_file: Path string of mzML file
-    :param mode: file extension string, defaults to mzML
-    :return: raw file name without path or extension
-    """
-    rx = r'.+/'
-    if "win" in platform:
-        rx = r'.+\\'
-
-    while True:
-        if re.search(rx, raw_file):
-            raw_file = re.sub(rx, '', raw_file)
-            continue
-        break
-    raw_file = re.sub(fr'\.{mode}', '', raw_file, flags=re.IGNORECASE)
-    return raw_file
-
-
 def purge_modified_sequence(pepseq):
     """
     Completely removes all modification strings in parentheses, leaving only raw sequences
