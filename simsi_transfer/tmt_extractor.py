@@ -97,6 +97,7 @@ def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path
     logger.info('Performing extraction for ' + mzml_file.name)
     fileframe = pd.DataFrame(columns=dfcol)
 
+    seen_scan_ids = set()
     with mzml.read(str(mzml_file)) as reader:
         for i, item in enumerate(reader):
             if item['ms level'] != extraction_level:
@@ -109,6 +110,12 @@ def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path
             else:
                 # supposed to find parent MS2 spectrum for MS3 by looking into precursorList/precursor/spectrumRef
                 scanseries['scanID'] = re.search(r'scan=(\d+)', item['precursorList']['precursor'][0]['spectrumRef'])[1]
+
+            if scanseries['scanID'] in seen_scan_ids:
+                logger.warning(
+                    f"Found duplicate MS3 spectrum for MS2 spectrum with scan number {scanseries['scanID']} in {mzml_file}, known bug in ThermoRawFileParser...")
+                continue
+            seen_scan_ids.add(scanseries['scanID'])
 
             mz = np.array(item['m/z array'])
             intensity = np.array(item['intensity array'])
