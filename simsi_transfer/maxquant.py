@@ -52,11 +52,11 @@ def read_evidence_txt(mainpath):
     :param mainpath: Processing path containing the 'combined' folder from MQ search
     :return: truncated evidence.txt dataframe
     """
-    evidence = pd.read_csv(mainpath / Path('evidence.txt'), sep='\t',
-                           usecols=['Sequence', 'Modified sequence', 'Leading proteins', 'Raw file', 'Charge',
-                                    'Calibrated retention time', 'Retention time', 'Retention length',
-                                    'Calibrated retention time start', 'Calibrated retention time finish',
-                                    'Retention time calibration', 'Type', 'Intensity', 'Reverse'])
+    usecols = ['Sequence', 'Modified sequence', 'Leading proteins', 'Raw file', 'Experiment', 'Fraction',
+               'Charge', 'Calibrated retention time', 'Retention time', 'Retention length',
+               'Calibrated retention time start', 'Calibrated retention time finish',
+               'Retention time calibration', 'Type', 'Intensity', 'Reverse']
+    evidence = pd.read_csv(mainpath / Path('evidence.txt'), sep='\t', usecols=lambda x: x in usecols)
     return evidence
 
 

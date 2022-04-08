@@ -80,7 +80,7 @@ def main(argv):
         logger.info(f'Starting MaxQuant and MaRaCluster file merge for {pval}.')
 
         cluster_results = cluster.read_cluster_results(cluster_result_folder, pval)
-        annotated_clusters = simsi_output.generate_summary_file(msmsscans_mq, msms_mq, rawfile_metadata, cluster_results)
+        annotated_clusters = simsi_output.annotate_clusters(msmsscans_mq, msms_mq, rawfile_metadata, cluster_results)
         del cluster_results
 
         simsi_output.export_annotated_clusters(annotated_clusters, output_folder, pval)
