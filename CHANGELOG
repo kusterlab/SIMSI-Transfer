@@ -1,3 +1,7 @@
+v0.2.1
+- Minor bug fixes for Windows GUI
+- Fill Experiment column with constant value if missing
+
 v0.2.0
 - Fixed support for ambiguous localization of phosphorylation sites
 - Fix for Pandas 1.4: changed df.append to pd.concat
