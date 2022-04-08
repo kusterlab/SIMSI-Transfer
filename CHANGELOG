@@ -1,0 +1,12 @@
+v0.2.0
+- Fixed support for ambiguous localization of phosphorylation sites
+- Fix for Pandas 1.4: changed df.append to pd.concat
+- Added automatic writing of log file to output folder
+- Multithreading for TMT extraction
+- Major refactoring
+- Fixed double printing in multithreading
+- Added column with all sequences in the transferred cluster
+- Capped default number of threads to 4
+
+v0.1.0
+- Initial release

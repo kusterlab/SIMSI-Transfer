@@ -1,12 +1,31 @@
 from sys import platform
 import subprocess
 import logging
+import re
 from typing import List
 from pathlib import Path
+
+import pandas as pd
 
 from .utils import subprocess_with_logger as subprocess
 
 logger = logging.getLogger(__name__)
+
+
+def read_cluster_results(mainpath, pval):
+    maracluster_df = pd.read_csv(mainpath / Path(f'MaRaCluster.clusters_{pval}.tsv'),
+                                 sep='\t', names=['Raw file', 'scanID', 'clusterID'])
+    maracluster_df['Raw file'] = maracluster_df['Raw file'].apply(get_file_name)
+    return maracluster_df
+
+
+def get_file_name(raw_file):
+    """
+    Removes full path and file extension from file name in MaRaCluster column
+    :param raw_file: Path string of mzML file
+    :return: raw file name without path or extension
+    """
+    return Path(raw_file).stem
 
 
 def cluster_mzml_files(mzml_files: List[Path], pvals: List[float], maracluster_folder: Path, num_threads: int = 1, cleanup: bool = True):

@@ -5,11 +5,12 @@ import pandas as pd
 import pandas.util.testing as tm
 import numpy as np
 
-import simsi_transfer.processing_functions as pf
+import simsi_transfer.evidence as evidence
+import simsi_transfer.transfer as transfer
 
 
 def test_assign_missing_precursors(summary_missing_precursors, allpeptides_missing_precursors):
-    summary = pf.assign_missing_precursors(summary_missing_precursors, allpeptides_missing_precursors)
+    summary = evidence.assign_missing_precursors(summary_missing_precursors, allpeptides_missing_precursors)
     
     def check_cols(idx, vals):
         tm.assert_series_equal(summary.loc[idx, ['new_type', 'Intensity']].reset_index(drop=True), pd.Series(vals, name=idx))  
@@ -26,7 +27,15 @@ def test_assign_missing_precursors(summary_missing_precursors, allpeptides_missi
     check_cols(4, ['MSMS', np.nan])
     # missing file
     check_cols(5, ['MSMS', np.nan])
-    
+
+def test_generate_modified_sequence_annotation_unique_raw_sequence():
+    assert (transfer.get_modified_and_raw_sequence(['TESTPEPT(Phospho (STY))IDE', 'TES(Phospho (STY))TPEPTIDE', 'T(Phospho (STY))ESTPEPTIDE']) == pd.Series(['TESTPEPTIDE.1.p1/p3/p8', 'TESTPEPTIDE'])).all()
+    assert (transfer.get_modified_and_raw_sequence(['_S(Phospho (STY))RSAS(Phospho (STY))LRR_', '_SRS(Phospho (STY))AS(Phospho (STY))LRR_']) == pd.Series(['TESTPEPTIDE.1.p1/p3/p8', 'TESTPEPTIDE'])).all()
+
+
+def test_generate_modified_sequence_annotation_ambiguous_raw_sequence():
+    assert (transfer.get_modified_and_raw_sequence(['TESTPEPT(Phospho (STY))IDE', 'SET(Phospho (STY))TPEPTIDE', 'T(Phospho (STY))ESTPEPTIDE']) == pd.Series([np.nan, np.nan])).all()
+
 
 def test_purge_mrc_files():
     assert False
