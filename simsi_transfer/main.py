@@ -6,12 +6,15 @@ import logging
 from . import command_line_interface as cli
 from . import maxquant as mq
 from . import simsi_output
-from .processing_functions import generate_summary_file, flag_ambiguous_clusters, transfer, \
-    count_clustering_parameters, build_evidence, remove_unidentified_scans
-from .merging_functions import assemble_corrected_tmt_table, merge_with_corrected_tmt
+from simsi_transfer.simsi_output import count_clustering_parameters, remove_unidentified_scans
+from simsi_transfer.transfer import flag_ambiguous_clusters
+from simsi_transfer.evidence import build_evidence
+from simsi_transfer.merging_functions import generate_summary_file
+from simsi_transfer.tmt_processing import merge_with_corrected_tmt
 from . import thermo_raw as raw
 from . import maracluster as cluster
-from . import tmt_extractor
+from . import tmt_processing
+from . import transfer
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +58,7 @@ def main(argv):
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
         extracted_folder = output_folder / Path('extracted')
         tmt_extractor.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_file, num_threads)
-        corrected_tmt = assemble_corrected_tmt_table(extracted_folder)
+        corrected_tmt = tmt_extractor.assemble_corrected_tmt_table(extracted_folder)
 
         msmsscanstxt = merge_with_corrected_tmt(msmsscanstxt, corrected_tmt)
 
@@ -90,7 +93,7 @@ def main(argv):
 
         logger.info(f'Starting cluster-based identity transfer for {pval}.')
         summary = flag_ambiguous_clusters(summary)
-        summary = transfer(summary)
+        summary = transfer.transfer(summary)
         simsi_output.export_summary_file(summary, output_folder, pval, state='transferred')
         logger.info(f'Finished identity transfer.')
 

@@ -12,6 +12,9 @@ from pyteomics import mzml
 
 logger = logging.getLogger(__name__)
 
+TMT_RAW_COLUMNS = [f'raw_TMT{i}' for i in range(1, 14)]
+TMT_CORRECTED_COLUMNS = [f'corr_TMT{i}' for i in range(1, 12)]
+
 
 def get_correction_factors(correction_factor_path: Path):
     correction = np.array([[100, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # 126 C Tag
@@ -33,8 +36,6 @@ def get_correction_factors(correction_factor_path: Path):
     tmt_masses = np.array([126.127726, 127.124761, 127.131081, 128.128116, 128.134436, 129.131471,
                            129.137790, 130.134825, 130.141145, 131.138180, 131.144499, 132.141535, 132.147854])
 
-    tmt_raw_col = [f'raw_TMT{i}' for i in range(1, 14)]
-    tmt_corr_col = [f'corr_TMT{i}' for i in range(1, 12)]
 
     if correction_factor_path.is_file():
         correction_dataframe = pd.read_csv(correction_factor_path, sep='\t')
@@ -51,7 +52,7 @@ def get_correction_factors(correction_factor_path: Path):
     # Normalize correction factors
     correction_normalized = (correction / correction.sum(axis=0))
 
-    return tmt_masses, tmt_raw_col, tmt_corr_col, correction_normalized
+    return tmt_masses, correction_normalized
 
 
 def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_factor_path: Path, num_threads: int = 1,
@@ -77,14 +78,14 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
 
 
 def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path, extraction_level):
-    tmt_masses, tmt_raw_col, tmt_corr_col, correction_normalized = get_correction_factors(correction_factor_path)
+    tmt_masses, correction_normalized = get_correction_factors(correction_factor_path)
 
     tolerance = 6 * 1e-3 / 2
     tmt_upper = tmt_masses + tolerance
     tmt_lower = tmt_masses - tolerance
 
-    convert_dict_raw = {k: 'float64' for k in tmt_raw_col}
-    convert_dict_corr = {k: 'float64' for k in tmt_corr_col}
+    convert_dict_raw = {k: 'float64' for k in TMT_RAW_COLUMNS}
+    convert_dict_corr = {k: 'float64' for k in TMT_CORRECTED_COLUMNS}
     convert_dict_other = {'raw_file': 'str', 'scanID': 'int'}
     convert_dict = {**convert_dict_raw, **convert_dict_corr, **convert_dict_other}
     dfcol = convert_dict.keys()
@@ -130,11 +131,52 @@ def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path
 
     # TMT correction
     logger.info('Extraction done, correcting TMT reporters for ' + mzml_file.name)
-    fileframe[tmt_corr_col] = pd.DataFrame(fileframe[tmt_raw_col].apply(
+    fileframe[TMT_CORRECTED_COLUMNS] = pd.DataFrame(fileframe[TMT_RAW_COLUMNS].apply(
         lambda tmt: np.linalg.lstsq(correction_normalized, tmt, rcond=None)[0].round(2), axis=1).tolist(),
-                                           columns=tmt_corr_col, index=fileframe[tmt_corr_col].index)
-    fileframe[tmt_corr_col] = fileframe[tmt_corr_col].where(fileframe[tmt_corr_col] > 10, 0)
+                                           columns=TMT_CORRECTED_COLUMNS, index=fileframe[TMT_CORRECTED_COLUMNS].index)
+    fileframe[TMT_CORRECTED_COLUMNS] = fileframe[TMT_CORRECTED_COLUMNS].where(fileframe[TMT_CORRECTED_COLUMNS] > 10, 0)
     fileframe.to_csv(output_file, sep='\t', index=False)
+
+
+def assemble_corrected_tmt_table(extracted_folder):
+    corrected_tmt = pd.DataFrame(
+        columns=['raw_file', 'scanID', 'raw_TMT1', 'raw_TMT2', 'raw_TMT3', 'raw_TMT4', 'raw_TMT5', 'raw_TMT6',
+                 'raw_TMT7', 'raw_TMT8', 'raw_TMT9', 'raw_TMT10', 'raw_TMT11', 'raw_TMT12', 'raw_TMT13',
+                 'corr_TMT1',
+                 'corr_TMT2', 'corr_TMT3', 'corr_TMT4', 'corr_TMT5', 'corr_TMT6', 'corr_TMT7', 'corr_TMT8',
+                 'corr_TMT9', 'corr_TMT10', 'corr_TMT11'])
+
+    for file in os.listdir(extracted_folder):
+        file = pd.read_csv(Path(extracted_folder / file), sep='\t')
+        corrected_tmt = pd.concat([corrected_tmt, file])
+        # corrected_tmt = corrected_tmt.append(file)
+    corrected_tmt = corrected_tmt.reset_index(drop=True)
+    corrected_tmt = corrected_tmt.rename(columns={
+        'raw_file': 'Raw file',
+        'raw_TMT1': 'Reporter intensity 1',
+        'raw_TMT2': 'Reporter intensity 2',
+        'raw_TMT3': 'Reporter intensity 3',
+        'raw_TMT4': 'Reporter intensity 4',
+        'raw_TMT5': 'Reporter intensity 5',
+        'raw_TMT6': 'Reporter intensity 6',
+        'raw_TMT7': 'Reporter intensity 7',
+        'raw_TMT8': 'Reporter intensity 8',
+        'raw_TMT9': 'Reporter intensity 9',
+        'raw_TMT10': 'Reporter intensity 10',
+        'raw_TMT11': 'Reporter intensity 11',
+        'corr_TMT1': 'Reporter intensity corrected 1',
+        'corr_TMT2': 'Reporter intensity corrected 2',
+        'corr_TMT3': 'Reporter intensity corrected 3',
+        'corr_TMT4': 'Reporter intensity corrected 4',
+        'corr_TMT5': 'Reporter intensity corrected 5',
+        'corr_TMT6': 'Reporter intensity corrected 6',
+        'corr_TMT7': 'Reporter intensity corrected 7',
+        'corr_TMT8': 'Reporter intensity corrected 8',
+        'corr_TMT9': 'Reporter intensity corrected 9',
+        'corr_TMT10': 'Reporter intensity corrected 10',
+        'corr_TMT11': 'Reporter intensity corrected 11'})
+    corrected_tmt['Raw file'] = corrected_tmt['Raw file'].str.replace(r'.mzML$', '', regex=True)
+    return corrected_tmt
 
 
 if __name__ == "__main__":
@@ -143,3 +185,7 @@ if __name__ == "__main__":
     output_path_arg = Path(sys.argv[3])
 
     extract_tmt_reporters([input_files_arg], output_path_arg, extraction_level=extraction_level_arg)
+
+
+def merge_with_corrected_tmt(tempfile, corrected_tmt):
+    return pd.merge(left=tempfile, right=corrected_tmt, on=['Raw file', 'scanID'], how='left', validate='one_to_one')

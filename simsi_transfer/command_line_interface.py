@@ -3,10 +3,6 @@ import multiprocessing
 from pathlib import Path
 import argparse
 
-import pandas as pd
-
-from .processing_functions import purge_mrc_files
-
 
 logger = logging.getLogger(__name__)
 

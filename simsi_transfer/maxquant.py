@@ -1,10 +1,7 @@
-import os
 import logging
 from pathlib import Path
 
 import pandas as pd
-
-from .processing_functions import purge_mrc_files
 
 
 logger = logging.getLogger(__name__)
