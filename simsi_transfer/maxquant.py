@@ -7,7 +7,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def open_msmsscans_txt(mainpath, tmt_requantify):
+def read_msmsscans_txt(mainpath, tmt_requantify):
     """
     Open msms.txt output file and subselect relevant columns
     :param mainpath: Processing path containing the 'combined' folder from MQ search
@@ -31,7 +31,7 @@ def open_msmsscans_txt(mainpath, tmt_requantify):
     return msmsscans, tmt
 
 
-def open_msms_txt(mainpath):
+def read_msms_txt(mainpath):
     """
     Open msms.txt output file and subselect relevant columns
     :param mainpath: Processing path containing the 'combined' folder from MQ search
@@ -46,7 +46,7 @@ def open_msms_txt(mainpath):
     return msmstxt
 
 
-def open_evidence_txt(mainpath):
+def read_evidence_txt(mainpath):
     """
     Open msms.txt output file and subselect relevant columns
     :param mainpath: Processing path containing the 'combined' folder from MQ search
@@ -60,7 +60,7 @@ def open_evidence_txt(mainpath):
     return evidence
 
 
-def open_allpeptides_txt(mainpath):
+def read_allpeptides_txt(mainpath):
     """
     Open msms.txt output file and subselect relevant columns
     :param mainpath: Processing path containing the 'combined' folder from MQ search
@@ -72,22 +72,13 @@ def open_allpeptides_txt(mainpath):
     return evidence
 
 
-def open_summary_txt(mainpath):
-    """
-    Open msms.txt output file and subselect relevant columns
-    :param mainpath: Processing path containing the 'combined' folder from MQ search
-    :return: truncated msmsscans.txt dataframe
-    """
-    try:
-        return pd.read_csv(mainpath / Path('summary.txt'), sep='\t',
-                           usecols=['Raw file', 'Experiment', 'Fraction'])
-    except ValueError:
-        temp = pd.read_csv(mainpath / Path('summary.txt'), sep='\t',
-                           usecols=['Raw file', 'Experiment'])
-        temp['Fraction'] = 1
-        return temp
-
-
+def get_rawfile_metadata(evidence_txt):
+    if 'Fraction' in evidence_txt.columns:
+        return evidence_txt[['Raw file', 'Experiment', 'Fraction']].drop_duplicates()
+    else:
+        meta_df = evidence_txt[['Raw file', 'Experiment']].drop_duplicates()
+        meta_df['Fraction'] = 1
+        return meta_df
 
 
 if __name__ == '__main__':

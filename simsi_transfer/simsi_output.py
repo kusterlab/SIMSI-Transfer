@@ -2,48 +2,42 @@ import os
 import logging
 from pathlib import Path
 
+import pandas as pd
+
+from simsi_transfer.merging_functions import merge_with_msmsscanstxt, merge_with_summarytxt, merge_with_msmstxt
+
 logger = logging.getLogger(__name__)
 
 
-def export_summary_file(summary_file, mainpath, pval, state):
-    """
-    Generate and return summary dataframes, a merge of msms.txt identifications and MaRaCluster clustering results with
-    one line for each ms2 scan generated during acquisition
-    :param summary_file: summary of msms.txt, msmsscans.txt, and MaRaCluster cluster.csv files
-    :param mainpath: Path to main processing folder
-    :param pval: MaRaCluster stringency threshold; a higher value (e.g. p30) is more stringent than a lower one (e.g.
-    p15), but results in less transfers
-    :param state: set to 'merged', 'transferred', or 'filtered' for merged files, msmsScans, and msms files respectively
-    """
+def export_annotated_clusters(annotated_clusters, mainpath, pval):
+    export_csv(annotated_clusters, 'annotated_clusters', mainpath, pval)
+
+
+def export_msmsscans(msmsscans_simsi, mainpath, pval):
+    export_csv(msmsscans_simsi, 'msmsScans', mainpath, pval, sort_columns=['Raw file', 'scanID'])
+
+
+def export_msms(msms_simsi, mainpath, pval):
+    export_csv(msms_simsi, 'msms', mainpath, pval, sort_columns=['Sequence', 'Modified sequence'])
+
+
+def export_csv(df: pd.DataFrame, filename: str, mainpath, pval, sort_columns=None):
     sumpath = mainpath / Path('summaries')
     if not os.path.exists(sumpath):
         os.makedirs(sumpath)
     pval_path = sumpath / Path(pval)
     if not os.path.exists(pval_path):
         os.makedirs(pval_path)
-    if state == 'merged':
-        summary_file.to_csv(pval_path / Path(f'{pval}_summary.csv'), sep='\t', index=False, na_rep='NaN')
-    elif state == 'transferred':
-        summary_file = summary_file.sort_values(by=['Raw file', 'scanID'])
-        summary_file.to_csv(pval_path / Path(f'{pval}_msmsScans.csv'), sep='\t', index=False, na_rep='NaN')
-    elif state == 'filtered':
-        summary_file = summary_file.sort_values(by=['Sequence', 'Modified sequence'])
-        summary_file.to_csv(pval_path / Path(f'{pval}_msms.csv'), sep='\t', index=False, na_rep='NaN')
-    else:
-        raise ValueError("Incorrect state given, please set state parameter to 'merged', 'transferred', or 'filtered'")
+    if sort_columns:
+        df.sort_values(by=sort_columns)
+    path = pval_path / Path(f'{pval}_{filename}.txt')
+    df.to_csv(path, sep='\t', index=False, na_rep='NaN')
 
 
 def export_simsi_evidence_file(evidence_file, mainpath, pval):
     sumpath = mainpath / Path('summaries')
     pval_path = sumpath / Path(pval)
     evidence_file.to_csv(pval_path / Path(f'{pval}_evidence.csv'), sep='\t', index=False, na_rep='NaN')
-
-
-
-
-
-if __name__ == '__main__':
-    raise NotImplementedError('Do not run this script.')
 
 
 def count_clustering_parameters(summary, rawtrans=False):
@@ -86,3 +80,22 @@ def remove_unidentified_scans(summary):
     summary = summary.loc[~summary['identification'].isna()]
     summary.insert(0, 'summary_ID', range(len(summary)))
     return summary
+
+
+def generate_summary_file(msmsscansdf, msmsdf, rawfile_metadata, clusterfile):
+    """
+    Merges msmsscans.txt, msms.txt, and MaRaCluster clusters to generate summary file
+    :param msmsscansdf:
+    :param msmsdf:
+    :param rawfile_metadata:
+    :param clusterfile:
+    :return:
+    """
+    summary = merge_with_msmsscanstxt(clusterfile, msmsscansdf)
+    summary = merge_with_summarytxt(summary, rawfile_metadata)
+    summary = merge_with_msmstxt(summary, msmsdf)
+    return summary
+
+
+if __name__ == '__main__':
+    raise NotImplementedError('Do not run this script.')

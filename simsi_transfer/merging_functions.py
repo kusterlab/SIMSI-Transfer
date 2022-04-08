@@ -37,21 +37,6 @@ if __name__ == '__main__':
     raise NotImplementedError('Do not run this script.')
 
 
-def generate_summary_file(msmsscansdf, msmsdf, summarytxt, clusterfile):
-    """
-    Merges msmsscans.txt, msms.txt, and MaRaCluster clusters to generate summary file
-    :param msmsscansdf:
-    :param msmsdf:
-    :param summarytxt:
-    :param clusterfile:
-    :return:
-    """
-    summary = merge_with_msmsscanstxt(clusterfile, msmsscansdf)
-    summary = merge_with_summarytxt(summary, summarytxt)
-    summary = merge_with_msmstxt(summary, msmsdf)
-    return summary
-
-
 def merge_summary_with_evidence(summary: pd.DataFrame, evidence: pd.DataFrame):
     '''
     take subset of evidence.txt columns that does not overlap with the columns in the summary dataframe

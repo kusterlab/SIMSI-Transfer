@@ -12,7 +12,7 @@ from .utils import subprocess_with_logger as subprocess
 logger = logging.getLogger(__name__)
 
 
-def open_maracluster_clusters(mainpath, pval):
+def read_cluster_results(mainpath, pval):
     maracluster_df = pd.read_csv(mainpath / Path(f'MaRaCluster.clusters_{pval}.tsv'),
                                  sep='\t', names=['Raw file', 'scanID', 'clusterID'])
     maracluster_df['Raw file'] = maracluster_df['Raw file'].apply(get_file_name)
