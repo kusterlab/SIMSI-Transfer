@@ -1,6 +1,6 @@
 # SIMSI-Transfer
 
-Tool for increasing PSM gain from MaxQuant output file. Requires "Experiment" set in MaxQuant! 
+Tool for increasing PSM gain from MaxQuant output file.
 
 For testing SIMSI-Transfer after installation, we recommend downloading the TMT11 MS2 raw files from this publication:  
 Thompson, A., Wölmer, N., Koncarevic, S., Selzer, S. et al., _TMTpro: Design, Synthesis, and Initial Evaluation of a Proline-Based Isobaric 16-Plex Tandem Mass Tag Reagent Set._ Analytical Chemistry 2019, 91, 15941–15950. doi:10.1021/acs.analchem.9b04474

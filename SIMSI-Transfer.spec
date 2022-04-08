@@ -18,8 +18,6 @@ a = Analysis(['gui.py'],
              cipher=block_cipher,
              noarchive=False)
 
-a.binaries = [x for x in a.binaries if not x[0].startswith("libcrypto")]
-a.binaries = [x for x in a.binaries if not x[0].startswith("libssl")]
 a.binaries = [x for x in a.binaries if not x[0].startswith("opengl")]
 a.binaries = [x for x in a.binaries if not x[0].startswith("openssl")]
 a.binaries = [x for x in a.binaries if not x[0].startswith("sqlite")]

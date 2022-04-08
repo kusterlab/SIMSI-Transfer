@@ -22,7 +22,8 @@ def main(argv):
     if not output_folder.is_dir():
         output_folder.mkdir(parents=True)
 
-    logging.getLogger(".".join(__name__.split(".")[:-1])).addHandler(
+    module_name = ".".join(__name__.split(".")[:-1])
+    logging.getLogger(module_name).addHandler(
         logging.FileHandler(output_folder / Path('SIMSI.log')))
     starttime = datetime.now()
 

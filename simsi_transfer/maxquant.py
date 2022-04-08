@@ -73,12 +73,13 @@ def read_allpeptides_txt(mainpath):
 
 
 def get_rawfile_metadata(evidence_txt):
-    if 'Fraction' in evidence_txt.columns:
-        return evidence_txt[['Raw file', 'Experiment', 'Fraction']].drop_duplicates()
-    else:
-        meta_df = evidence_txt[['Raw file', 'Experiment']].drop_duplicates()
-        meta_df['Fraction'] = 1
-        return meta_df
+    metadata_columns = ['Raw file', 'Experiment', 'Fraction']
+    metadata_columns_available = [x for x in metadata_columns if x in evidence_txt.columns]
+    metadata_columns_unavailable = [x for x in metadata_columns if x not in evidence_txt.columns]
+    
+    meta_df = evidence_txt[metadata_columns_available].drop_duplicates()
+    meta_df[metadata_columns_unavailable] = 1
+    return meta_df
 
 
 if __name__ == '__main__':
