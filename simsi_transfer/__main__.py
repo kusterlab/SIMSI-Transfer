@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-"""triqler.__main__: executed when bootstrap directory is called as script."""
+"""simsi_transfer.__main__: executed when bootstrap directory is called as script."""
 import sys
 from .main import main
 

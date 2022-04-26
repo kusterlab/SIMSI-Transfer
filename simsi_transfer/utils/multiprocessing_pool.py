@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import sys
+import time
 import signal
 import warnings
 import logging
@@ -38,12 +39,19 @@ class NestablePool(multiprocessing.pool.Pool):
 class JobPool:
     def __init__(self, processes=1, warningFilter="default", queue=None):
         self.warningFilter = warningFilter
-        if not queue:
+        
+        # In the GUI, SIMSI-Transfer runs in a child process to allow user
+        # interaction with the GUI itself. In this case, we need a 
+        # NoDaemonProcess to allow this child process to spawn children,
+        # which is implemented in the NestablePool class.
+        # We also need to pass the logger to these grandchildren processes
+        # using the multiprocessing.Queue and QueueListener classes.
+        if not queue and multiprocessing.current_process().name != 'MainProcess':
             queue = multiprocessing.Queue()
-            if sys.platform.startswith('win'):
-                queue_listener = QueueListener(queue, logger)
-                queue_listener.start()
+            queue_listener = QueueListener(queue, logger)
+            queue_listener.start()
         self.pool = NestablePool(processes, worker_init, initargs=(self.warningFilter, queue))
+        
         self.results = []
 
     def applyAsync(self, f, fargs, *args, **kwargs):
