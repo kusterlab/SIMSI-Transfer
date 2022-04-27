@@ -43,13 +43,19 @@ def export_simsi_evidence_file(evidence_file, mainpath, pval):
 def count_clustering_parameters(summary, rawtrans=False):
     """
     Counts MICs, tIDs, dIDs, optionally IDs with lost phospho location, and clusters. Requires flagged MICs and tIDs.
+    
+    MICs = multiply identified clusters, i.e. ambiguous clusters with multiple peptide sequence
+    tIDs = transferred identifications (by SIMSI-Transfer)
+    dIDs = direct identifications (by MaxQuant)
+    
     :param summary: summary_extended input dataframe
     :param rawtrans: Flag for added lost phospho localization counting
     :return: Dictionary of counted values
     """
-    scans = len(summary)
+    ids = len(summary)
     dids = len(summary[summary['identification'] == 'd'])
     tids = len(summary[summary['identification'] == 't'])
+    
     lostphos = None
     if rawtrans:
         lostphos = len(
@@ -59,20 +65,22 @@ def count_clustering_parameters(summary, rawtrans=False):
     mulclus = max(summary[summary['clusterID'].duplicated(keep=False)]['clusterID'])
     pho_mics = summary[summary['mod_ambiguous'] == 1]['clusterID'].nunique(dropna=True)
     raw_mics = summary[summary['raw_ambiguous'] == 1]['clusterID'].nunique(dropna=True)
-    logger.info(f'Scans: {str(scans)}')
-    logger.info(f'MaxQuant IDs: {str(dids)}')
-    logger.info(f'SIMSI IDs: {str(tids)}')
+    
+    logger.info(f'Identified spectra: {str(ids)}')
+    logger.info(f'- MaxQuant IDs: {str(dids)}')
+    logger.info(f'- SIMSI IDs: {str(tids)}')
     if rawtrans:
         logger.info(f'Isomeric SIMSI IDs: {str(lostphos)}')
     logger.info(f'All clusters: {str(totclus)}')
-    logger.info(f'Clusters > 1: {str(mulclus)}')
-    logger.info(f'PTM-isomeric clusters : {str(pho_mics)}')
-    logger.info(f'Ambiguous clusters: {str(raw_mics)}')
+    logger.info(f'- Clusters of size > 1: {str(mulclus)}')
+    logger.info(f'- PTM-isomeric clusters : {str(pho_mics)}')
+    logger.info(f'- Ambiguous clusters: {str(raw_mics)}')
+    
     if rawtrans:
-        return {'scans': scans, 'dids': dids, 'tids': tids, 'lostphos': lostphos, 'totclus': totclus,
+        return {'scans': ids, 'dids': dids, 'tids': tids, 'lostphos': lostphos, 'totclus': totclus,
                 'mulclus': mulclus, 'pho_mics': pho_mics, 'raw_mics': raw_mics}
     else:
-        return {'scans': scans, 'dids': dids, 'tids': tids, 'totclus': totclus, 'mulclus': mulclus,
+        return {'scans': ids, 'dids': dids, 'tids': tids, 'totclus': totclus, 'mulclus': mulclus,
                 'pho_mics': pho_mics, 'raw_mics': raw_mics}
 
 

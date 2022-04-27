@@ -39,6 +39,9 @@ def assign_missing_precursors(summary: pd.DataFrame, allpeptides: pd.DataFrame):
     summary.loc[missing_precursor, ['new_type', 'Intensity']] = summary.loc[missing_precursor].apply(
             lambda x : match_precursor_grouped(x, allpeptides_grouped, group_key), axis=1, result_type='expand'
         ).to_numpy() # need to convert to numpy array, see: https://stackoverflow.com/questions/69954697/
+    
+    num_new_assigned_precursor = (summary.loc[missing_precursor]['new_type'] == 'MULTI-MSMS').sum()
+    logger.info(f"Assigned precursor to {num_new_assigned_precursor} out of {len(missing_precursor)} unassigned MS2 spectra")
     return summary
 
 
@@ -170,7 +173,7 @@ def calculate_evidence_columns(summary, tmt):
             'summary_ID': pd.NamedAgg(column='summary_ID', aggfunc=csv_list)
         })
     evidence['id'] = evidence.index # evidence_ID
-    evidence.to_csv('~/evidence.csv', sep='\t')
+    evidence.to_csv('~/evidence.txt', sep='\t')
     evidence = evidence.astype({'Length': 'int64', 'Missed cleavages': 'int64', 'Fraction': 'int64', 'Charge': 'int64', 'MS/MS scan number': 'int64'})
     evidence['Reverse'].fillna('', inplace=True)
     evidence = evidence.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge'])
