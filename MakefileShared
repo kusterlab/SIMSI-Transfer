@@ -1,5 +1,5 @@
 IMAGE ?= simsi_transfer
-DATA ?= $(HOME)/git/picked_group_fdr/data/example/
+DATA ?= $(HOME)
 OUT_DIR ?= $(DATA)
 
 LOCAL_DIR ?= /root/data

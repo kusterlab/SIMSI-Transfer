@@ -1,3 +1,6 @@
+v0.2.2
+- Fixed problem with multiprocessing on Linux with more than 80 files
+
 v0.2.1
 - Minor bug fixes for Windows GUI
 - Fill Experiment column with constant value if missing

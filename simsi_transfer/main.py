@@ -93,17 +93,17 @@ def main(argv):
         simsi_output.export_msmsscans(msmsscans_simsi, output_folder, pval)
         logger.info(f'Finished identity transfer.')
 
-        logger.info(f'Building msms.csv file for {pval}.')
+        logger.info(f'Building SIMSI-Transfer msms.txt file for {pval}.')
         msms_simsi = simsi_output.remove_unidentified_scans(msmsscans_simsi)
         simsi_output.export_msms(msms_simsi, output_folder, pval)
-        logger.info(f'Finished msms.csv assembly.')
+        logger.info(f'Finished SIMSI-Transfer msms.txt assembly.')
 
         statistics[pval] = simsi_output.count_clustering_parameters(msms_simsi)
 
-        logger.info(f'Starting evidence_transferred.txt building for {pval}.')
+        logger.info(f'Starting SIMSI-Transfer evidence.txt building for {pval}.')
         evidence_simsi = evidence.build_evidence(msms_simsi, evidence_mq, allpeptides_mq, tmt)
         simsi_output.export_simsi_evidence_file(evidence_simsi, output_folder, pval)
-        logger.info(f'Finished evidence_transferred.txt building.')
+        logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
         logger.info('')
 
     endtime = datetime.now()
