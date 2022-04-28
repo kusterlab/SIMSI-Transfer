@@ -1,17 +1,29 @@
 # SIMSI-Transfer
 
-Tool for increasing PSM gain from MaxQuant output file.
+Transferring identifications using MS2 spectrum clustering with MaxQuant search results.
 
-Hamood, F., Bayer, F. P., Wilhelm, M., Kuster, B., & The, M. (2022). [SIMSI-Transfer: Software-assisted reduction of missing values in phosphoproteomic and proteomic isobaric labeling data using tandem mass spectrum clustering.](https://www.sciencedirect.com/science/article/pii/S1535947622000469) Molecular & Cellular Proteomics, 100238.
+Hamood, F., Bayer, F. P., Wilhelm, M., Kuster, B., & The, M. (2022). _[SIMSI-Transfer: Software-assisted reduction of missing values in phosphoproteomic and proteomic isobaric labeling data using tandem mass spectrum clustering.](https://www.sciencedirect.com/science/article/pii/S1535947622000469)_ Molecular & Cellular Proteomics, 100238.
 
 ## Test dataset
 
-For testing SIMSI-Transfer after installation, we recommend downloading the TMT11 MS2 raw files from this publication:  
-Thompson, A., Wölmer, N., Koncarevic, S., Selzer, S. et al., _TMTpro: Design, Synthesis, and Initial Evaluation of a Proline-Based Isobaric 16-Plex Tandem Mass Tag Reagent Set._ Analytical Chemistry 2019, 91, 15941–15950. doi:10.1021/acs.analchem.9b04474
+For testing SIMSI-Transfer after installation, we recommend downloading the TMT11 MS2 raw files from this publication:
+Thompson, A., Wölmer, N., Koncarevic, S., Selzer, S. et al., _[TMTpro: Design, Synthesis, and Initial Evaluation of a Proline-Based Isobaric 16-Plex Tandem Mass Tag Reagent Set.](https://pubs.acs.org/doi/abs/10.1021/acs.analchem.9b04474)_ Analytical Chemistry 2019, 91, 15941–15950. doi:10.1021/acs.analchem.9b04474
 
-The MaxQuant and SIMSI-Transfer results of the processed dataset can be downloaded from the following DOIs:  
-- MaxQuant output (required as input for SIMSI-Transfer): 10.5281/zenodo.6365902
-- SIMSI-Transfer output: 10.5281/zenodo.6365638
+PRIDE link: https://www.ebi.ac.uk/pride/archive/projects/PXD014750
+
+Raw files for TMT-MS2:
+- 19070-001.raw
+- 19070-002.raw
+- 19070-003.raw
+- 19070-006.raw
+- 19070-007.raw
+- 19070-008.raw
+
+The MaxQuant results needed as input to SIMSI-Transfer can be downloaded from Zenodo: 
+- [10.5281/zenodo.6365902](https://zenodo.org/record/6365902)
+
+For reference, the original SIMSI-Transfer results (v0.1.0) for this dataset can also be downloaded from Zenodo:
+- [10.5281/zenodo.6365638](https://zenodo.org/record/6365638)
 
 ## Running SIMSI-Transfer using the GUI
 
@@ -45,34 +57,3 @@ Alternatively, you can install directly from this repository:
 git clone https://github.com/kusterlab/SIMSI-Transfer.git
 pip install .
 ```
-
-## Building the GUI on Windows
-
-### Create a conda environment
-
-Try importing `conda_environment.yml` in the Anaconda environment tab.
-
-If that does not work, try the following:
-
-1. Set up a new environment, either through the Anaconda UI, or by running the following on the command line:
-
-```
-conda create -n simsi_transfer_gui python=3.8
-activate simsi_transfer_gui
-```
-
-2. There are some caveats with installing the dependencies. We want to avoid dependence on the MKL (Math Kernel Library) package by numpy/scipy, as this blows up the size of the .exe file over 200MB (see [here](https://github.com/pyinstaller/pyinstaller/issues/2270)).
-
-```
-conda install -c conda-forge nomkl numpy pandas pyqt pyinstaller
-conda install -c bioconda pyteomics
-```
-
-### Building a self-contained executable
-
-Use the `build_gui.bat` script to create a self-contained executable.
-
-
-### Reducing size of the executable
-
-Download UPX (https://upx.github.io/) to reduce the DLL file sizes, change the path in `build_gui.bat` to point to the UPX **folder**.
