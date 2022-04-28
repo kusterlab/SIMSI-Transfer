@@ -3,7 +3,7 @@ __pycache__
 tests/integrations_tests
 .idea
 simsi_output
-build
-dist
+gui_tools/build
+gui_tools/dist
 .coverage
 system_test.sh
