@@ -41,7 +41,7 @@ def assign_missing_precursors(summary: pd.DataFrame, allpeptides: pd.DataFrame):
         ).to_numpy() # need to convert to numpy array, see: https://stackoverflow.com/questions/69954697/
     
     num_new_assigned_precursor = (summary.loc[missing_precursor]['new_type'] == 'MULTI-MSMS').sum()
-    logger.info(f"Assigned precursor to {num_new_assigned_precursor} out of {len(missing_precursor)} unassigned MS2 spectra")
+    logger.info(f"Assigned precursor to {num_new_assigned_precursor} out of {missing_precursor.sum()} unassigned MS2 spectra")
     return summary
 
 
@@ -138,42 +138,45 @@ def calculate_evidence_columns(summary, tmt):
 
     def csv_list_unique(x):
         return ";".join(map(str, list(dict.fromkeys(x))))
+    
+    def count_transferred(ids):
+        return (ids == 't').sum()
 
     evidence = summary_grouped.agg(
         **{
-            'Sequence': pd.NamedAgg(column='Sequence', aggfunc='first'),
-            'Length': pd.NamedAgg(column='Length', aggfunc='first'),
-            'Modifications': pd.NamedAgg(column='Modifications', aggfunc='first'),
-            'Modified sequence': pd.NamedAgg(column='Modified sequence', aggfunc='first'),
-            'Missed cleavages': pd.NamedAgg(column='Missed cleavages', aggfunc='first'),
-            'Proteins': pd.NamedAgg(column='Proteins', aggfunc=csv_list_unique), # from msms.txt
+            'Sequence': pd.NamedAgg(column='Sequence', aggfunc='first'),                    # from msms.txt
+            'Length': pd.NamedAgg(column='Length', aggfunc='first'),                        # from msms.txt
+            'Modifications': pd.NamedAgg(column='Modifications', aggfunc='first'),          # from msms.txt
+            'Modified sequence': pd.NamedAgg(column='Modified sequence', aggfunc='first'),  # from msms.txt
+            'Missed cleavages': pd.NamedAgg(column='Missed cleavages', aggfunc='first'),    # from msms.txt
+            'Proteins': pd.NamedAgg(column='Proteins', aggfunc=csv_list_unique),            # from msms.txt
             'Leading proteins': pd.NamedAgg(column='Leading proteins', aggfunc=csv_list_unique), # from evidence.txt, NaN if scan not matched to precursor in evidence.txt
-            'Gene Names': pd.NamedAgg(column='Gene Names', aggfunc='first'), # from msms.txt
-            'Protein Names': pd.NamedAgg(column='Protein Names', aggfunc='first'),
-            'Type': pd.NamedAgg(column='new_type', aggfunc='first'),
-            'Raw file': pd.NamedAgg(column='Raw file', aggfunc='first'),
-            'Fraction': pd.NamedAgg(column='Fraction', aggfunc='first'),
-            'Experiment': pd.NamedAgg(column='Experiment', aggfunc='first'),
-            'Charge': pd.NamedAgg(column='Charge', aggfunc='first'),
-            'm/z': pd.NamedAgg(column='m/z', aggfunc='first'), # from msmsScans.txt, NaN if charge state in msmsScans is different than in the mzML
-            'Mass': pd.NamedAgg(column='Mass', aggfunc='first'), # from msmsScans.txt, NaN if charge was unknown
-            'Mass error [ppm]': pd.NamedAgg(column='Mass error [ppm]', aggfunc=min), # from msms.txt, NaN if Type=MSMS
-            'Retention time': pd.NamedAgg(column='Retention time', aggfunc='first'), # from msmsScans.txt
-            'PEP': pd.NamedAgg(column='PEP', aggfunc=min),
-            'MS/MS count': pd.NamedAgg(column='Sequence', aggfunc='size'),
-            'MS/MS all scan numbers': pd.NamedAgg(column='scanID', aggfunc=csv_list),
-            'MS/MS scan number': pd.NamedAgg(column='scanID', aggfunc='first'),
-            'Score': pd.NamedAgg(column='Score', aggfunc=max),
-            'Delta score': pd.NamedAgg(column='Delta score', aggfunc=max),
-            'Intensity': pd.NamedAgg(column='Intensity', aggfunc='sum'), # from evidence.txt, supplemented from allPeptides.txt
-            **{f'Reporter intensity corrected {i}': pd.NamedAgg(column=f'Reporter intensity corrected {i}', aggfunc='sum') for i in range(1, tmt+1)},
-            **{f'Reporter intensity {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='sum') for i in range(1, tmt+1)},
-            **{f'Reporter intensity count {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='count') for i in range(1, tmt+1)},
-            'Reverse': pd.NamedAgg(column='Reverse', aggfunc='first'),
-            'summary_ID': pd.NamedAgg(column='summary_ID', aggfunc=csv_list)
+            'Gene Names': pd.NamedAgg(column='Gene Names', aggfunc='first'),                # from msms.txt
+            'Protein Names': pd.NamedAgg(column='Protein Names', aggfunc='first'),          # from msms.txt
+            'Type': pd.NamedAgg(column='new_type', aggfunc='first'),                        # calculated by SIMSI-Transfer
+            'Raw file': pd.NamedAgg(column='Raw file', aggfunc='first'),                    # from msms.txt
+            'Fraction': pd.NamedAgg(column='Fraction', aggfunc='first'),                    # from evidence.txt using rawfile_metadata dictionary
+            'Experiment': pd.NamedAgg(column='Experiment', aggfunc='first'),                # from evidence.txt using rawfile_metadata dictionary
+            'Charge': pd.NamedAgg(column='Charge', aggfunc='first'),                        # from msms.txt
+            'm/z': pd.NamedAgg(column='m/z', aggfunc='first'),                              # from msmsScans.txt
+            'Mass': pd.NamedAgg(column='Mass', aggfunc='first'),                            # from msmsScans.txt
+            'Mass error [ppm]': pd.NamedAgg(column='Mass error [ppm]', aggfunc=min),        # from msms.txt, NaN if Type=MSMS
+            'Retention time': pd.NamedAgg(column='Retention time', aggfunc='first'),        # from msmsScans.txt
+            'PEP': pd.NamedAgg(column='PEP', aggfunc=min),                                  # from msms.txt
+            'MS/MS count': pd.NamedAgg(column='Sequence', aggfunc='size'),                  # calculated by SIMSI-Transfer
+            'MS/MS all scan numbers': pd.NamedAgg(column='scanID', aggfunc=csv_list),       # calculated by SIMSI-Transfer
+            'MS/MS scan number': pd.NamedAgg(column='scanID', aggfunc='first'),             # calculated by SIMSI-Transfer
+            'Score': pd.NamedAgg(column='Score', aggfunc=max),                              # from msms.txt
+            'Delta score': pd.NamedAgg(column='Delta score', aggfunc=max),                  # from msms.txt
+            'Intensity': pd.NamedAgg(column='Intensity', aggfunc='sum'),                    # from evidence.txt, supplemented from allPeptides.txt
+            **{f'Reporter intensity corrected {i}': pd.NamedAgg(column=f'Reporter intensity corrected {i}', aggfunc='sum') for i in range(1, tmt+1)}, # from msmsScans.txt or parsed from mzML files by SIMSI-Transfer
+            **{f'Reporter intensity {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='sum') for i in range(1, tmt+1)},  # from msmsScans.txt or parsed from mzML files by SIMSI-Transfer
+            **{f'Reporter intensity count {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='count') for i in range(1, tmt+1)},  # calculated by SIMSI-Transfer
+            'Reverse': pd.NamedAgg(column='Reverse', aggfunc='first'),                      # from msms.txt
+            'summary_ID': pd.NamedAgg(column='summary_ID', aggfunc=csv_list),               # assigned by SIMSI-Transfer
+            'Transferred spectra count': pd.NamedAgg(column='identification', aggfunc=count_transferred) # calculated by SIMSI-Transfer
         })
     evidence['id'] = evidence.index # evidence_ID
-    evidence.to_csv('~/evidence.txt', sep='\t')
     evidence = evidence.astype({'Length': 'int64', 'Missed cleavages': 'int64', 'Fraction': 'int64', 'Charge': 'int64', 'MS/MS scan number': 'int64'})
     evidence['Reverse'].fillna('', inplace=True)
     evidence = evidence.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge'])

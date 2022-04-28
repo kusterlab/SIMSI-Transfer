@@ -37,7 +37,7 @@ def export_csv(df: pd.DataFrame, filename: str, mainpath, pval, sort_columns=Non
 def export_simsi_evidence_file(evidence_file, mainpath, pval):
     sumpath = mainpath / Path('summaries')
     pval_path = sumpath / Path(pval)
-    evidence_file.to_csv(pval_path / Path(f'{pval}_evidence.csv'), sep='\t', index=False, na_rep='NaN')
+    evidence_file.to_csv(pval_path / Path(f'{pval}_evidence.txt'), sep='\t', index=False, na_rep='NaN')
 
 
 def count_clustering_parameters(summary, rawtrans=False):
@@ -70,11 +70,11 @@ def count_clustering_parameters(summary, rawtrans=False):
     logger.info(f'- MaxQuant IDs: {str(dids)}')
     logger.info(f'- SIMSI IDs: {str(tids)}')
     if rawtrans:
-        logger.info(f'Isomeric SIMSI IDs: {str(lostphos)}')
-    logger.info(f'All clusters: {str(totclus)}')
-    logger.info(f'- Clusters of size > 1: {str(mulclus)}')
-    logger.info(f'- PTM-isomeric clusters : {str(pho_mics)}')
-    logger.info(f'- Ambiguous clusters: {str(raw_mics)}')
+        logger.info(f'  - PTM-Isomeric: {str(lostphos)}')
+    logger.info(f'Clusters: {str(totclus)}')
+    logger.info(f'- size > 1: {str(mulclus)}')
+    logger.info(f'- PTM-isomeric: {str(pho_mics)}')
+    logger.info(f'- Ambiguous: {str(raw_mics)}')
     
     if rawtrans:
         return {'scans': ids, 'dids': dids, 'tids': tids, 'lostphos': lostphos, 'totclus': totclus,

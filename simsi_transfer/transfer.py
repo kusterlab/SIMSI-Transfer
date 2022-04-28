@@ -10,12 +10,12 @@ from .merging_functions import merge_with_msmsscanstxt, merge_with_msmstxt, merg
 logger = logging.getLogger(__name__)
 
 
-def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
+def transfer(summary_df, rawseq='Sequence', modseq='Modified sequence', mask=False):
     """
     Main function for transfers by clustering. Transfers identifications for merged dataframe and adds a column for
     identification type. Transferred columns are Sequence, Modified sequence, Proteins, Gene names, Protein Names,
     Charge, m/z, and Mass.
-    :param sumdf: Summary dataframe, merged from cleaned msms.txt and MaRaCluster clusters.tsv file
+    :param summary_df: Summary dataframe, merged from cleaned msms.txt and MaRaCluster clusters.tsv file
     :param rawseq: Column name of the raw sequence column
     :param modseq: Column name of the modified sequence column
     :param mask: if false, uses "identification" column from summary frame. If set to a value, transfer uses the
@@ -23,48 +23,54 @@ def transfer(sumdf, rawseq='Sequence', modseq='Modified sequence', mask=False):
     :return: DataFrame with transferred identifications resembling MaxQuant msmsScans.txt
     """
     if mask:
-        ident = f'identification_{mask}'
+        identification_column = f'identification_{mask}'
     else:
-        ident = 'identification'
-    grpdf = sumdf[sumdf[modseq] == sumdf[modseq]].groupby('clusterID')[modseq].unique().reset_index(
+        identification_column = 'identification'
+        
+    # (mis)use the property that np.nan != np.nan to filter for identified scans
+    identified_scans = (summary_df[modseq] == summary_df[modseq])
+    unidentified_scans = (summary_df[modseq] != summary_df[modseq])
+    
+    # retain unique modified sequences per cluster
+    identified_clusters_df = summary_df[identified_scans].groupby('clusterID')[modseq].unique().reset_index(
         name='cluster_modified_sequences')
 
-    grpdf[['representative_modified_sequence', 'representative_raw_sequence']] = grpdf[
+    identified_clusters_df[['representative_modified_sequence', 'representative_raw_sequence']] = identified_clusters_df[
         'cluster_modified_sequences'].apply(get_modified_and_raw_sequence)
 
-    grpdf.loc[grpdf['representative_modified_sequence'].notna(), ident] = 't'
-    mg1 = pd.merge(left=sumdf, right=grpdf, on=['clusterID'], how='left')
-    mg1.loc[mg1[modseq] == mg1[modseq], ident] = 'd'
-    mg1.loc[mg1[modseq] != mg1[modseq], modseq] = mg1['representative_modified_sequence']
-    mg1.loc[mg1[modseq] != mg1[modseq], rawseq] = mg1['representative_raw_sequence']
-    mg1.drop(columns=['representative_modified_sequence', 'representative_raw_sequence'], axis=1, inplace=True)
+    # temporarily mark all scans in clusters with an identification as transferred ('t').
+    # The MQ identification will overwrite this column as direct ('d') a few lines below.
+    identified_clusters_df.loc[identified_clusters_df['representative_modified_sequence'].notna(), identification_column] = 't'
+    
+    summary_df = pd.merge(left=summary_df, right=identified_clusters_df, on=['clusterID'], how='left')
+    summary_df.loc[identified_scans, identification_column] = 'd'
+    summary_df.loc[unidentified_scans, modseq] = summary_df['representative_modified_sequence']
+    summary_df.loc[unidentified_scans, rawseq] = summary_df['representative_raw_sequence']
+    summary_df.drop(columns=['representative_modified_sequence', 'representative_raw_sequence'], axis=1, inplace=True)
 
-    replacement_dict = {'Modifications': 'd_Modifications',
-                        'Proteins': 'd_Proteins',
-                        'Gene Names': 'd_Gene Names',
-                        'Protein Names': 'd_Protein Names',
-                        'Charge': 'd_Charge',
-                        'm/z': 'd_m/z',
-                        'Mass': 'd_Mass',
-                        'Missed cleavages': 'd_missed_cleavages',
-                        'Length': 'd_length',
-                        'Reverse': 'd_Reverse'}
-    mg1.rename(columns=replacement_dict, inplace=True)
-    grpdf = mg1.groupby('clusterID', as_index=False)[[rawseq] + list(replacement_dict.values())].agg(
-        lambda x: get_main_object(set(x)))
-    grpdf.dropna(subset=[rawseq], inplace=True)
-    grpdf.drop(columns=[rawseq], inplace=True)
+    agg_funcs = {'Modifications': get_main_object,
+                 'Proteins': get_main_object,
+                 'Gene Names': get_main_object,
+                 'Protein Names': get_main_object,
+                 'Charge': get_main_object,
+                 'm/z': 'mean',
+                 'Mass': 'mean',
+                 'Missed cleavages': get_main_object,
+                 'Length': get_main_object,
+                 'Reverse': get_main_object}
 
-    replacement_dict_reverse = {v: k for k, v in replacement_dict.items()}
-    grpdf.rename(columns=replacement_dict_reverse, inplace=True)
-    grpdf[ident] = 't'
-    mg1 = pd.merge(left=mg1, right=grpdf, on=['clusterID', ident], how='left')
-    mg1.loc[
-        mg1[ident] == 't', replacement_dict.values()] = mg1.loc[
-        mg1[ident] == 't', replacement_dict.keys()].to_numpy()
-    mg1.drop(columns=replacement_dict.keys(), inplace=True)
-    mg1.rename(columns=replacement_dict_reverse, inplace=True)
-    return mg1
+    cluster_info_df = summary_df[identified_scans].groupby('clusterID', as_index=False)[list(agg_funcs.keys())].agg(agg_funcs)
+    cluster_info_df[identification_column] = 't'
+    
+    replacement_dict = {k: "d_" + k for k in agg_funcs.keys()}
+    cluster_info_df.rename(columns=replacement_dict, inplace=True)
+    
+    summary_df = pd.merge(left=summary_df, right=cluster_info_df, on=['clusterID', identification_column], how='left')
+    summary_df.loc[
+        summary_df[identification_column] == 't', replacement_dict.keys()] = summary_df.loc[
+        summary_df[identification_column] == 't', replacement_dict.values()].to_numpy()
+    summary_df.drop(columns=replacement_dict.values(), inplace=True)
+    return summary_df
 
 
 def get_modified_and_raw_sequence(sequence_array):
@@ -109,7 +115,7 @@ def get_main_object(input_list):
     :param input_list: List of peptide sequences
     :return: Returns peptide sequence if it is the only one in the input list, otherwise returns np.NaN
     """
-    x = remove_nan_values(input_list)
+    x = remove_nan_values(set(input_list))
     if len(x) == 1:
         return x[0]
     else:
