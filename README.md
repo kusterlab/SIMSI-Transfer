@@ -2,6 +2,10 @@
 
 Tool for increasing PSM gain from MaxQuant output file.
 
+Hamood, F., Bayer, F. P., Wilhelm, M., Kuster, B., & The, M. (2022). [SIMSI-Transfer: Software-assisted reduction of missing values in phosphoproteomic and proteomic isobaric labeling data using tandem mass spectrum clustering.](https://www.sciencedirect.com/science/article/pii/S1535947622000469) Molecular & Cellular Proteomics, 100238.
+
+## Test dataset
+
 For testing SIMSI-Transfer after installation, we recommend downloading the TMT11 MS2 raw files from this publication:  
 Thompson, A., Wölmer, N., Koncarevic, S., Selzer, S. et al., _TMTpro: Design, Synthesis, and Initial Evaluation of a Proline-Based Isobaric 16-Plex Tandem Mass Tag Reagent Set._ Analytical Chemistry 2019, 91, 15941–15950. doi:10.1021/acs.analchem.9b04474
 
