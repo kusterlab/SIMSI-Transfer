@@ -1,3 +1,8 @@
+v0.3.0
+- Fixed issue with MS1 feature assignment for transferred identifications
+- Made naming of evidence output file consistent (.txt instead of .csv)
+- Improved log messages for statistics and evidence building
+
 v0.2.2
 - Fixed problem with multiprocessing on Linux with more than 80 files
 
