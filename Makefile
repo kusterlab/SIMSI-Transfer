@@ -50,4 +50,4 @@ integration_test:
 
 
 test:
-	python3 -m pytest --cov=picked_group_fdr --cov-report html --cov-report term tests/unit_tests
+	python3 -m pytest --cov=simsi_transfer --cov-report html --cov-report term tests/unit_tests

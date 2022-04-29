@@ -7,3 +7,5 @@ gui_tools/build
 gui_tools/dist
 .coverage
 system_test.sh
+build
+htmlcov
