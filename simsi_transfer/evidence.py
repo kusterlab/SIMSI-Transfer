@@ -117,6 +117,7 @@ def assign_evidence_feature(summary: pd.DataFrame, evidence: pd.DataFrame, allpe
 
 def calculate_evidence_columns(summary, tmt):
     # replacing zeros with NaNs to count later
+    logger.info('Assigned evidence features; calculating column values...')
     reps = ['Reporter intensity 1', 'Reporter intensity 2', 'Reporter intensity 3', 'Reporter intensity 4',
             'Reporter intensity 5', 'Reporter intensity 6', 'Reporter intensity 7', 'Reporter intensity 8',
             'Reporter intensity 9', 'Reporter intensity 10', 'Reporter intensity corrected 1',
