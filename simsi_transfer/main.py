@@ -1,4 +1,5 @@
 import sys
+import os
 from pathlib import Path
 from datetime import datetime
 import logging
@@ -11,6 +12,11 @@ from . import maracluster as cluster
 from . import tmt_processing
 from . import transfer
 from . import evidence
+from . import version
+
+
+__version__ = version.get_version_from_pyproject()
+__copyright__ = '''Copyright (c) 2021-2022 Firas Hamood & Matthew The. All rights reserved. Written by Firas Hamood (firas.hamood@tum.de) and Matthew The (matthew.the@tum.de) at the Chair of Proteomics and Bioanalytics at the Technical University of Munich.'''
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +31,13 @@ def main(argv):
     module_name = ".".join(__name__.split(".")[:-1])
     logging.getLogger(module_name).addHandler(
         logging.FileHandler(output_folder / Path('SIMSI.log')))
+        
     starttime = datetime.now()
-
+    
+    logger.info(f'SIMSI-Transfer version {__version__}')
+    logger.info(f'{__copyright__}')
+    logger.info(f'Issued command: {os.path.basename(__file__)} {" ".join(map(str, argv))}')
+  
     logger.info(f'Input parameters:')
     logger.info(f"MaxQuant txt folder = {mq_txt_folder}")
     logger.info(f"Raw file folder = {raw_folder}")

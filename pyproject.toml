@@ -12,7 +12,7 @@ include = [
   "LICENSE",
   "THERMO_LICENSE"
 ]
-#build = "build.py" # not necessary since we do not have compiled code, e.g. cython
+#build = "build.py" # this creates platform and python version specific packages when running poetry build. Not necessary here since we do not have compiled code, e.g. cython
 
 [tool.poetry.dependencies]
 python = "^3.8"
