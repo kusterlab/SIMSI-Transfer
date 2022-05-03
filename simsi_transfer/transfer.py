@@ -147,4 +147,7 @@ def flag_ambiguous_clusters(sumdf, rawseq='Sequence', modseq='Modified sequence'
 
     # merge with initial frame
     merged_dataframe = pd.merge(left=merged_dataframe, right=group_dataframe, on='clusterID', how='left')
+
+    # remove mod_ambiguous flags if cluster is raw_ambiguous
+    merged_dataframe.loc[merged_dataframe['raw_ambiguous'] == 1, 'mod_ambiguous'] = np.nan
     return merged_dataframe
