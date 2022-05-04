@@ -9,3 +9,4 @@ gui_tools/dist
 system_test.sh
 build
 htmlcov
+dist

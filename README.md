@@ -1,5 +1,9 @@
 # SIMSI-Transfer
 
+[![PyPI version](https://img.shields.io/pypi/v/simsi_transfer.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/simsi_transfer/)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/simsi_transfer.svg?logo=python&logoColor=FFE873)](https://pypi.org/project/simsi_transfer/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/simsi_transfer.svg)](https://pypistats.org/packages/simsi_transfer)
+
 Transferring identifications using MS2 spectrum clustering with MaxQuant search results.
 
 Hamood, F., Bayer, F. P., Wilhelm, M., Kuster, B., & The, M. (2022). _[SIMSI-Transfer: Software-assisted reduction of missing values in phosphoproteomic and proteomic isobaric labeling data using tandem mass spectrum clustering.](https://www.sciencedirect.com/science/article/pii/S1535947622000469)_ Molecular & Cellular Proteomics, 100238.
