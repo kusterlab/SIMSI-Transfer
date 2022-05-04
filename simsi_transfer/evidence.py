@@ -178,6 +178,15 @@ def calculate_evidence_columns(summary, tmt):
             'Transferred spectra count': pd.NamedAgg(column='identification', aggfunc=count_transferred) # calculated by SIMSI-Transfer
         })
     evidence['id'] = evidence.index # evidence_ID
+
+    # Checking for entries without "Fraction"; these are caused when one or more raw files in a maxquant search generate
+    # no results in evidence.txt and therefore the metadata cannot be fetched
+    no_fraction_rows = evidence['Fraction'].isna()
+    no_metadata_rawfiles = evidence.loc[no_fraction_rows, 'Raw file'].unique()
+    if no_metadata_rawfiles.size > 0:
+        logger.warning(f'No metadata fetched from evidence for {no_metadata_rawfiles}; autofilling with Fraction = -1 and Experiment = "UNKNOWN"')
+    evidence.loc[no_fraction_rows, 'Experiment'] = 'UNKNOWN'
+    evidence.loc[no_fraction_rows, 'Fraction'] = -1
     evidence = evidence.astype({'Length': 'int64', 'Missed cleavages': 'int64', 'Fraction': 'int64', 'Charge': 'int64', 'MS/MS scan number': 'int64'})
     evidence['Reverse'].fillna('', inplace=True)
     evidence = evidence.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge'])
