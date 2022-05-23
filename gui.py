@@ -33,7 +33,13 @@ class QTextEditLogger(logging.Handler, QObject):
     appendPlainText = pyqtSignal(str)
     
     def __init__(self, parent):
+        # initialize logging.Handler
         super().__init__()
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        formatter.converter = time.gmtime
+        self.setFormatter(formatter)
+
+        # initialize QObject
         QObject.__init__(self)
         self.widget = QtWidgets.QPlainTextEdit(parent)
         self.widget.setReadOnly(True)
@@ -51,6 +57,9 @@ class LogEmitter(QObject):
 class LogHandler(logging.Handler):
     def __init__(self):
         super().__init__()
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        formatter.converter = time.gmtime
+        self.setFormatter(formatter)
         self.emitter = LogEmitter()
 
     def emit(self, record):

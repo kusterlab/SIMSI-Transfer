@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 import logging
+import time
 
 from . import command_line_interface as cli
 from . import maxquant as mq
@@ -29,8 +30,11 @@ def main(argv):
         output_folder.mkdir(parents=True)
 
     module_name = ".".join(__name__.split(".")[:-1])
-    logging.getLogger(module_name).addHandler(
-        logging.FileHandler(output_folder / Path('SIMSI.log')))
+    file_logger = logging.FileHandler(output_folder / Path('SIMSI.log'))
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    formatter.converter = time.gmtime
+    file_logger.setFormatter(formatter)
+    logging.getLogger(module_name).addHandler(file_logger)
         
     starttime = datetime.now()
     
