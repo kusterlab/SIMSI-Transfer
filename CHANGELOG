@@ -1,3 +1,11 @@
+v0.3.2
+- Updated MaRaCluster to v1.02
+
+v0.3.1
+- Improved handling of missing columns in evidence.txt and msms.txt input files
+- Improved logging
+- Added greeter and README badges
+
 v0.3.0
 - Fixed issue with MS1 feature assignment for transferred identifications
 - Made naming of evidence output file consistent (.txt instead of .csv)
