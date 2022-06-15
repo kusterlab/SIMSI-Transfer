@@ -166,6 +166,7 @@ def calculate_evidence_columns(summary, tmt):
             **{f'Reporter intensity corrected {i}': pd.NamedAgg(column=f'Reporter intensity corrected {i}', aggfunc='sum') for i in range(1, tmt+1)},
             **{f'Reporter intensity {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='sum') for i in range(1, tmt+1)},
             **{f'Reporter intensity count {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='count') for i in range(1, tmt+1)},
+            # Reverse is not needed, already filtered for it before. Remove?
             'Reverse': pd.NamedAgg(column='Reverse', aggfunc='first'),
             'summary_ID': pd.NamedAgg(column='summary_ID', aggfunc=csv_list)
         })
@@ -173,6 +174,7 @@ def calculate_evidence_columns(summary, tmt):
     evidence.to_csv('~/evidence.csv', sep='\t')
     evidence = evidence.astype({'Length': 'int64', 'Missed cleavages': 'int64', 'Fraction': 'int64', 'Charge': 'int64', 'MS/MS scan number': 'int64'})
     evidence['Reverse'].fillna('', inplace=True)
+    evidence.loc[evidence['Protein Names'].str.contains('CON_'), 'Potential Contaminant'] = '+'
     evidence = evidence.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge'])
     return evidence
 
