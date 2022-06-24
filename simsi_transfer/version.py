@@ -1,5 +1,9 @@
 import re
 import os
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_version_from_pyproject():
@@ -15,6 +19,10 @@ def get_version_from_pyproject():
                 version = compiled_version_regex.search(line)  # type: ignore # noqa: E501
                 if version is not None:
                     return version.group(1).strip()
-    except (FileNotFoundError, UnicodeDecodeError):
+    except FileNotFoundError:
+        logger.info(f"Could not find pyproject.toml at {file_path} containing the version number.")
+        pass
+    except UnicodeDecodeError:
+        logger.info(f"Could not parse version number from pyproject.toml at {file_path}.")
         pass
     return None
