@@ -47,6 +47,12 @@ First install SIMSI-Transfer as explained below, then run SIMSI-Tranfer:
 python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder>
 ```
 
+Alternative command for MS3 acquisition, using the TMT correction factor file exported from MaxQuant:
+
+```shell
+python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder> --tmt_ms_level ms3 --tmt_requantify --tmt_reporter_correction_file </path/to/correction/factor/file.txt>
+```
+
 ## Installation
 
 SIMSI-Tranfer is available on PyPI and can be installed with `pip`:
