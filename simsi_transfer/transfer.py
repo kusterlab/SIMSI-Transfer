@@ -1,3 +1,4 @@
+import collections
 import re
 import logging
 
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 PHOSPHO_REGEX = re.compile(r'([STY])\(Phospho \(STY\)\)')
 
 
-def transfer(summary_df, mask=False):
+def transfer(summary_df, mask=False, ambiguity_decision=False):
     """
     Main function for transfers by clustering. Transfers identifications for merged dataframe and adds a column for
     identification type. Transferred columns are Sequence, Modified sequence, Proteins, Gene names, Protein Names,
@@ -20,6 +21,8 @@ def transfer(summary_df, mask=False):
     :param summary_df: Summary dataframe, merged from cleaned msms.txt and MaRaCluster clusters.tsv file
     :param mask: if false, uses "identification" column from summary frame. If set to a value, transfer uses the
     'identification_{mask}' column, needed for the masking analysis
+    :param ambiguity_decision: if False, returns raw sequences with potential phospho positions when encountering isomer
+    clusters; if True, decides for one sequence (majority vote)
     :return: DataFrame with transferred identifications resembling MaxQuant msmsScans.txt
     """
     if mask:
@@ -30,7 +33,6 @@ def transfer(summary_df, mask=False):
     identified_scans = summary_df['Modified sequence'].notna()
 
     agg_funcs = {'Sequence': get_unique_else_nan,
-                 'Modified sequence': get_consensus_modified_sequence,
                  'Modifications': get_unique_else_nan,
                  'Proteins': get_unique_else_nan,
                  'Gene Names': get_unique_else_nan,
@@ -41,16 +43,20 @@ def transfer(summary_df, mask=False):
                  'Missed cleavages': get_unique_else_nan,
                  'Length': get_unique_else_nan,
                  'Reverse': get_unique_else_nan}
+    if ambiguity_decision:
+        agg_funcs['Modified sequence'] = get_modified_sequence_decision
+    else:
+        agg_funcs['Modified sequence'] = get_consensus_modified_sequence
 
     cluster_info_df = summary_df[identified_scans].groupby('clusterID', as_index=False).agg(agg_funcs)
-    
+
     # Mark all clusters with a unique identification as transferred ('t').
     # Identifications by MQ will overwrite this column as direct identification ('d') a few lines below.
     cluster_info_df[identification_column] = np.where(cluster_info_df['Modified sequence'].notna(), 't', None)
-    
+
     replacement_dict = {k: "d_" + k for k in agg_funcs.keys()}
     cluster_info_df.rename(columns=replacement_dict, inplace=True)
-    
+
     summary_df = pd.merge(left=summary_df, right=cluster_info_df, on=['clusterID'], how='left')
     summary_df.loc[identified_scans, identification_column] = 'd'
     summary_df.loc[
@@ -60,24 +66,47 @@ def transfer(summary_df, mask=False):
     return summary_df
 
 
-def get_consensus_modified_sequence(sequences):
+def check_ambiguity(sequences):
     sequences = remove_nan_values(set(sequences))
     if len(sequences) == 0:
-        return np.NaN
-    
+        return np.nan, np.nan
     if len(sequences) == 1:
-        return sequences[0]
+        return sequences[0], np.nan
 
     sequences_lower = [re.sub(PHOSPHO_REGEX, lambda pat: pat.group(1).lower(), x) for x in sequences]
     sequence_set_upper = {x.upper() for x in sequences_lower}
     if len(sequence_set_upper) != 1:
-        return np.NaN
+        return np.NaN, np.nan
+    return sequences, sequences_lower
+
+
+def get_consensus_modified_sequence(sequences):
+    sequences, sequences_lower = check_ambiguity(sequences)
+    if type(sequences) == float:
+        if np.isnan(sequences):
+            return np.nan
+    elif type(sequences) == str:
+        return sequences
 
     modified_sequence = generate_modified_sequence_annotation(sequences, sequences_lower)
     return modified_sequence
 
 
+def get_modified_sequence_decision(initial_sequences):
+    sequences, sequences_lower = check_ambiguity(initial_sequences)
+    if type(sequences) == float:
+        if np.isnan(sequences):
+            return np.nan
+    elif type(sequences) == str:
+        return sequences
+
+    sequences = remove_nan_values(initial_sequences)
+    return collections.Counter(sequences).most_common(1)[0][0]
+
+
+
 def generate_modified_sequence_annotation(sequences, sequences_lower):
+    # TODO: Make ambiguous localization handling work for acetylation (and p-ac-combinations) as well
     num_mods = len(re.findall(r'[sty]', sequences_lower[0]))
     phospho_positions = {m.start() + 1 for x in sequences_lower for m in re.finditer(r'[sty]', x)}
     phospho_positions = sorted(list(phospho_positions))
