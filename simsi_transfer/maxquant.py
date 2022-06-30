@@ -38,7 +38,7 @@ def read_msms_txt(mainpath):
     :param mainpath: Processing path containing the 'combined' folder from MQ search
     :return: truncated msms.txt dataframe
     """
-    columns = ['Raw file', 'Scan number', 'Sequence', 'Modified sequence', 'Length',
+    columns = ['Raw file', 'Scan number', 'Sequence', 'Modified sequence', 'Phospho (STY) Probabilities', 'Length',
                'Modifications', 'Missed cleavages', 'Proteins', 'Gene Names', 'Protein Names',
                'Charge', 'Mass error [ppm]', 'PIF', 'Precursor Intensity', 'PEP', 'Score',
                'Delta score', 'Reverse']

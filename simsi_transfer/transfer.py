@@ -1,4 +1,6 @@
 import collections
+import functools
+import operator
 import re
 import logging
 
@@ -32,8 +34,10 @@ def transfer(summary_df, mask=False, ambiguity_decision=False):
 
     identified_scans = summary_df['Modified sequence'].notna()
 
+    # TODO: Generate modified sequence from probability string rather than taking it from the cluster
     agg_funcs = {'Sequence': get_unique_else_nan,
                  'Modifications': get_unique_else_nan,
+                 'Phospho (STY) Probabilities': calculate_average_probabilities,
                  'Proteins': get_unique_else_nan,
                  'Gene Names': get_unique_else_nan,
                  'Protein Names': get_unique_else_nan,
@@ -66,7 +70,8 @@ def transfer(summary_df, mask=False, ambiguity_decision=False):
     return summary_df
 
 
-def check_ambiguity(sequences):
+
+def check_ambiguity(sequences, checktype='sequences'):
     sequences = remove_nan_values(set(sequences))
     if len(sequences) == 0:
         return np.nan, np.nan
@@ -74,10 +79,50 @@ def check_ambiguity(sequences):
         return sequences[0], np.nan
 
     sequences_lower = [re.sub(PHOSPHO_REGEX, lambda pat: pat.group(1).lower(), x) for x in sequences]
-    sequence_set_upper = {x.upper() for x in sequences_lower}
-    if len(sequence_set_upper) != 1:
-        return np.NaN, np.nan
+    if checktype == 'sequences':
+        sequence_set_upper = {x.upper() for x in sequences_lower}
+        if len(sequence_set_upper) != 1:
+            return np.NaN, np.nan
+    elif checktype == 'probabilities':
+        pattern = re.compile(r'\((\d(?:\.\d+)?)\)')
+        pureseq = {re.sub(pattern, '', sequence) for sequence in sequences}
+        if len(pureseq) != 1:
+            return np.NaN, np.nan
     return sequences, sequences_lower
+
+
+def calculate_average_probabilities(initial_phospho_probabilities):
+    phospho_probabilities, sequences_lower = check_ambiguity(initial_phospho_probabilities, 'probabilities')
+    # logger.info(phospho_probabilities)
+    if type(phospho_probabilities) == float:
+        if np.isnan(phospho_probabilities):
+            return np.nan
+    elif type(phospho_probabilities) == str:
+        return phospho_probabilities
+
+    phospho_probabilities = remove_nan_values(initial_phospho_probabilities)
+
+    pattern = re.compile(r'\((\d(?:\.?\d+)?)\)')
+    pureseq = re.sub(pattern, '', phospho_probabilities[0])
+    tots = len(phospho_probabilities)
+    dictlist = []
+    for probstring in phospho_probabilities:
+        probsplit = re.split(pattern, probstring)
+        start = 0
+        probdict = dict()
+        for listpos in range(len(probsplit)):
+            if (listpos % 2 == 0) & (listpos + 1 != len(probsplit)):
+                start = start + len(probsplit[listpos])
+                probdict[start] = float(probsplit[listpos + 1])
+        dictlist.append(probdict)
+    resdict = dict(functools.reduce(operator.add, map(collections.Counter, dictlist)))
+    resdict = dict(sorted({k: round(v / tots, 3) for k, v in resdict.items()}.items()))
+    for key in reversed(list(resdict.keys())):
+        pureseq = pureseq[:key] + f'({resdict[key]})' + pureseq[key:]
+    # # this does not work for multiple phosphorylations in one sequence
+    # if not 0.95 < sum(resdict.values()) < 1.05:
+    #     raise ValueError(f'Probability sum deviates from expected value: {resdict}')
+    return pureseq
 
 
 def get_consensus_modified_sequence(sequences):
@@ -102,7 +147,6 @@ def get_modified_sequence_decision(initial_sequences):
 
     sequences = remove_nan_values(initial_sequences)
     return collections.Counter(sequences).most_common(1)[0][0]
-
 
 
 def generate_modified_sequence_annotation(sequences, sequences_lower):

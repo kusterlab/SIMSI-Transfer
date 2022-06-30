@@ -48,6 +48,7 @@ def parse_args(argv):
 
     apars.add_argument('--ambiguity_decision', default=False, action='store_true',
                        help='''Enables the decision for one spectrum whenever PTM-isomeric clusters are encountered.''')
+    # TODO: Change into different kinds of handling; str for decision
 
     # ------------------------------------------------
     args = apars.parse_args(argv)
