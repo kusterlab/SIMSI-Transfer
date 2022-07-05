@@ -28,4 +28,4 @@ def run(cmd):
 
 def log_subprocess_output(pipe):
     for line in iter(pipe.readline, b''): # b'\n'-separated lines
-        logger.info(line.decode("utf-8")[:-1])
+        logger.info(line.decode("utf-8").rstrip())
