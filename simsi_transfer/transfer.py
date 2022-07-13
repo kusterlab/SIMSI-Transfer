@@ -3,6 +3,7 @@ import functools
 import operator
 import re
 import logging
+from typing import List, Union, Callable, Dict
 
 import pandas as pd
 import numpy as np
@@ -13,6 +14,7 @@ from .merging_functions import merge_with_msmsscanstxt, merge_with_msmstxt, merg
 logger = logging.getLogger(__name__)
 
 PHOSPHO_REGEX = re.compile(r'([STY])\(Phospho \(STY\)\)')
+PROBABILITY_REGEX = re.compile(r'\((\d(?:\.?\d+)?)\)')
 
 
 def transfer(summary_df, mask=False, ambiguity_decision=False):
@@ -31,12 +33,10 @@ def transfer(summary_df, mask=False, ambiguity_decision=False):
         identification_column = f'identification_{mask}'
     else:
         identification_column = 'identification'
-
-    identified_scans = summary_df['Modified sequence'].notna()
-
-    # TODO: Generate modified sequence from probability string rather than taking it from the cluster
+    
     agg_funcs = {'Sequence': get_unique_else_nan,
                  'Modifications': get_unique_else_nan,
+                 'Modified sequence' : get_consensus_modified_sequence,
                  'Phospho (STY) Probabilities': calculate_average_probabilities,
                  'Proteins': get_unique_else_nan,
                  'Gene Names': get_unique_else_nan,
@@ -48,12 +48,11 @@ def transfer(summary_df, mask=False, ambiguity_decision=False):
                  'Length': get_unique_else_nan,
                  'Reverse': get_unique_else_nan}
     if ambiguity_decision:
-        agg_funcs['Modified sequence'] = get_modified_sequence_decision
-    else:
-        agg_funcs['Modified sequence'] = get_consensus_modified_sequence
-
+        # TODO: Generate modified sequence from probability string rather than taking it from the cluster
+        agg_funcs['Modified sequence'] = lambda s: get_consensus_modified_sequence(s, get_most_common_sequence)
+    
+    identified_scans = summary_df['Modified sequence'].notna()
     cluster_info_df = summary_df[identified_scans].groupby('clusterID', as_index=False).agg(agg_funcs)
-
     # Mark all clusters with a unique identification as transferred ('t').
     # Identifications by MQ will overwrite this column as direct identification ('d') a few lines below.
     cluster_info_df[identification_column] = np.where(cluster_info_df['Modified sequence'].notna(), 't', None)
@@ -70,97 +69,112 @@ def transfer(summary_df, mask=False, ambiguity_decision=False):
     return summary_df
 
 
+def transform_phospho_psp_format(sequences: List[str]) -> List[str]:
+    """Replaces phosphorylation modification by lower case letter (PhosphositePlus convention), 
+    e.g. 'AAAAAAAGDS(Phospho (STY))DS(Phospho (STY))WDADAFSVEDPVRK' => 'AAAAAAAGDsDsWDADAFSVEDPVRK'
+    """
+    return [re.sub(PHOSPHO_REGEX, lambda pat: pat.group(1).lower(), x) for x in sequences]
 
-def check_ambiguity(sequences, checktype='sequences'):
+
+def remove_probabilities(sequences_with_probabilities: List[str]) -> List[str]:
+    return [remove_probabilities_from_sequence(s) for s in sequences_with_probabilities]
+
+
+def remove_probabilities_from_sequence(sequence: str) -> str:
+    """remove probability strings noted in parentheses, 
+    e.g. 'AAAAAAAGDS(0.988)DS(0.012)WDADAFSVEDPVRK' => 'AAAAAAAGDSDSWDADAFSVEDPVRK'
+    """
+    return re.sub(PROBABILITY_REGEX, '', sequence)
+
+
+def check_ambiguity(sequences: List[str], transform_sequence: Callable[[List[str]], List[str]] = transform_phospho_psp_format):
     sequences = remove_nan_values(set(sequences))
     if len(sequences) == 0:
         return np.nan, np.nan
     if len(sequences) == 1:
         return sequences[0], np.nan
 
-    sequences_lower = [re.sub(PHOSPHO_REGEX, lambda pat: pat.group(1).lower(), x) for x in sequences]
-    if checktype == 'sequences':
-        sequence_set_upper = {x.upper() for x in sequences_lower}
-        if len(sequence_set_upper) != 1:
-            return np.NaN, np.nan
-    elif checktype == 'probabilities':
-        pattern = re.compile(r'\((\d(?:\.\d+)?)\)')
-        pureseq = {re.sub(pattern, '', sequence) for sequence in sequences}
-        if len(pureseq) != 1:
-            return np.NaN, np.nan
-    return sequences, sequences_lower
+    transformed_sequences = transform_sequence(sequences)
+    unique_sequences = set(map(str.upper, transformed_sequences))
+    if len(unique_sequences) != 1:
+        return np.NaN, np.nan
+    return sequences, transformed_sequences
 
 
-def calculate_average_probabilities(initial_phospho_probabilities):
-    phospho_probabilities, sequences_lower = check_ambiguity(initial_phospho_probabilities, 'probabilities')
-    # logger.info(phospho_probabilities)
-    if type(phospho_probabilities) == float:
-        if np.isnan(phospho_probabilities):
-            return np.nan
-    elif type(phospho_probabilities) == str:
-        return phospho_probabilities
+def is_unambiguous(sequences):
+    return (type(sequences) == float and np.isnan(sequences)) or type(sequences) == str
 
-    phospho_probabilities = remove_nan_values(initial_phospho_probabilities)
 
-    pattern = re.compile(r'\((\d(?:\.?\d+)?)\)')
-    pureseq = re.sub(pattern, '', phospho_probabilities[0])
-    tots = len(phospho_probabilities)
-    dictlist = []
-    for probstring in phospho_probabilities:
-        probsplit = re.split(pattern, probstring)
-        start = 0
-        probdict = dict()
-        for listpos in range(len(probsplit)):
-            if (listpos % 2 == 0) & (listpos + 1 != len(probsplit)):
-                start = start + len(probsplit[listpos])
-                probdict[start] = float(probsplit[listpos + 1])
-        dictlist.append(probdict)
-    resdict = dict(functools.reduce(operator.add, map(collections.Counter, dictlist)))
-    resdict = dict(sorted({k: round(v / tots, 3) for k, v in resdict.items()}.items()))
-    for key in reversed(list(resdict.keys())):
-        pureseq = pureseq[:key] + f'({resdict[key]})' + pureseq[key:]
+def get_mod_probabilities_dict(probstring: str) -> Dict[int, float]:
+    probsplit = re.split(PROBABILITY_REGEX, probstring)
+    start = 0
+    probdict = dict()
+    for amino_acids, prob in zip(probsplit[0::2], probsplit[1::2]):
+        start += len(amino_acids)
+        probdict[start] = float(prob)
+    return probdict
+
+
+def sum_dictionaries(dictionary):
+    return dict(functools.reduce(operator.add, map(collections.Counter, dictionary)))
+
+
+def average_dictionaries(dictionary):
+    summed_dictionary = sum_dictionaries(dictionary)
+    
+    num_dictionaries = len(dictionary)
+    def get_average_and_round(x):
+        return round(x / num_dictionaries, 3)
+    
+    return {pos: get_average_and_round(summed_prob) for pos, summed_prob in summed_dictionary.items()}
+
+
+def add_probabilities_to_sequence(sequence, probability_dict):
+    for position, probability in reversed(list(probability_dict.items())):
+        sequence = sequence[:position] + f'({probability})' + sequence[position:]
+    return sequence
+
+
+def calculate_average_probabilities(mod_probability_sequences):
+    mod_probability_sequences, _ = check_ambiguity(mod_probability_sequences, remove_probabilities)
+    if is_unambiguous(mod_probability_sequences):
+        return mod_probability_sequences
+
+    mod_probabilities = [get_mod_probabilities_dict(p) for p in mod_probability_sequences]
+    average_mod_probabilities = average_dictionaries(mod_probabilities)
+    
+    sequence = remove_probabilities_from_sequence(mod_probability_sequences[0])
+    sequence_with_probabilities = add_probabilities_to_sequence(sequence, average_mod_probabilities)
     # # this does not work for multiple phosphorylations in one sequence
     # if not 0.95 < sum(resdict.values()) < 1.05:
     #     raise ValueError(f'Probability sum deviates from expected value: {resdict}')
-    return pureseq
+    return sequence_with_probabilities
 
 
-def get_consensus_modified_sequence(sequences):
-    sequences, sequences_lower = check_ambiguity(sequences)
-    if type(sequences) == float:
-        if np.isnan(sequences):
-            return np.nan
-    elif type(sequences) == str:
-        return sequences
-
-    modified_sequence = generate_modified_sequence_annotation(sequences, sequences_lower)
-    return modified_sequence
-
-
-def get_modified_sequence_decision(initial_sequences):
-    sequences, sequences_lower = check_ambiguity(initial_sequences)
-    if type(sequences) == float:
-        if np.isnan(sequences):
-            return np.nan
-    elif type(sequences) == str:
-        return sequences
-
-    sequences = remove_nan_values(initial_sequences)
-    return collections.Counter(sequences).most_common(1)[0][0]
-
-
-def generate_modified_sequence_annotation(sequences, sequences_lower):
+def get_modified_sequence_annotation(sequences, sequences_psp_format):
     # TODO: Make ambiguous localization handling work for acetylation (and p-ac-combinations) as well
-    num_mods = len(re.findall(r'[sty]', sequences_lower[0]))
-    phospho_positions = {m.start() + 1 for x in sequences_lower for m in re.finditer(r'[sty]', x)}
+    num_mods = len(re.findall(r'[sty]', sequences_psp_format[0]))
+    phospho_positions = {m.start() + 1 for x in sequences_psp_format for m in re.finditer(r'[sty]', x)}
     phospho_positions = sorted(list(phospho_positions))
     phopsho_positions_string = "/".join(map(lambda x: f'p{x}', phospho_positions))
     mod_sequence_without_phospho = remove_modifications(sequences[0], remove_phospho_only=True)
     return f"{mod_sequence_without_phospho}.{num_mods}.{phopsho_positions_string}"
 
 
+def get_most_common_sequence(sequences, sequences_psp_format):
+    sequences = remove_nan_values(sequences)
+    return collections.Counter(sequences).most_common(1)[0][0]
+ 
+
+def get_consensus_modified_sequence(sequences, consensus_function=get_modified_sequence_annotation):
+    unique_sequences, sequences_psp_format = check_ambiguity(sequences)
+    if is_unambiguous(unique_sequences):
+        return unique_sequences
+    return consensus_function(sequences, sequences_psp_format)
+
+
 def remove_modifications(mod_sequence, remove_phospho_only=False):
-    raw_sequence = re.sub(PHOSPHO_REGEX, '', mod_sequence)
+    raw_sequence = mod_sequence.replace('(Phospho (STY))', '')
     if remove_phospho_only:
         return raw_sequence
     raw_sequence = raw_sequence.replace('(Acetyl (Protein N-term))', '')
