@@ -15,7 +15,6 @@ from . import transfer
 from . import evidence
 from . import version
 
-
 __version__ = version.get_version_from_pyproject()
 __copyright__ = '''Copyright (c) 2021-2022 Firas Hamood & Matthew The. All rights reserved. Written by Firas Hamood (firas.hamood@tum.de) and Matthew The (matthew.the@tum.de) at the Chair of Proteomics and Bioanalytics at the Technical University of Munich.'''
 
@@ -23,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 def main(argv):
-    mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file, ms_level, tmt_requantify = cli.parse_args(
-        argv)
+    mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file, ms_level, tmt_requantify, \
+        ambiguity_decision = cli.parse_args(argv)
 
     if not output_folder.is_dir():
         output_folder.mkdir(parents=True)
@@ -35,13 +34,13 @@ def main(argv):
     formatter.converter = time.gmtime
     file_logger.setFormatter(formatter)
     logging.getLogger(module_name).addHandler(file_logger)
-        
+
     starttime = datetime.now()
-    
+
     logger.info(f'SIMSI-Transfer version {__version__}')
     logger.info(f'{__copyright__}')
     logger.info(f'Issued command: {os.path.basename(__file__)} {" ".join(map(str, argv))}')
-  
+
     logger.info(f'Input parameters:')
     logger.info(f"MaxQuant txt folder = {mq_txt_folder}")
     logger.info(f"Raw file folder = {raw_folder}")
@@ -87,7 +86,6 @@ def main(argv):
     logger.info(f'Reading in MaxQuant allPeptides.txt file')
     allpeptides_mq = mq.read_allpeptides_txt(mq_txt_folder)
 
-
     statistics = dict()
 
     for pval in ['p' + str(i) for i in pvals]:
@@ -104,7 +102,7 @@ def main(argv):
 
         logger.info(f'Starting cluster-based identity transfer for {pval}.')
         annotated_clusters = transfer.flag_ambiguous_clusters(annotated_clusters)
-        msmsscans_simsi = transfer.transfer(annotated_clusters)
+        msmsscans_simsi = transfer.transfer(annotated_clusters, ambiguity_decision=ambiguity_decision)
         simsi_output.export_msmsscans(msmsscans_simsi, output_folder, pval)
         logger.info(f'Finished identity transfer.')
 
