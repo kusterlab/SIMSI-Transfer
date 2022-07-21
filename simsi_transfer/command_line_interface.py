@@ -72,13 +72,10 @@ def get_input_folders(args):
             logging.error("Cannot use the --mq_txt_folder and --meta_input_file parameters at the same time.")
         
         meta_input_df = pd.read_csv(args.meta_input_file, sep='\t')
-        if len(meta_input_df.columns) == 2:
-            meta_input_df.columns = ['raw_folder', 'mq_txt_folder']
-        elif len(meta_input_df.columns) == 3:
-            meta_input_df.columns = ['raw_folder', 'mq_txt_folder', 'tmt_correction_file']
+        meta_input_df.columns = ['mq_txt_folder', 'raw_folder', 'tmt_correction_file'][:len(meta_input_df.columns)]
         
         raw_folders = convert_to_path_list(meta_input_df['raw_folder'])
-        mq_txt_folders = convert_to_path_list(meta_input_df['mq_txt_folders'])
+        mq_txt_folders = convert_to_path_list(meta_input_df['mq_txt_folder'])
         if 'tmt_correction_file' in meta_input_df.columns:
             tmt_correction_files = convert_to_path_list(meta_input_df['tmt_correction_file'])
         else:
