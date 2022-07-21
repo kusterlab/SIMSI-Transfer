@@ -34,6 +34,9 @@ def transfer(summary_df, mask=False, ambiguity_decision=False):
     else:
         identification_column = 'identification'
     
+    def csv_list_unique(x):
+        return ";".join(map(str, list(dict.fromkeys(x))))
+        
     agg_funcs = {'Sequence': get_unique_else_nan,
                  'Modifications': get_unique_else_nan,
                  'Modified sequence' : get_consensus_modified_sequence,

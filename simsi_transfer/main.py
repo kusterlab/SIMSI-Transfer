@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 def main(argv):
-    mq_txt_folder, raw_folder, pvals, output_folder, num_threads, tmt_correction_file, ms_level, tmt_requantify, \
-        ambiguity_decision = cli.parse_args(argv)
+    mq_txt_folders, raw_folders, pvals, output_folder, num_threads, tmt_correction_files, ms_level, tmt_requantify, \
+        ambiguity_decision, meta_input_file = cli.parse_args(argv)
 
     if not output_folder.is_dir():
         output_folder.mkdir(parents=True)
@@ -42,12 +42,12 @@ def main(argv):
     logger.info(f'Issued command: {os.path.basename(__file__)} {" ".join(map(str, argv))}')
 
     logger.info(f'Input parameters:')
-    logger.info(f"MaxQuant txt folder = {mq_txt_folder}")
-    logger.info(f"Raw file folder = {raw_folder}")
+    logger.info(f"MaxQuant txt folder = {mq_txt_folders}")
+    logger.info(f"Raw file folder = {raw_folders}")
     logger.info(f"Stringencies = {','.join(map(str, pvals))}")
     logger.info(f"Output folder = {output_folder}")
     logger.info(f"Number of threads = {num_threads}")
-    logger.info(f"TMT correction file = {tmt_correction_file}")
+    logger.info(f"TMT correction file = {tmt_correction_files}")
     logger.info(f"TMT MS level = {ms_level}")
     logger.info('')
 
@@ -56,35 +56,36 @@ def main(argv):
 
     logger.info(f'Converting .raw files')
     mzml_folder = output_folder / Path('mzML')
-    mzml_files = raw.convert_raw_mzml_batch(raw_folder, mzml_folder, num_threads)
+    mzml_files = raw.convert_raw_mzml_batch(raw_folders, mzml_folder, num_threads)
 
     logger.info(f'Clustering .mzML files')
     cluster_result_folder = output_folder / Path('maracluster_output')
     cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, num_threads)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
-    msmsscans_mq, tmt = mq.read_msmsscans_txt(mq_txt_folder, tmt_requantify)
+    msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify)
 
     if tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
         extracted_folder = output_folder / Path('extracted')
-        tmt_processing.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_file, num_threads)
+        # TODO: support multiple TMT correction files
+        tmt_processing.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_files[0], num_threads)
         corrected_tmt = tmt_processing.assemble_corrected_tmt_table(extracted_folder)
 
         msmsscans_mq = tmt_processing.merge_with_corrected_tmt(msmsscans_mq, corrected_tmt)
 
     logger.info(f'Reading in MaxQuant msms.txt file and filtering out decoy hits')
-    msms_mq = mq.read_msms_txt(mq_txt_folder)
+    msms_mq = mq.process_and_concat(mq_txt_folders, mq.read_msms_txt)
     # TODO: check if we should also transfer decoys
     msms_mq = msms_mq[msms_mq['Reverse'] != '+']
 
     logger.info(f'Reading in MaxQuant evidence.txt file and filtering out decoy hits')
-    evidence_mq = mq.read_evidence_txt(mq_txt_folder)
+    evidence_mq = mq.process_and_concat(mq_txt_folders, mq.read_evidence_txt)
     evidence_mq = evidence_mq[evidence_mq['Reverse'] != '+']
     rawfile_metadata = mq.get_rawfile_metadata(evidence_mq)
 
     logger.info(f'Reading in MaxQuant allPeptides.txt file')
-    allpeptides_mq = mq.read_allpeptides_txt(mq_txt_folder)
+    allpeptides_mq = mq.process_and_concat(mq_txt_folders, mq.read_allpeptides_txt)
 
     statistics = dict()
 
@@ -114,7 +115,7 @@ def main(argv):
         statistics[pval] = simsi_output.count_clustering_parameters(msms_simsi)
 
         logger.info(f'Starting SIMSI-Transfer evidence.txt building for {pval}.')
-        evidence_simsi = evidence.build_evidence(msms_simsi, evidence_mq, allpeptides_mq, tmt)
+        evidence_simsi = evidence.build_evidence(msms_simsi, evidence_mq, allpeptides_mq)
         simsi_output.export_simsi_evidence_file(evidence_simsi, output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
         logger.info('')

@@ -3,6 +3,7 @@ import multiprocessing
 from pathlib import Path
 import argparse
 
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +18,14 @@ def parse_args(argv):
     apars = ArgumentParserWithLogger(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    apars.add_argument('--mq_txt_folder', default=None, metavar="DIR", required=True,
+    apars.add_argument('--mq_txt_folder', default=None, metavar="DIR",
                        help='''Path to MaxQuant combined/txt output folder.''')
 
-    apars.add_argument('--raw_folder', default=None, metavar="DIR", required=True,
+    apars.add_argument('--raw_folder', default=None, metavar="DIR",
                        help='''Full path to folder containing .raw or .mzML files.''')
+
+    apars.add_argument('--meta_input_file', default=None, metavar="DIR",
+                       help='''Tab separated file with a header line followed by rows containing mq_txt_folder, raw_folder and, optionally, tmt_reporter_correction_file.''')
 
     apars.add_argument('--stringencies', default="20,15,10", metavar="S",
                        help='''Clustering thresholds at which to produce cluster files, listed as comma separated list. 
@@ -52,10 +56,48 @@ def parse_args(argv):
 
     # ------------------------------------------------
     args = apars.parse_args(argv)
+    
+    raw_folders, mq_txt_folders, tmt_correction_files = get_input_folders(args)
+    
+    return mq_txt_folders, raw_folders, parse_stringencies(args.stringencies), Path(
+        args.output_folder), args.num_threads, tmt_correction_files, args.tmt_ms_level, \
+        args.tmt_requantify, args.ambiguity_decision, args.meta_input_file
 
-    return Path(args.mq_txt_folder), Path(args.raw_folder), parse_stringencies(args.stringencies), Path(
-        args.output_folder), args.num_threads, Path(args.tmt_reporter_correction_file), args.tmt_ms_level, \
-        args.tmt_requantify, args.ambiguity_decision
+
+def get_input_folders(args):
+    if args.meta_input_file:
+        if args.raw_folder:
+            logging.error("Cannot use the --raw_folder and --meta_input_file parameters at the same time.")
+        if args.mq_txt_folder:
+            logging.error("Cannot use the --mq_txt_folder and --meta_input_file parameters at the same time.")
+        
+        meta_input_df = pd.read_csv(args.meta_input_file, sep='\t')
+        if len(meta_input_df.columns) == 2:
+            meta_input_df.columns = ['raw_folder', 'mq_txt_folder']
+        elif len(meta_input_df.columns) == 3:
+            meta_input_df.columns = ['raw_folder', 'mq_txt_folder', 'tmt_correction_file']
+        
+        raw_folders = convert_to_path_list(meta_input_df['raw_folder'])
+        mq_txt_folders = convert_to_path_list(meta_input_df['mq_txt_folders'])
+        if 'tmt_correction_file' in meta_input_df.columns:
+            tmt_correction_files = convert_to_path_list(meta_input_df['tmt_correction_file'])
+        else:
+            tmt_correction_files = [Path(args.tmt_reporter_correction_file)]*len(raw_folders)
+    else:
+        if not args.raw_folder:
+            logging.error("Missing --raw_folder argument")
+        if not args.mq_txt_folder:
+            logging.error("Missing --mq_txt_folder argument")
+
+        raw_folders = [Path(args.raw_folder)]
+        mq_txt_folders = [Path(args.mq_txt_folder)]
+        tmt_correction_files = [Path(args.tmt_reporter_correction_file)]
+    
+    return raw_folders, mq_txt_folders, tmt_correction_files
+
+
+def convert_to_path_list(s):
+    return list(map(Path, s.tolist()))
 
 
 def parse_stringencies(stringencies):

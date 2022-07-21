@@ -115,7 +115,7 @@ def assign_evidence_feature(summary: pd.DataFrame, evidence: pd.DataFrame, allpe
     return summary
 
 
-def calculate_evidence_columns(summary, tmt):
+def calculate_evidence_columns(summary):
     # replacing zeros with NaNs to count later
     logger.info('Assigned evidence features; calculating column values...')
     reps = ['Reporter intensity 1', 'Reporter intensity 2', 'Reporter intensity 3', 'Reporter intensity 4',
@@ -124,7 +124,9 @@ def calculate_evidence_columns(summary, tmt):
             'Reporter intensity corrected 2', 'Reporter intensity corrected 3', 'Reporter intensity corrected 4',
             'Reporter intensity corrected 5', 'Reporter intensity corrected 6', 'Reporter intensity corrected 7',
             'Reporter intensity corrected 8', 'Reporter intensity corrected 9', 'Reporter intensity corrected 10']
-    if tmt == 11:
+    tmt = 10
+    if 'Reporter intensity 11' in summary.columns:
+        tmt = 11
         reps.extend(['Reporter intensity 11', 'Reporter intensity corrected 11'])
     summary[reps] = summary[reps].replace({0: np.nan})
     summary = summary.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge']).reset_index(drop=True)
@@ -193,10 +195,10 @@ def calculate_evidence_columns(summary, tmt):
     return evidence
 
 
-def build_evidence(summary: pd.DataFrame, evidence: pd.DataFrame, allpeptides: pd.DataFrame, tmt: int):
+def build_evidence(summary: pd.DataFrame, evidence: pd.DataFrame, allpeptides: pd.DataFrame):
     evidence = evidence[evidence['Type'] != 'MSMS']
     evidence = evidence.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Calibrated retention time start'])
     evidence.insert(len(evidence.columns), 'evidence_ID', range(len(evidence)))
     summary = assign_evidence_feature(summary, evidence, allpeptides)
-    evidence = calculate_evidence_columns(summary, tmt)
+    evidence = calculate_evidence_columns(summary)
     return evidence

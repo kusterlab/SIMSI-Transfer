@@ -1,6 +1,6 @@
 import os
 from sys import platform
-from typing import Optional, List
+from typing import Optional, List, Any, Callable
 from pathlib import Path
 import logging
 
@@ -45,8 +45,8 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip:
     return output_path
 
 
-def convert_raw_mzml_batch(raw_folder: Path, output_folder: Optional[Path] = None, num_threads: int = 1, gzip: bool = False, ms_level: str = "2-") -> List[Path]:
-    raw_files = get_raw_files(raw_folder)
+def convert_raw_mzml_batch(raw_folders: List[Path], output_folder: Optional[Path] = None, num_threads: int = 1, gzip: bool = False, ms_level: str = "2-") -> List[Path]:
+    raw_files = apply_and_flatten(raw_folders, get_raw_files)
     
     if not output_folder.is_dir():
         output_folder.mkdir(parents=True)
@@ -58,17 +58,19 @@ def convert_raw_mzml_batch(raw_folder: Path, output_folder: Optional[Path] = Non
     
     mzml_files = []
     for raw_file in raw_files:
-        if raw_file.suffix == ".raw":
+        if raw_file.suffix.lower() == ".raw":
             input_path = raw_file
             output_path = output_folder / raw_file.with_suffix('.mzML').name
             
             if num_threads > 1:
                 processingPool.applyAsync(convert_raw_mzml, (input_path, output_path))
             else:
-                raw_file = convert_raw_mzml(input_path, output_path)
-                mzml_files.append(raw_file)
+                mzml_file = convert_raw_mzml(input_path, output_path)
+                mzml_files.append(mzml_file)
+        elif raw_file.suffix.lower() == ".mzml":
+            mzml_files.append(raw_file)
     
-    if num_threads > 1:
+    if len(mzml_files) == 0 and num_threads > 1:
         mzml_files = processingPool.checkPool(printProgressEvery = 1)
         
     return mzml_files
@@ -95,6 +97,9 @@ def get_raw_files(raw_folder: Path) -> List[Path]:
     logger.info(f"Found {len(raw_files)} raw files in the search directory")
     return raw_files
             
+
+def apply_and_flatten(lst: List[Any], f: Callable[[Any],Any]):
+    return sorted(list({f_x for x in lst for f_x in f(x)}))
 
 
 if __name__ == "__main__":
