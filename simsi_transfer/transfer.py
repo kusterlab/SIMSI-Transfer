@@ -3,13 +3,13 @@ import functools
 import operator
 import re
 import logging
-from typing import List, Union, Callable, Dict
+from typing import List, Union, Callable, Dict, Any
 
 import pandas as pd
 import numpy as np
 
 from .merging_functions import merge_with_msmsscanstxt, merge_with_msmstxt, merge_with_summarytxt
-
+from .utils import utils
 
 logger = logging.getLogger(__name__)
 
@@ -33,23 +33,20 @@ def transfer(summary_df, mask=False, ambiguity_decision=False):
         identification_column = f'identification_{mask}'
     else:
         identification_column = 'identification'
-    
-    def csv_list_unique(x):
-        return ";".join(map(str, list(dict.fromkeys(x))))
         
-    agg_funcs = {'Sequence': get_unique_else_nan,
-                 'Modifications': get_unique_else_nan,
+    agg_funcs = {'Sequence': utils.get_unique_else_nan,
+                 'Modifications': utils.get_unique_else_nan,
                  'Modified sequence' : get_consensus_modified_sequence,
                  'Phospho (STY) Probabilities': calculate_average_probabilities,
-                 'Proteins': get_unique_else_nan,
-                 'Gene Names': get_unique_else_nan,
-                 'Protein Names': get_unique_else_nan,
-                 'Charge': get_unique_else_nan,
+                 'Proteins': utils.csv_list_unique,
+                 'Gene Names': utils.csv_list_unique,
+                 'Protein Names': utils.csv_list_unique,
+                 'Charge': utils.get_unique_else_nan,
                  'm/z': 'mean',
                  'Mass': 'mean',
-                 'Missed cleavages': get_unique_else_nan,
-                 'Length': get_unique_else_nan,
-                 'Reverse': get_unique_else_nan}
+                 'Missed cleavages': utils.get_unique_else_nan,
+                 'Length': utils.get_unique_else_nan,
+                 'Reverse': utils.get_unique_else_nan}
     if ambiguity_decision:
         # TODO: Generate modified sequence from probability string rather than taking it from the cluster
         agg_funcs['Modified sequence'] = lambda s: get_consensus_modified_sequence(s, get_most_common_sequence)
@@ -91,7 +88,7 @@ def remove_probabilities_from_sequence(sequence: str) -> str:
 
 
 def check_ambiguity(sequences: List[str], transform_sequence: Callable[[List[str]], List[str]] = transform_phospho_psp_format):
-    sequences = remove_nan_values(set(sequences))
+    sequences = utils.remove_nan_values(set(sequences))
     if len(sequences) == 0:
         return np.nan, np.nan
     if len(sequences) == 1:
@@ -160,12 +157,12 @@ def get_modified_sequence_annotation(sequences, sequences_psp_format):
     phospho_positions = {m.start() + 1 for x in sequences_psp_format for m in re.finditer(r'[sty]', x)}
     phospho_positions = sorted(list(phospho_positions))
     phopsho_positions_string = "/".join(map(lambda x: f'p{x}', phospho_positions))
-    mod_sequence_without_phospho = remove_modifications(sequences[0], remove_phospho_only=True)
+    mod_sequence_without_phospho = utils.remove_modifications(sequences[0], remove_phospho_only=True)
     return f"{mod_sequence_without_phospho}.{num_mods}.{phopsho_positions_string}"
 
 
 def get_most_common_sequence(sequences, sequences_psp_format):
-    sequences = remove_nan_values(sequences)
+    sequences = utils.remove_nan_values(sequences)
     return collections.Counter(sequences).most_common(1)[0][0]
  
 
@@ -174,38 +171,6 @@ def get_consensus_modified_sequence(sequences, consensus_function=get_modified_s
     if is_unambiguous(unique_sequences):
         return unique_sequences
     return consensus_function(sequences, sequences_psp_format)
-
-
-def remove_modifications(mod_sequence, remove_phospho_only=False):
-    raw_sequence = mod_sequence.replace('(Phospho (STY))', '')
-    if remove_phospho_only:
-        return raw_sequence
-    raw_sequence = raw_sequence.replace('(Acetyl (Protein N-term))', '')
-    raw_sequence = raw_sequence.replace('(Oxidation (M))', '')
-    raw_sequence = raw_sequence.replace('_', '')
-    return raw_sequence
-
-
-def get_unique_else_nan(input_list):
-    """
-    Returns nan if no unique sequence is found in inputlist, or the sequence if its unique
-    :param input_list: List of peptide sequences
-    :return: Returns peptide sequence if it is the only one in the input list, otherwise returns np.NaN
-    """
-    x = remove_nan_values(set(input_list))
-    if len(x) == 1:
-        return x[0]
-    else:
-        return np.nan
-
-
-def remove_nan_values(input_list):
-    """
-    Eliminates NaNs from sets or lists, returns list of all other values
-    :param input_list: List (or set) of elements
-    :return: List with removed np.NaN values
-    """
-    return [v for v in input_list if pd.notnull(v)]
 
 
 def flag_ambiguous_clusters(sumdf, rawseq='Sequence', modseq='Modified sequence'):

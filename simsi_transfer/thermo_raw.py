@@ -5,6 +5,7 @@ from pathlib import Path
 import logging
 
 from .utils import subprocess_with_logger as subprocess
+from .utils import utils
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip:
 
     :param input_path: File path of the Thermo Rawfile
     :param output_path: File path of the mzML path
-    :param ms_level: MS levels to keep, "2-" means MS2 and above (e.g. MS3)
+    :param ms_level: MS levels to keep, "2-" means MS2 and above (e.g. MS2 and MS3)
     """
     if output_path is None:
         output_path = input_path.stem + ".mzML"
@@ -46,7 +47,7 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip:
 
 
 def convert_raw_mzml_batch(raw_folders: List[Path], output_folder: Optional[Path] = None, num_threads: int = 1, gzip: bool = False, ms_level: str = "2-") -> List[Path]:
-    raw_files = apply_and_flatten(raw_folders, get_raw_files)
+    raw_files = utils.apply_and_flatten(raw_folders, get_raw_files)
     
     if not output_folder.is_dir():
         output_folder.mkdir(parents=True)
@@ -96,10 +97,6 @@ def get_raw_files(raw_folder: Path) -> List[Path]:
         
     logger.info(f"Found {len(raw_files)} raw files in the search directory")
     return raw_files
-            
-
-def apply_and_flatten(lst: List[Any], f: Callable[[Any],Any]):
-    return sorted(list({f_x for x in lst for f_x in f(x)}))
 
 
 if __name__ == "__main__":

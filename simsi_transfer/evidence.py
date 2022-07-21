@@ -4,8 +4,8 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from simsi_transfer.merging_functions import merge_summary_with_evidence
-
+from .merging_functions import merge_summary_with_evidence
+from .utils import utils
 
 logger = logging.getLogger(__name__)
 
@@ -138,9 +138,6 @@ def calculate_evidence_columns(summary):
 
     def csv_list(x):
         return ";".join(map(str, x))
-
-    def csv_list_unique(x):
-        return ";".join(map(str, list(dict.fromkeys(x))))
     
     def count_transferred(ids):
         return (ids == 't').sum()
@@ -152,8 +149,8 @@ def calculate_evidence_columns(summary):
             'Modifications': pd.NamedAgg(column='Modifications', aggfunc='first'),          # from msms.txt
             'Modified sequence': pd.NamedAgg(column='Modified sequence', aggfunc='first'),  # from msms.txt
             'Missed cleavages': pd.NamedAgg(column='Missed cleavages', aggfunc='first'),    # from msms.txt
-            'Proteins': pd.NamedAgg(column='Proteins', aggfunc=csv_list_unique),            # from msms.txt
-            'Leading proteins': pd.NamedAgg(column='Leading proteins', aggfunc=csv_list_unique), # from evidence.txt, NaN if scan not matched to precursor in evidence.txt
+            'Proteins': pd.NamedAgg(column='Proteins', aggfunc=utils.csv_list_unique),            # from msms.txt
+            'Leading proteins': pd.NamedAgg(column='Leading proteins', aggfunc=utils.csv_list_unique), # from evidence.txt, NaN if scan not matched to precursor in evidence.txt
             'Gene Names': pd.NamedAgg(column='Gene Names', aggfunc='first'),                # from msms.txt
             'Protein Names': pd.NamedAgg(column='Protein Names', aggfunc='first'),          # from msms.txt
             'Type': pd.NamedAgg(column='new_type', aggfunc='first'),                        # calculated by SIMSI-Transfer
