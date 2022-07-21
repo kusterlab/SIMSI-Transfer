@@ -1,6 +1,6 @@
 import os
 from sys import platform
-from typing import Optional
+from typing import Optional, List
 from pathlib import Path
 import logging
 
@@ -9,7 +9,7 @@ from .utils import subprocess_with_logger as subprocess
 logger = logging.getLogger(__name__)
 
 
-def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip = False, ms_level: str = "2-"):
+def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip: bool = False, ms_level: str = "2-") -> Path:
     """
     Converts a ThermoRaw file to mzML. Adapted from prosit_io/raw/thermo_raw.py
 
@@ -45,7 +45,7 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip 
     return output_path
 
 
-def convert_raw_mzml_batch(raw_folder: Path, output_folder: Optional[Path] = None, num_threads: int = 1, gzip = False, ms_level: str = "2-"):
+def convert_raw_mzml_batch(raw_folder: Path, output_folder: Optional[Path] = None, num_threads: int = 1, gzip: bool = False, ms_level: str = "2-") -> List[Path]:
     raw_files = get_raw_files(raw_folder)
     
     if not output_folder.is_dir():
@@ -74,7 +74,7 @@ def convert_raw_mzml_batch(raw_folder: Path, output_folder: Optional[Path] = Non
     return mzml_files
     
 
-def get_raw_files(raw_folder: Path):
+def get_raw_files(raw_folder: Path) -> List[Path]:
     """
     Obtains raw files by scanning through the raw_path directory.
     """
