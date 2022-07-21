@@ -4,8 +4,8 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from simsi_transfer.merging_functions import merge_summary_with_evidence
-
+from .merging_functions import merge_summary_with_evidence
+from .utils import utils
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +115,7 @@ def assign_evidence_feature(summary: pd.DataFrame, evidence: pd.DataFrame, allpe
     return summary
 
 
-def calculate_evidence_columns(summary, tmt):
+def calculate_evidence_columns(summary):
     # replacing zeros with NaNs to count later
     logger.info('Assigned evidence features; calculating column values...')
     reps = ['Reporter intensity 1', 'Reporter intensity 2', 'Reporter intensity 3', 'Reporter intensity 4',
@@ -124,7 +124,9 @@ def calculate_evidence_columns(summary, tmt):
             'Reporter intensity corrected 2', 'Reporter intensity corrected 3', 'Reporter intensity corrected 4',
             'Reporter intensity corrected 5', 'Reporter intensity corrected 6', 'Reporter intensity corrected 7',
             'Reporter intensity corrected 8', 'Reporter intensity corrected 9', 'Reporter intensity corrected 10']
-    if tmt == 11:
+    tmt = 10
+    if 'Reporter intensity 11' in summary.columns:
+        tmt = 11
         reps.extend(['Reporter intensity 11', 'Reporter intensity corrected 11'])
     summary[reps] = summary[reps].replace({0: np.nan})
     summary = summary.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge']).reset_index(drop=True)
@@ -136,9 +138,6 @@ def calculate_evidence_columns(summary, tmt):
 
     def csv_list(x):
         return ";".join(map(str, x))
-
-    def csv_list_unique(x):
-        return ";".join(map(str, list(dict.fromkeys(x))))
     
     def count_transferred(ids):
         return (ids == 't').sum()
@@ -150,8 +149,8 @@ def calculate_evidence_columns(summary, tmt):
             'Modifications': pd.NamedAgg(column='Modifications', aggfunc='first'),          # from msms.txt
             'Modified sequence': pd.NamedAgg(column='Modified sequence', aggfunc='first'),  # from msms.txt
             'Missed cleavages': pd.NamedAgg(column='Missed cleavages', aggfunc='first'),    # from msms.txt
-            'Proteins': pd.NamedAgg(column='Proteins', aggfunc=csv_list_unique),            # from msms.txt
-            'Leading proteins': pd.NamedAgg(column='Leading proteins', aggfunc=csv_list_unique), # from evidence.txt, NaN if scan not matched to precursor in evidence.txt
+            'Proteins': pd.NamedAgg(column='Proteins', aggfunc=utils.csv_list_unique),            # from msms.txt
+            'Leading proteins': pd.NamedAgg(column='Leading proteins', aggfunc=utils.csv_list_unique), # from evidence.txt, NaN if scan not matched to precursor in evidence.txt
             'Gene Names': pd.NamedAgg(column='Gene Names', aggfunc='first'),                # from msms.txt
             'Protein Names': pd.NamedAgg(column='Protein Names', aggfunc='first'),          # from msms.txt
             'Type': pd.NamedAgg(column='new_type', aggfunc='first'),                        # calculated by SIMSI-Transfer
@@ -193,10 +192,10 @@ def calculate_evidence_columns(summary, tmt):
     return evidence
 
 
-def build_evidence(summary: pd.DataFrame, evidence: pd.DataFrame, allpeptides: pd.DataFrame, tmt: int):
+def build_evidence(summary: pd.DataFrame, evidence: pd.DataFrame, allpeptides: pd.DataFrame):
     evidence = evidence[evidence['Type'] != 'MSMS']
     evidence = evidence.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Calibrated retention time start'])
     evidence.insert(len(evidence.columns), 'evidence_ID', range(len(evidence)))
     summary = assign_evidence_feature(summary, evidence, allpeptides)
-    evidence = calculate_evidence_columns(summary, tmt)
+    evidence = calculate_evidence_columns(summary)
     return evidence
