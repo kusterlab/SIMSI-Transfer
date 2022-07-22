@@ -65,6 +65,8 @@ def main(argv):
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
     msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify)
 
+    # TODO: Add check if raw_files(maracluster) == raw_files(msmsScans)
+
     if tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
         extracted_folder = output_folder / Path('extracted')
