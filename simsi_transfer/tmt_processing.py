@@ -90,7 +90,7 @@ def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path
     convert_dict = {**convert_dict_raw, **convert_dict_corr, **convert_dict_other}
     dfcol = convert_dict.keys()
 
-    output_file = f'{output_path}/ext_{mzml_file.name}.txt'
+    output_file = get_extracted_tmt_file_name(output_path, mzml_file)
     if Path(output_file).is_file():
         logger.info(f"Found extracted reporter ions at {output_file}, skipping extraction")
         return
@@ -138,45 +138,38 @@ def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path
     fileframe.to_csv(output_file, sep='\t', index=False)
 
 
-def assemble_corrected_tmt_table(extracted_folder):
-    corrected_tmt = pd.DataFrame(
-        columns=['raw_file', 'scanID', 'raw_TMT1', 'raw_TMT2', 'raw_TMT3', 'raw_TMT4', 'raw_TMT5', 'raw_TMT6',
-                 'raw_TMT7', 'raw_TMT8', 'raw_TMT9', 'raw_TMT10', 'raw_TMT11', 'raw_TMT12', 'raw_TMT13',
-                 'corr_TMT1',
-                 'corr_TMT2', 'corr_TMT3', 'corr_TMT4', 'corr_TMT5', 'corr_TMT6', 'corr_TMT7', 'corr_TMT8',
-                 'corr_TMT9', 'corr_TMT10', 'corr_TMT11'])
+def get_extracted_tmt_file_name(output_path: str, mzml_file: Path):
+    return f'{output_path}/ext_{mzml_file.name}.txt'
 
-    for file in os.listdir(extracted_folder):
-        file = pd.read_csv(Path(extracted_folder / file), sep='\t')
-        corrected_tmt = pd.concat([corrected_tmt, file])
-        # corrected_tmt = corrected_tmt.append(file)
+
+def assemble_corrected_tmt_table(mzml_files, extracted_folder):
+    logger.info('Assembling corrected reporter ion tables')
+    corrected_tmt = pd.DataFrame(
+        columns=['raw_file', 'scanID'] + \
+                TMT_RAW_COLUMNS + \
+                TMT_CORRECTED_COLUMNS)
+    
+    corrected_tmts = list()
+    for mzml_file in mzml_files:
+        tmt_file = get_extracted_tmt_file_name(extracted_folder, mzml_file)
+        logger.debug(f'  Appending {tmt_file}')
+        df = pd.read_csv(tmt_file, sep='\t')
+        corrected_tmts.append(df)
+    corrected_tmt = pd.concat(corrected_tmts)
+    
     corrected_tmt = corrected_tmt.reset_index(drop=True)
     corrected_tmt = corrected_tmt.rename(columns={
         'raw_file': 'Raw file',
-        'raw_TMT1': 'Reporter intensity 1',
-        'raw_TMT2': 'Reporter intensity 2',
-        'raw_TMT3': 'Reporter intensity 3',
-        'raw_TMT4': 'Reporter intensity 4',
-        'raw_TMT5': 'Reporter intensity 5',
-        'raw_TMT6': 'Reporter intensity 6',
-        'raw_TMT7': 'Reporter intensity 7',
-        'raw_TMT8': 'Reporter intensity 8',
-        'raw_TMT9': 'Reporter intensity 9',
-        'raw_TMT10': 'Reporter intensity 10',
-        'raw_TMT11': 'Reporter intensity 11',
-        'corr_TMT1': 'Reporter intensity corrected 1',
-        'corr_TMT2': 'Reporter intensity corrected 2',
-        'corr_TMT3': 'Reporter intensity corrected 3',
-        'corr_TMT4': 'Reporter intensity corrected 4',
-        'corr_TMT5': 'Reporter intensity corrected 5',
-        'corr_TMT6': 'Reporter intensity corrected 6',
-        'corr_TMT7': 'Reporter intensity corrected 7',
-        'corr_TMT8': 'Reporter intensity corrected 8',
-        'corr_TMT9': 'Reporter intensity corrected 9',
-        'corr_TMT10': 'Reporter intensity corrected 10',
-        'corr_TMT11': 'Reporter intensity corrected 11'})
+        **{f'raw_TMT{i}': f'Reporter intensity {i}' for i in range(1,12)},
+        **{f'corr_TMT{i}': f'Reporter intensity corrected {i}' for i in range(1,12)}
+        })
     corrected_tmt['Raw file'] = corrected_tmt['Raw file'].str.replace(r'.mzML$', '', regex=True)
     return corrected_tmt
+
+
+def merge_with_corrected_tmt(msmsscans_df, corrected_tmt):
+    logger.info('Merging corrected reporter ion tables into msmsScans.txt')
+    return pd.merge(left=msmsscans_df, right=corrected_tmt, on=['Raw file', 'scanID'], how='left', validate='one_to_one')
 
 
 if __name__ == "__main__":
@@ -186,6 +179,3 @@ if __name__ == "__main__":
 
     extract_tmt_reporters([input_files_arg], output_path_arg, extraction_level=extraction_level_arg)
 
-
-def merge_with_corrected_tmt(tempfile, corrected_tmt):
-    return pd.merge(left=tempfile, right=corrected_tmt, on=['Raw file', 'scanID'], how='left', validate='one_to_one')

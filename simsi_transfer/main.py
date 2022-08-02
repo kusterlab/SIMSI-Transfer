@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 def main(argv):
     mq_txt_folders, raw_folders, pvals, output_folder, num_threads, tmt_correction_files, ms_level, tmt_requantify, \
-        ambiguity_decision, meta_input_file = cli.parse_args(argv)
+        filter_decoys, ambiguity_decision, meta_input_file = cli.parse_args(argv)
 
     if not output_folder.is_dir():
         output_folder.mkdir(parents=True)
@@ -70,18 +70,20 @@ def main(argv):
         extracted_folder = output_folder / Path('extracted')
         # TODO: support multiple TMT correction files
         tmt_processing.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_files[0], num_threads)
-        corrected_tmt = tmt_processing.assemble_corrected_tmt_table(extracted_folder)
-
+        
+        corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder)
         msmsscans_mq = tmt_processing.merge_with_corrected_tmt(msmsscans_mq, corrected_tmt)
 
     logger.info(f'Reading in MaxQuant msms.txt file and filtering out decoy hits')
     msms_mq = mq.process_and_concat(mq_txt_folders, mq.read_msms_txt)
     # TODO: check if we should also transfer decoys
-    msms_mq = msms_mq[msms_mq['Reverse'] != '+']
+    if filter_decoys:
+        msms_mq = msms_mq[msms_mq['Reverse'] != '+']
 
     logger.info(f'Reading in MaxQuant evidence.txt file and filtering out decoy hits')
     evidence_mq = mq.process_and_concat(mq_txt_folders, mq.read_evidence_txt)
-    evidence_mq = evidence_mq[evidence_mq['Reverse'] != '+']
+    if filter_decoys:
+        evidence_mq = evidence_mq[evidence_mq['Reverse'] != '+']
     rawfile_metadata = mq.get_rawfile_metadata(evidence_mq)
 
     logger.info(f'Reading in MaxQuant allPeptides.txt file')
