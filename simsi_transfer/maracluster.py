@@ -47,7 +47,7 @@ def cluster_mzml_files(mzml_files: List[Path], pvals: List[float], maracluster_f
     if "win" in platform:
         exec_bin = f"{exec_path}\\utils\\maracluster\\win64\\maracluster"
         
-    cluster_command = f'{num_threads_string} {exec_bin} batch -b "{batch_file}" -c {pvals_string} -f "{maracluster_folder}" 2>&1'
+    cluster_command = f'{num_threads_string} "{exec_bin}" batch -b "{batch_file}" -c {pvals_string} -f "{maracluster_folder}" 2>&1'
     process = subprocess.run(cluster_command)
 
 
