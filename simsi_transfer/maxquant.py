@@ -25,12 +25,13 @@ def read_msmsscans_txt(mq_txt_folder, tmt_requantify):
         cols += [f'Reporter intensity corrected {i}' for i in range(1, 12)]
 
     try:
-        msmsscans = pd.read_csv(mq_txt_folder / Path('msmsScans.txt'), sep='\t', usecols=cols).rename(
-            columns={'Scan number': 'scanID'})
+        msmsscans = pd.read_csv(mq_txt_folder / Path('msmsScans.txt'), sep='\t', usecols=cols)
     except ValueError:
         cols.remove('Reporter intensity 11')
         cols.remove('Reporter intensity corrected 11')
-        msmsscans = pd.read_csv(mq_txt_folder / Path('msmsScans.txt'), sep='\t', usecols=cols).rename(
+        msmsscans = pd.read_csv(mq_txt_folder / Path('msmsScans.txt'), sep='\t', usecols=cols)
+    
+    msmsscans = msmsscans.rename(
             columns={'Scan number': 'scanID'})
     return msmsscans
 
@@ -46,12 +47,14 @@ def read_msms_txt(mq_txt_folder):
                'Charge', 'Mass error [ppm]', 'PIF', 'Precursor Intensity', 'PEP', 'Score',
                'Delta score', 'Reverse']
     msmstxt = pd.read_csv(mq_txt_folder / Path('msms.txt'), sep='\t',
-                          usecols=lambda x: x in columns).rename(
-        columns={'Scan number': 'scanID'})
+                          usecols=lambda x: x in columns)
+    
     for col in columns:
         if col not in msmstxt.columns:
             logger.warning(f'Missing column in msms.txt, filled with numpy NaN: {col}')
             msmstxt[col] = np.NaN
+    
+    msmstxt = msmstxt.rename(columns={'Scan number': 'scanID'})
     return msmstxt
 
 

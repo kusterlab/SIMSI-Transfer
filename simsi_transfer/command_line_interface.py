@@ -50,9 +50,13 @@ def parse_args(argv):
                                This solves problems where MaxQuant assigns TMT reporter ions to the wrong scan in msmsScans.txt.
                                This appears especially problematic in MS3 data.''')
 
-    apars.add_argument('--ambiguity_decision', default=False, action='store_true',
-                       help='''Enables the decision for one spectrum whenever PTM-isomeric clusters are encountered.''')
-    # TODO: Change into different kinds of handling; str for decision
+    apars.add_argument('--filter_decoys', default=False, action='store_true',
+                       help='''Removes decoys from MaxQuant results before PSM transfer.''')
+
+    apars.add_argument('--ambiguity_decision', default='majority',
+                       help='''Determines which modified sequence to set for PTM-ambiguous clusters (default: 'majority'): 
+                               'majority' returns the most frequently observed modified sequence in the cluster.
+                               'all' returns unmodified sequence with all observed PTM positions.''')
 
     # ------------------------------------------------
     args = apars.parse_args(argv)
@@ -61,7 +65,7 @@ def parse_args(argv):
     
     return mq_txt_folders, raw_folders, parse_stringencies(args.stringencies), Path(
         args.output_folder), args.num_threads, tmt_correction_files, args.tmt_ms_level, \
-        args.tmt_requantify, args.ambiguity_decision, args.meta_input_file
+        args.tmt_requantify, args.filter_decoys, args.ambiguity_decision, args.meta_input_file
 
 
 def get_input_folders(args):

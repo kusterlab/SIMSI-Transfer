@@ -17,7 +17,7 @@ PHOSPHO_REGEX = re.compile(r'([STY])\(Phospho \(STY\)\)')
 PROBABILITY_REGEX = re.compile(r'\((\d(?:\.?\d+)?)\)')
 
 
-def transfer(summary_df, mask=False, ambiguity_decision=False):
+def transfer(summary_df, mask=False, ambiguity_decision='majority'):
     """
     Main function for transfers by clustering. Transfers identifications for merged dataframe and adds a column for
     identification type. Transferred columns are Sequence, Modified sequence, Proteins, Gene names, Protein Names,
@@ -25,8 +25,8 @@ def transfer(summary_df, mask=False, ambiguity_decision=False):
     :param summary_df: Summary dataframe, merged from cleaned msms.txt and MaRaCluster clusters.tsv file
     :param mask: if false, uses "identification" column from summary frame. If set to a value, transfer uses the
     'identification_{mask}' column, needed for the masking analysis
-    :param ambiguity_decision: if False, returns raw sequences with potential phospho positions when encountering isomer
-    clusters; if True, decides for one sequence (majority vote)
+    :param ambiguity_decision: if 'all', returns raw sequences with potential phospho positions when encountering isomer
+    clusters; if 'majority', decides for one sequence by majority vote
     :return: DataFrame with transferred identifications resembling MaxQuant msmsScans.txt
     """
     if mask:
@@ -47,7 +47,7 @@ def transfer(summary_df, mask=False, ambiguity_decision=False):
                  'Missed cleavages': utils.get_unique_else_nan,
                  'Length': utils.get_unique_else_nan,
                  'Reverse': utils.get_unique_else_nan}
-    if ambiguity_decision:
+    if ambiguity_decision == 'majority':
         # TODO: Generate modified sequence from probability string rather than taking it from the cluster
         agg_funcs['Modified sequence'] = lambda s: get_consensus_modified_sequence(s, get_most_common_sequence)
     

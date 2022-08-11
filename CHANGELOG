@@ -1,3 +1,10 @@
+v0.4.0
+- Added support for a meta file with multiple raw and MQ input folders
+- Updated ThermoRawFileParser to v1.4.0, fixes wrong MS3->MS2 assignment issue
+- Added support for majority vote for PTM-ambiguous clusters
+- Added calculation of average phospho-probability string
+- Added support for keeping the decoy hits from the MQ output (enabled by default)
+
 v0.3.2
 - Updated MaRaCluster to v1.02
 
