@@ -153,12 +153,8 @@ def get_extracted_tmt_file_name(output_path: str, mzml_file: Path):
 
 def assemble_corrected_tmt_table(mzml_files, extracted_folder, plex):
     logger.info('Assembling corrected reporter ion tables')
-    tmt_raw_columns, tmt_corrected_columns = get_tmt_columns(plex)
-    corrected_tmt = pd.DataFrame(
-        columns=['raw_file', 'scanID'] + \
-                tmt_raw_columns + \
-                tmt_corrected_columns)
-
+    # tmt_raw_columns, tmt_corrected_columns = get_tmt_columns(plex)
+    # corrected_tmt = pd.DataFrame(columns=['raw_file', 'scanID'] + tmt_raw_columns + tmt_corrected_columns)
     corrected_tmts = list()
     for mzml_file in mzml_files:
         tmt_file = get_extracted_tmt_file_name(extracted_folder, mzml_file)
@@ -170,8 +166,8 @@ def assemble_corrected_tmt_table(mzml_files, extracted_folder, plex):
     corrected_tmt = corrected_tmt.reset_index(drop=True)
     corrected_tmt = corrected_tmt.rename(columns={
         'raw_file': 'Raw file',
-        **{f'raw_TMT{i}': f'Reporter intensity {i}' for i in range(1, 12)},
-        **{f'corr_TMT{i}': f'Reporter intensity corrected {i}' for i in range(1, 12)}
+        **{f'raw_TMT{i}': f'Reporter intensity {i}' for i in range(1, plex + 1)},
+        **{f'corr_TMT{i}': f'Reporter intensity corrected {i}' for i in range(1, plex + 1)}
     })
     corrected_tmt['Raw file'] = corrected_tmt['Raw file'].str.replace(r'.mzML$', '', regex=True)
     return corrected_tmt
