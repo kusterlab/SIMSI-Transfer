@@ -72,9 +72,9 @@ def main(argv):
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
         extracted_folder = output_folder / Path('extracted')
         # TODO: support multiple TMT correction files
-        tmt_processing.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_files[0], num_threads)
+        tmt_processing.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_files[0], num_threads, plex)
         
-        corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder)
+        corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder, plex)
         msmsscans_mq = tmt_processing.merge_with_corrected_tmt(msmsscans_mq, corrected_tmt)
 
     logger.info(f'Reading in MaxQuant msms.txt file and filtering out decoy hits')
