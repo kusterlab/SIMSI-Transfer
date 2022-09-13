@@ -1,4 +1,5 @@
 import logging
+import re
 import warnings
 from pathlib import Path
 from typing import List, Callable, Any
@@ -13,7 +14,15 @@ def process_and_concat(input_folders: List[Any], reading_function: Callable, **k
     return pd.concat([reading_function(f, **kwargs) for f in input_folders], axis=0)
 
 
-def read_msmsscans_txt(mq_txt_folder, tmt_requantify):
+def get_plex(input_folders):
+    columns = pd.read_csv(input_folders[0]/Path('msms.txt'), nrows=0, sep='\t').columns.tolist()
+    substring = re.compile(r'^Reporter intensity (\d{1,2})$')
+    reporters = [i for i in columns if re.match(substring, i)]
+    plex_number = max([int(re.search(substring, i).group(1)) for i in reporters])
+    return plex_number
+
+
+def read_msmsscans_txt(mq_txt_folder, tmt_requantify, plex):
     """
     Open msms.txt output file and subselect relevant columns
     :param mq_txt_folder: Processing path containing the 'combined' folder from MQ search
@@ -21,18 +30,11 @@ def read_msmsscans_txt(mq_txt_folder, tmt_requantify):
     """
     cols = ['Raw file', 'Scan number', 'm/z', 'Mass', 'Retention time', 'Precursor full scan number', 'MS scan number']
     if not tmt_requantify:
-        cols += [f'Reporter intensity {i}' for i in range(1, 12)]
-        cols += [f'Reporter intensity corrected {i}' for i in range(1, 12)]
-
-    try:
-        msmsscans = pd.read_csv(mq_txt_folder / Path('msmsScans.txt'), sep='\t', usecols=cols)
-    except ValueError:
-        cols.remove('Reporter intensity 11')
-        cols.remove('Reporter intensity corrected 11')
-        msmsscans = pd.read_csv(mq_txt_folder / Path('msmsScans.txt'), sep='\t', usecols=cols)
+        cols += [f'Reporter intensity {i}' for i in range(1, plex + 1)]
+        cols += [f'Reporter intensity corrected {i}' for i in range(1, plex + 1)]
+    msmsscans = pd.read_csv(mq_txt_folder / Path('msmsScans.txt'), sep='\t', usecols=cols)
     
-    msmsscans = msmsscans.rename(
-            columns={'Scan number': 'scanID'})
+    msmsscans = msmsscans.rename(columns={'Scan number': 'scanID'})
     return msmsscans
 
 

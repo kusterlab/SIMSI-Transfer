@@ -63,7 +63,8 @@ def main(argv):
     cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, num_threads)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
-    msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify)
+    plex = mq.get_plex(mq_txt_folders)
+    msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify, plex=plex)
 
     # TODO: Add check if raw_files(maracluster) == raw_files(msmsScans)
 
