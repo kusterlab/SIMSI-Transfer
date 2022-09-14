@@ -32,6 +32,13 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
     #                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # 132 C Overflow
     #                        ])
     correction = np.zeros(shape=(plex_size + 2, plex_size))
+    logger.info('Hier hier hier!')
+    logger.info('Hier hier hier!')
+    logger.info(f'Die plex size ist {plex_size}!')
+    logger.info(correction)
+    logger.info(correction.shape)
+    logger.info('Hier hier hier!')
+    logger.info('Hier hier hier!')
     for i in range(correction.shape[1]):
         correction[i, i] = 100
 
@@ -45,7 +52,7 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
     if correction_factor_path.is_file():
         correction_dataframe = pd.read_csv(correction_factor_path, sep='\t')
 
-        for i in range(11):
+        for i in range(plex_size):
             if i not in [0, 1, 2, 3]:
                 correction[i - 4, i] = correction_dataframe.iloc[i]['Correction factor -2 [%]']
             if i not in [0, 1]:
