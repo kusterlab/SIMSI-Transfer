@@ -39,7 +39,7 @@ def assign_missing_precursors(summary: pd.DataFrame, allpeptides: pd.DataFrame):
     summary.loc[missing_precursor, ['new_type', 'Intensity']] = summary.loc[missing_precursor].apply(
             lambda x : match_precursor_grouped(x, allpeptides_grouped, group_key), axis=1, result_type='expand'
         ).to_numpy() # need to convert to numpy array, see: https://stackoverflow.com/questions/69954697/
-    
+
     num_new_assigned_precursor = (summary.loc[missing_precursor]['new_type'] == 'MULTI-MSMS').sum()
     logger.info(f"Assigned precursor to {num_new_assigned_precursor} out of {missing_precursor.sum()} unassigned MS2 spectra")
     return summary
@@ -115,19 +115,21 @@ def assign_evidence_feature(summary: pd.DataFrame, evidence: pd.DataFrame, allpe
     return summary
 
 
-def calculate_evidence_columns(summary):
+def calculate_evidence_columns(summary, plex):
     # replacing zeros with NaNs to count later
     logger.info('Assigned evidence features; calculating column values...')
-    reps = ['Reporter intensity 1', 'Reporter intensity 2', 'Reporter intensity 3', 'Reporter intensity 4',
-            'Reporter intensity 5', 'Reporter intensity 6', 'Reporter intensity 7', 'Reporter intensity 8',
-            'Reporter intensity 9', 'Reporter intensity 10', 'Reporter intensity corrected 1',
-            'Reporter intensity corrected 2', 'Reporter intensity corrected 3', 'Reporter intensity corrected 4',
-            'Reporter intensity corrected 5', 'Reporter intensity corrected 6', 'Reporter intensity corrected 7',
-            'Reporter intensity corrected 8', 'Reporter intensity corrected 9', 'Reporter intensity corrected 10']
-    tmt = 10
-    if 'Reporter intensity 11' in summary.columns:
-        tmt = 11
-        reps.extend(['Reporter intensity 11', 'Reporter intensity corrected 11'])
+    reps = [f'Reporter intensity {i}' for i in range(1, plex + 1)]
+    reps.extend([f'Reporter intensity corrected {i}' for i in range(1, plex + 1)])
+    # reps = ['Reporter intensity 1', 'Reporter intensity 2', 'Reporter intensity 3', 'Reporter intensity 4',
+    #         'Reporter intensity 5', 'Reporter intensity 6', 'Reporter intensity 7', 'Reporter intensity 8',
+    #         'Reporter intensity 9', 'Reporter intensity 10', 'Reporter intensity corrected 1',
+    #         'Reporter intensity corrected 2', 'Reporter intensity corrected 3', 'Reporter intensity corrected 4',
+    #         'Reporter intensity corrected 5', 'Reporter intensity corrected 6', 'Reporter intensity corrected 7',
+    #         'Reporter intensity corrected 8', 'Reporter intensity corrected 9', 'Reporter intensity corrected 10']
+    # tmt = 10
+    # if 'Reporter intensity 11' in summary.columns:
+    #     tmt = 11
+    #     reps.extend(['Reporter intensity 11', 'Reporter intensity corrected 11'])
     summary[reps] = summary[reps].replace({0: np.nan})
     summary = summary.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge']).reset_index(drop=True)
 
@@ -138,7 +140,7 @@ def calculate_evidence_columns(summary):
 
     def csv_list(x):
         return ";".join(map(str, x))
-    
+
     def count_transferred(ids):
         return (ids == 't').sum()
 
@@ -169,9 +171,9 @@ def calculate_evidence_columns(summary):
             'Score': pd.NamedAgg(column='Score', aggfunc=max),                              # from msms.txt
             'Delta score': pd.NamedAgg(column='Delta score', aggfunc=max),                  # from msms.txt
             'Intensity': pd.NamedAgg(column='Intensity', aggfunc='sum'),                    # from evidence.txt, supplemented from allPeptides.txt
-            **{f'Reporter intensity corrected {i}': pd.NamedAgg(column=f'Reporter intensity corrected {i}', aggfunc='sum') for i in range(1, tmt+1)}, # from msmsScans.txt or parsed from mzML files by SIMSI-Transfer
-            **{f'Reporter intensity {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='sum') for i in range(1, tmt+1)},  # from msmsScans.txt or parsed from mzML files by SIMSI-Transfer
-            **{f'Reporter intensity count {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='count') for i in range(1, tmt+1)},  # calculated by SIMSI-Transfer
+            **{f'Reporter intensity corrected {i}': pd.NamedAgg(column=f'Reporter intensity corrected {i}', aggfunc='sum') for i in range(1, plex + 1)}, # from msmsScans.txt or parsed from mzML files by SIMSI-Transfer
+            **{f'Reporter intensity {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='sum') for i in range(1, plex + 1)},  # from msmsScans.txt or parsed from mzML files by SIMSI-Transfer
+            **{f'Reporter intensity count {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='count') for i in range(1, plex + 1)},  # calculated by SIMSI-Transfer
             'Reverse': pd.NamedAgg(column='Reverse', aggfunc='first'),                      # from msms.txt
             'summary_ID': pd.NamedAgg(column='summary_ID', aggfunc=csv_list),               # assigned by SIMSI-Transfer
             'Transferred spectra count': pd.NamedAgg(column='identification', aggfunc=count_transferred) # calculated by SIMSI-Transfer
@@ -192,10 +194,10 @@ def calculate_evidence_columns(summary):
     return evidence
 
 
-def build_evidence(summary: pd.DataFrame, evidence: pd.DataFrame, allpeptides: pd.DataFrame):
+def build_evidence(summary: pd.DataFrame, evidence: pd.DataFrame, allpeptides: pd.DataFrame, plex: int):
     evidence = evidence[evidence['Type'] != 'MSMS']
     evidence = evidence.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Calibrated retention time start'])
     evidence.insert(len(evidence.columns), 'evidence_ID', range(len(evidence)))
     summary = assign_evidence_feature(summary, evidence, allpeptides)
-    evidence = calculate_evidence_columns(summary)
+    evidence = calculate_evidence_columns(summary, plex)
     return evidence
