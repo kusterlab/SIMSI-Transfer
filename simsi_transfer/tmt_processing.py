@@ -12,8 +12,9 @@ from pyteomics import mzml
 
 logger = logging.getLogger(__name__)
 
+
 def get_tmt_columns(plex):
-    return [f'raw_TMT{i}' for i in range(1, 14)], [f'corr_TMT{i}' for i in range(1, 12)]
+    return [f'raw_TMT{i}' for i in range(1, plex + 3)], [f'corr_TMT{i}' for i in range(1, plex + 1)]
 
 
 def get_correction_factors(correction_factor_path: Path, plex_size):

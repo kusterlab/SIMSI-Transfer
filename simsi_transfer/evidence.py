@@ -120,16 +120,6 @@ def calculate_evidence_columns(summary, plex):
     logger.info('Assigned evidence features; calculating column values...')
     reps = [f'Reporter intensity {i}' for i in range(1, plex + 1)]
     reps.extend([f'Reporter intensity corrected {i}' for i in range(1, plex + 1)])
-    # reps = ['Reporter intensity 1', 'Reporter intensity 2', 'Reporter intensity 3', 'Reporter intensity 4',
-    #         'Reporter intensity 5', 'Reporter intensity 6', 'Reporter intensity 7', 'Reporter intensity 8',
-    #         'Reporter intensity 9', 'Reporter intensity 10', 'Reporter intensity corrected 1',
-    #         'Reporter intensity corrected 2', 'Reporter intensity corrected 3', 'Reporter intensity corrected 4',
-    #         'Reporter intensity corrected 5', 'Reporter intensity corrected 6', 'Reporter intensity corrected 7',
-    #         'Reporter intensity corrected 8', 'Reporter intensity corrected 9', 'Reporter intensity corrected 10']
-    # tmt = 10
-    # if 'Reporter intensity 11' in summary.columns:
-    #     tmt = 11
-    #     reps.extend(['Reporter intensity 11', 'Reporter intensity corrected 11'])
     summary[reps] = summary[reps].replace({0: np.nan})
     summary = summary.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge']).reset_index(drop=True)
 
