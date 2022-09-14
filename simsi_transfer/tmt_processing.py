@@ -53,6 +53,11 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
         correction_dataframe = pd.read_csv(correction_factor_path, sep='\t')
 
         for i in range(plex_size):
+            logger.info('Dort dort dort!')
+            logger.info('Dort dort dort!')
+            logger.info(f'Der iterator steht bei {i}!')
+            logger.info('Dort dort dort!')
+            logger.info('Dort dort dort!')
             if i not in [0, 1, 2, 3]:
                 correction[i - 4, i] = correction_dataframe.iloc[i]['Correction factor -2 [%]']
             if i not in [0, 1]:
