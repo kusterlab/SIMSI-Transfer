@@ -57,9 +57,6 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
 
     # Normalize correction factors
     correction_normalized = (correction / correction.sum(axis=0))
-    logger.info('This crap passed!')
-    logger.info(correction)
-    logger.info(correction_normalized)
     return tmt_masses, correction_normalized
 
 
