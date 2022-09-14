@@ -16,9 +16,17 @@ def process_and_concat(input_folders: List[Any], reading_function: Callable, **k
 
 def get_plex(input_folders):
     columns = pd.read_csv(input_folders[0]/Path('msms.txt'), nrows=0, sep='\t').columns.tolist()
-    substring = re.compile(r'^Reporter intensity (\d{1,2})$')
+    substring = re.compile(r'Reporter intensity (\d{1,2})')
     reporters = [i for i in columns if re.match(substring, i)]
     plex_number = max([int(re.search(substring, i).group(1)) for i in reporters])
+    logger.info('Plex information incoming!')
+    logger.info('Plex information incoming!')
+    logger.info(reporters)
+    logger.info(re.search(substring, 'Reporter intensity 9').group(1))
+    logger.info([int(re.search(substring, i).group(1)) for i in reporters])
+    logger.info(plex_number)
+    logger.info('Plex information incoming!')
+    logger.info('Plex information incoming!')
     return plex_number
 
 
