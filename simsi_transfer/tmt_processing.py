@@ -17,6 +17,7 @@ def get_tmt_columns(plex):
 
 
 def get_correction_factors(correction_factor_path: Path, plex_size):
+    logger.info(plex_size)
     # correction = np.array([[100, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # 126 C Tag
     #                        [0.0, 100, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # 127 N Tag
     #                        [0.0, 0.0, 100, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # 127 C Tag

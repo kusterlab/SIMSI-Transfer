@@ -67,6 +67,8 @@ def main(argv):
     msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify, plex=plex)
 
     # TODO: Add check if raw_files(maracluster) == raw_files(msmsScans)
+    logger.info('This is in main:')
+    logger.info(plex)
 
     if tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
