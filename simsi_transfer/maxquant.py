@@ -19,14 +19,7 @@ def get_plex(input_folders):
     substring = re.compile(r'^Reporter intensity (\d{1,2})$')
     reporters = [i for i in columns if re.match(substring, i)]
     plex_number = max([int(re.search(substring, i).group(1)) for i in reporters])
-    logger.info('Plex information incoming!')
-    logger.info('Plex information incoming!')
-    logger.info(reporters)
-    logger.info(re.search(substring, 'Reporter intensity 9').group(1))
-    logger.info([int(re.search(substring, i).group(1)) for i in reporters])
-    logger.info(plex_number)
-    logger.info('Plex information incoming!')
-    logger.info('Plex information incoming!')
+    logger.info(f'Automatic plex detection: {plex_number}plex detected.')
     return plex_number
 
 
