@@ -67,15 +67,15 @@ def main(argv):
     msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify, plex=plex)
 
     # TODO: Add check if raw_files(maracluster) == raw_files(msmsScans)
-    logger.info('This is in main:')
-    logger.info(plex)
 
     if tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
         extracted_folder = output_folder / Path('extracted')
         # TODO: support multiple TMT correction files
-        tmt_processing.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_files[0], num_threads, plex)
-        
+        tmt_processing.extract_tmt_reporters(mzml_files=mzml_files, output_path=extracted_folder,
+                                             correction_factor_path=tmt_correction_files[0], plex=plex,
+                                             num_threads=num_threads)
+
         corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder, plex)
         msmsscans_mq = tmt_processing.merge_with_corrected_tmt(msmsscans_mq, corrected_tmt)
 

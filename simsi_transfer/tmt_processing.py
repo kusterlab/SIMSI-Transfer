@@ -17,7 +17,6 @@ def get_tmt_columns(plex):
 
 
 def get_correction_factors(correction_factor_path: Path, plex_size):
-    logger.info(plex_size)
     # correction = np.array([[100, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # 126 C Tag
     #                        [0.0, 100, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # 127 N Tag
     #                        [0.0, 0.0, 100, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # 127 C Tag
@@ -33,13 +32,6 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
     #                        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # 132 C Overflow
     #                        ])
     correction = np.zeros(shape=(plex_size + 2, plex_size))
-    logger.info('Hier hier hier!')
-    logger.info('Hier hier hier!')
-    logger.info(f'Die plex size ist {plex_size}!')
-    logger.info(correction)
-    logger.info(correction.shape)
-    logger.info('Hier hier hier!')
-    logger.info('Hier hier hier!')
     for i in range(correction.shape[1]):
         correction[i, i] = 100
 
@@ -55,9 +47,6 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
         correction_dataframe = pd.read_csv(correction_factor_path, sep='\t')
 
         for i in range(plex_size):
-            logger.info()
-            logger.info('Dort dort dort!')
-            logger.info(f'Der iterator steht bei {i}!')
             if i not in [0, 1, 2, 3]:
                 correction[i - 4, i] = correction_dataframe.iloc[i]['Correction factor -2 [%]']
             if i not in [0, 1]:
@@ -65,11 +54,12 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
             correction[i + 2, i] = correction_dataframe.iloc[i]['Correction factor +1 [%]']
             if i not in [plex_size - 1, plex_size - 2, plex_size - 3]:
                 correction[i + 4, i] = correction_dataframe.iloc[i]['Correction factor +2 [%]']
-            logger.info(correction)
 
     # Normalize correction factors
     correction_normalized = (correction / correction.sum(axis=0))
-
+    logger.info('This crap passed!')
+    logger.info(correction)
+    logger.info(correction_normalized)
     return tmt_masses, correction_normalized
 
 
