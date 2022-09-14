@@ -49,22 +49,22 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
 
     tmt_masses = all_tmt_masses[:plex_size + 2]
 
+    np.set_printoptions(linewidth=200)
     if correction_factor_path.is_file():
         correction_dataframe = pd.read_csv(correction_factor_path, sep='\t')
 
         for i in range(plex_size):
-            logger.info('Dort dort dort!')
+            logger.info()
             logger.info('Dort dort dort!')
             logger.info(f'Der iterator steht bei {i}!')
-            logger.info('Dort dort dort!')
-            logger.info('Dort dort dort!')
             if i not in [0, 1, 2, 3]:
                 correction[i - 4, i] = correction_dataframe.iloc[i]['Correction factor -2 [%]']
             if i not in [0, 1]:
                 correction[i - 2, i] = correction_dataframe.iloc[i]['Correction factor -1 [%]']
             correction[i + 2, i] = correction_dataframe.iloc[i]['Correction factor +1 [%]']
-            if i not in [9, 10]:
+            if i not in [plex_size - 1, plex_size - 2, plex_size - 3]:
                 correction[i + 4, i] = correction_dataframe.iloc[i]['Correction factor +2 [%]']
+            logger.info(correction)
 
     # Normalize correction factors
     correction_normalized = (correction / correction.sum(axis=0))
