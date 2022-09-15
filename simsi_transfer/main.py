@@ -63,7 +63,8 @@ def main(argv):
     cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, num_threads)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
-    msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify)
+    plex = mq.get_plex(mq_txt_folders)
+    msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify, plex=plex)
 
     # TODO: Add check if raw_files(maracluster) == raw_files(msmsScans)
 
@@ -71,9 +72,11 @@ def main(argv):
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
         extracted_folder = output_folder / Path('extracted')
         # TODO: support multiple TMT correction files
-        tmt_processing.extract_tmt_reporters(mzml_files, extracted_folder, tmt_correction_files[0], num_threads)
-        
-        corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder)
+        tmt_processing.extract_tmt_reporters(mzml_files=mzml_files, output_path=extracted_folder,
+                                             correction_factor_path=tmt_correction_files[0], plex=plex,
+                                             num_threads=num_threads)
+
+        corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder, plex)
         msmsscans_mq = tmt_processing.merge_with_corrected_tmt(msmsscans_mq, corrected_tmt)
 
     logger.info(f'Reading in MaxQuant msms.txt file and filtering out decoy hits')
@@ -119,7 +122,7 @@ def main(argv):
         statistics[pval] = simsi_output.count_clustering_parameters(msms_simsi)
 
         logger.info(f'Starting SIMSI-Transfer evidence.txt building for {pval}.')
-        evidence_simsi = evidence.build_evidence(msms_simsi, evidence_mq, allpeptides_mq)
+        evidence_simsi = evidence.build_evidence(msms_simsi, evidence_mq, allpeptides_mq, plex)
         simsi_output.export_simsi_evidence_file(evidence_simsi, output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
         logger.info('')
