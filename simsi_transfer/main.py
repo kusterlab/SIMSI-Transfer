@@ -71,9 +71,8 @@ def main(argv):
     if tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
         extracted_folder = output_folder / Path('extracted')
-        # TODO: support multiple TMT correction files
         tmt_processing.extract_tmt_reporters(mzml_files=mzml_files, output_path=extracted_folder,
-                                             correction_factor_path=tmt_correction_files[0], plex=plex,
+                                             correction_factor_path=tmt_correction_files, plex=plex,
                                              num_threads=num_threads)
 
         corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder, plex)

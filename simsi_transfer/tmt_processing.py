@@ -61,7 +61,7 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
     return tmt_masses, correction_normalized
 
 
-def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_factor_path: Path, plex: int,
+def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_factor_paths: List[Path], plex: int,
                           num_threads: int = 1, extraction_level: int = 3):
     """
     Takes about 1.5 minute for a 700MB file with 40k MS2 scans
@@ -72,7 +72,7 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
     if num_threads > 1:
         from .utils.multiprocessing_pool import JobPool
         processing_pool = JobPool(processes=num_threads)
-    for mzml_file in mzml_files:
+    for mzml_file, correction_factor_path in zip(mzml_files, correction_factor_paths):
         if num_threads > 1:
             processing_pool.applyAsync(extract_and_correct_reporters,
                                        (mzml_file, output_path, correction_factor_path, extraction_level, plex))
