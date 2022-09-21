@@ -11,12 +11,12 @@ pd.set_option('display.max_columns', None)
 
 class TestTransfer:
     def test_transfer(self, summary_df):
-        transferred_df = transfer.transfer(summary_df, ambiguity_decision=False)
+        transferred_df = transfer.transfer(summary_df, ambiguity_decision='all')
         assert transferred_df.iloc[3]['Sequence'] == 'DSDSWDADAFSVEDPVRK'
         assert transferred_df.iloc[3]['Modified sequence'] == 'DSDSWDADAFSVEDPVRK.2.p2/p4/p11'
 
     def test_transfer_ambiguity_decision(self, summary_df):
-        transferred_df = transfer.transfer(summary_df, ambiguity_decision=True)
+        transferred_df = transfer.transfer(summary_df, ambiguity_decision='majority')
         assert transferred_df.iloc[3]['Sequence'] == 'DSDSWDADAFSVEDPVRK'
         assert transferred_df.iloc[3]['Modified sequence'] == 'DS(Phospho (STY))DS(Phospho (STY))WDADAFSVEDPVRK'
 
