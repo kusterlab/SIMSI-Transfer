@@ -1,3 +1,7 @@
+v0.4.1
+- Support for TMT-Pro and other isobaric labels
+- Added TMT correction factor files to meta file input
+
 v0.4.0
 - Added support for a meta file with multiple raw and MQ input folders
 - Updated ThermoRawFileParser to v1.4.0, fixes wrong MS3->MS2 assignment issue
