@@ -1,3 +1,6 @@
+v0.4.2
+- Fixed metafile handling with multiple reporter ion files
+
 v0.4.1
 - Support for TMT-Pro and other isobaric labels
 - Added TMT correction factor files to meta file input
