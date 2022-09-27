@@ -48,6 +48,8 @@ clean_data_folder:
 integration_test:
 	python3 -um simsi_transfer --mq_txt_folder ${DATA}/combined/txt/ --raw_folder ${DATA} --output_folder ${DATA}/simsi_output --num_threads 3 --stringencies 20,15 ${EXTRA_ARGS}
 
+integration_test_metafile:
+	python3 -um simsi_transfer --meta_input_file ${DATA}/meta_file_simsi.txt --output_folder ${DATA}/simsi_output --num_threads 4 --stringencies 20,15 --tmt_requantify ${EXTRA_ARGS}
 
 test:
 	python3 -m pytest --cov=simsi_transfer --cov-report html --cov-report term tests/unit_tests
