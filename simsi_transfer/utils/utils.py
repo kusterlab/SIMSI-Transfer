@@ -1,4 +1,5 @@
 from typing import List, Callable, Any
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
@@ -15,6 +16,23 @@ def csv_list_unique(x: pd.Series) -> str:
     def semicolon_split(x):
         return x.split(";")
     return ";".join(apply_and_flatten(x, semicolon_split))
+
+
+def convert_to_path_list(s):
+    return list(map(Path, s.tolist()))
+
+
+def get_raw_files_and_correction_factor_paths(meta_input_df: pd.DataFrame):
+    meta_input_exploded_df = meta_input_df[['raw_files', 'tmt_correction_file']].explode('raw_files')
+    raw_files, correction_factor_paths = meta_input_exploded_df.transpose().values.tolist()
+    
+    def convert_to_paths(l: List[str]):
+        return list(map(Path, l))
+
+    raw_files = convert_to_paths(raw_files)
+    correction_factor_paths = convert_to_paths(correction_factor_paths)
+    
+    return raw_files, correction_factor_paths
 
 
 def apply_and_flatten(lst: List[Any], f: Callable[[Any],List[Any]]) -> List[Any]:

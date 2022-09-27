@@ -46,9 +46,7 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip:
     return output_path
 
 
-def convert_raw_mzml_batch(raw_folders: List[Path], output_folder: Optional[Path] = None, num_threads: int = 1, gzip: bool = False, ms_level: str = "2-") -> List[Path]:
-    raw_files = utils.apply_and_flatten(raw_folders, get_raw_files)
-    
+def convert_raw_mzml_batch(raw_files: List[Path], output_folder: Optional[Path] = None, num_threads: int = 1, gzip: bool = False, ms_level: str = "2-") -> List[Path]:
     if not output_folder.is_dir():
         output_folder.mkdir(parents=True)
     
@@ -77,10 +75,12 @@ def convert_raw_mzml_batch(raw_folders: List[Path], output_folder: Optional[Path
     return mzml_files
     
 
-def get_raw_files(raw_folder: Path) -> List[Path]:
+def get_raw_files(raw_folder: str) -> List[Path]:
     """
     Obtains raw files by scanning through the raw_path directory.
     """
+    raw_folder = Path(raw_folder)
+    
     raw_files = []
     if not raw_folder.is_dir():
         raise ValueError(f'Failed converting raw files, {raw_folder} is not a directory.')
@@ -93,7 +93,7 @@ def get_raw_files(raw_folder: Path) -> List[Path]:
         raw_files = [f for f in raw_folder.iterdir() if f.suffix.lower() == extension]
     
     if len(raw_files) == 0:
-        raise ValueError(f'Failed converting raw files, {raw_folder} did not contain any .mzML or .raw files.')
+        raise ValueError(f'Failed getting raw files, {raw_folder} did not contain any .mzML or .raw files.')
         
     logger.info(f"Found {len(raw_files)} raw files in the search directory")
     return raw_files
