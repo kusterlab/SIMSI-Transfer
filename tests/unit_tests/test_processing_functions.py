@@ -2,7 +2,7 @@ import io
 
 import pytest
 import pandas as pd
-import pandas.util.testing as tm
+import pandas.testing as tm
 import numpy as np
 
 import simsi_transfer.evidence as evidence
