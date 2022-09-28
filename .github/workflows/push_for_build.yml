@@ -8,11 +8,25 @@ on:
 jobs:
   build:
     name: 'Build .exe for Windows users'
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.8' ]
     runs-on: 'windows-latest'
-    defaults:
-      run:
-        shell: bash -l {0}
+#    defaults:
+#      run:
+#        shell: bash -l {0}
+#        steps:
+#          - run: |
+#              conda env create -f conda_environment.yml
+#              build_gui.bat
     steps:
-      - run: |
-          conda env create -f conda_environment.yml
-          build_gui.bat
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          # $CONDA is an environment variable pointing to the root of the miniconda directory
+          $CONDA/bin/conda env update --file environment.yml --name base
