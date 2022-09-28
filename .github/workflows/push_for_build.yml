@@ -14,7 +14,5 @@ jobs:
         shell: bash -l {0}
     steps:
       - run: |
-          echo "$PWD"
-      - run: |
-          dir
-          ls
+          conda env create -f conda_environment.yml
+          build_gui.bat
