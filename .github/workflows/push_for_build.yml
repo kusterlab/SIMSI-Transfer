@@ -25,35 +25,27 @@ on:
 
 
 jobs:
-  build-linux:
+  build-windows:
+    name: Poetry build for Windows
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ '3.8' ]
+        poetry-version: [ 1.1.11 ]
+
     steps:
-      - uses: Nuitka/Nuitka-Action@v0.4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
         with:
-          script-name: gui.py
-          standalone: true
-          enable-plugins: pyside6
-#    name: Poetry build for ${{ matrix.os }}
-#    runs-on: ${{ matrix.os }}
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        python-version: [ '3.8' ]
-#        poetry-version: [ 1.1.11 ]
-#        os: [ ubuntu-20.04 ]
-#
-#    steps:
-#      - uses: actions/checkout@v3
-#      - uses: actions/setup-python@v3
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#      - name: Run image
-#        uses: abatilo/actions-poetry@v2.0.0
-#        with:
-#          poetry-version: ${{ matrix.poetry-version }}
-#      - name: Build package
-#        run: poetry build
-#      - name: Install dependencies
-#        run: |
-#          # $CONDA is an environment variable pointing to the root of the miniconda directory
-#          $CONDA/bin/conda env update --file conda_environment.yml --name base
+          python-version: ${{ matrix.python-version }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v2.0.0
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: Build package
+        run: poetry build
+      - name: Install dependencies
+        run: |
+          # $CONDA is an environment variable pointing to the root of the miniconda directory
+          $CONDA/bin/conda env update --file conda_environment.yml --name base
