@@ -1,0 +1,17 @@
+name: Push for build
+
+on:
+  push:
+    branches:
+      - 'automatic_exe_build'
+
+jobs:
+  build:
+    name: 'Build .exe for Windows users'
+    runs-on: 'windows-latest'
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - run: |
+          echo "$PWD"
