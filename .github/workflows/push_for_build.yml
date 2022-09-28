@@ -32,6 +32,7 @@ jobs:
         with:
           script-name: gui.py
           standalone: true
+          enable-plugins: pyside6
 #    name: Poetry build for ${{ matrix.os }}
 #    runs-on: ${{ matrix.os }}
 #    strategy:
