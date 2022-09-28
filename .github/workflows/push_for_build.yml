@@ -12,7 +12,10 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}
+        working-directory: SIMSI-Transfer
     steps:
       - run: |
           echo "$PWD"
+      - run: |
           dir
+          ls
