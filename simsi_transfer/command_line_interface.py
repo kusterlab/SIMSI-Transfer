@@ -61,11 +61,11 @@ def parse_args(argv):
     # ------------------------------------------------
     args = apars.parse_args(argv)
     
-    raw_folders, mq_txt_folders, tmt_correction_files = get_input_folders(args)
+    meta_input_df = get_input_folders(args)
     
-    return mq_txt_folders, raw_folders, parse_stringencies(args.stringencies), Path(
-        args.output_folder), args.num_threads, tmt_correction_files, args.tmt_ms_level, \
-        args.tmt_requantify, args.filter_decoys, args.ambiguity_decision, args.meta_input_file
+    return meta_input_df, parse_stringencies(args.stringencies), Path(
+        args.output_folder), args.num_threads, args.tmt_ms_level, \
+        args.tmt_requantify, args.filter_decoys, args.ambiguity_decision
 
 
 def get_input_folders(args):
@@ -77,28 +77,18 @@ def get_input_folders(args):
         
         meta_input_df = pd.read_csv(args.meta_input_file, sep='\t')
         meta_input_df.columns = ['mq_txt_folder', 'raw_folder', 'tmt_correction_file'][:len(meta_input_df.columns)]
-        
-        raw_folders = convert_to_path_list(meta_input_df['raw_folder'])
-        mq_txt_folders = convert_to_path_list(meta_input_df['mq_txt_folder'])
-        if 'tmt_correction_file' in meta_input_df.columns:
-            tmt_correction_files = convert_to_path_list(meta_input_df['tmt_correction_file'])
-        else:
-            tmt_correction_files = [Path(args.tmt_reporter_correction_file)]*len(raw_folders)
+        if 'tmt_correction_file' not in meta_input_df.columns:
+            meta_input_df['tmt_correction_file'] = args.tmt_reporter_correction_file
     else:
         if not args.raw_folder:
             logging.error("Missing --raw_folder argument")
         if not args.mq_txt_folder:
             logging.error("Missing --mq_txt_folder argument")
 
-        raw_folders = [Path(args.raw_folder)]
-        mq_txt_folders = [Path(args.mq_txt_folder)]
-        tmt_correction_files = [Path(args.tmt_reporter_correction_file)]
+        meta_input_df = pd.DataFrame(list(zip([args.mq_txt_folder], [args.raw_folder], [args.tmt_reporter_correction_file])), 
+                                     columns = ['mq_txt_folder', 'raw_folder', 'tmt_correction_file'])
     
-    return raw_folders, mq_txt_folders, tmt_correction_files
-
-
-def convert_to_path_list(s):
-    return list(map(Path, s.tolist()))
+    return meta_input_df
 
 
 def parse_stringencies(stringencies):

@@ -14,6 +14,7 @@ from . import tmt_processing
 from . import transfer
 from . import evidence
 from . import version
+from .utils import utils
 
 __version__ = version.get_version_from_pyproject()
 __copyright__ = '''Copyright (c) 2021-2022 Firas Hamood & Matthew The. All rights reserved. Written by Firas Hamood (firas.hamood@tum.de) and Matthew The (matthew.the@tum.de) at the Chair of Proteomics and Bioanalytics at the Technical University of Munich.'''
@@ -22,8 +23,12 @@ logger = logging.getLogger(__name__)
 
 
 def main(argv):
-    mq_txt_folders, raw_folders, pvals, output_folder, num_threads, tmt_correction_files, ms_level, tmt_requantify, \
-        filter_decoys, ambiguity_decision, meta_input_file = cli.parse_args(argv)
+    meta_input_df, pvals, output_folder, num_threads, ms_level, tmt_requantify, \
+        filter_decoys, ambiguity_decision = cli.parse_args(argv)
+    
+    raw_folders = utils.convert_to_path_list(meta_input_df['raw_folder'])
+    mq_txt_folders = utils.convert_to_path_list(meta_input_df['mq_txt_folder'])
+    tmt_correction_files = utils.convert_to_path_list(meta_input_df['tmt_correction_file'])
 
     if not output_folder.is_dir():
         output_folder.mkdir(parents=True)
@@ -53,10 +58,14 @@ def main(argv):
 
     logger.info(f'Starting SIMSI-Transfer')
     logger.info('')
+    
+    logger.info(f'Retrieving .raw files')
+    meta_input_df['raw_files'] = meta_input_df['raw_folder'].apply(raw.get_raw_files)
+    raw_files, correction_factor_paths = utils.get_raw_files_and_correction_factor_paths(meta_input_df)
 
     logger.info(f'Converting .raw files')
     mzml_folder = output_folder / Path('mzML')
-    mzml_files = raw.convert_raw_mzml_batch(raw_folders, mzml_folder, num_threads)
+    mzml_files = raw.convert_raw_mzml_batch(raw_files, mzml_folder, num_threads)
 
     logger.info(f'Clustering .mzML files')
     cluster_result_folder = output_folder / Path('maracluster_output')
@@ -72,7 +81,7 @@ def main(argv):
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
         extracted_folder = output_folder / Path('extracted')
         tmt_processing.extract_tmt_reporters(mzml_files=mzml_files, output_path=extracted_folder,
-                                             correction_factor_paths=tmt_correction_files, plex=plex,
+                                             correction_factor_paths=correction_factor_paths, plex=plex,
                                              num_threads=num_threads)
 
         corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder, plex)

@@ -1,3 +1,6 @@
+v0.4.3
+- Fixed metafile handling with multiple reporter ion files again
+
 v0.4.2
 - Fixed metafile handling with multiple reporter ion files
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "simsi_transfer"
-version = "0.4.2"
+version = "0.4.3"
 description = "Software-assisted reduction of missing values in phosphoproteomics and proteomics isobaric labeling data using MS2 spectrum clustering"
 authors = ["Firas Hamood <firas.hamood@tum.de>", "Matthew The <matthew.the@tum.de>"]
 license= "Apache-2.0"
