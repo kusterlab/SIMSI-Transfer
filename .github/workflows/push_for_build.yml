@@ -23,13 +23,19 @@ jobs:
         run: |
           C:\Miniconda\condabin\conda.bat env create -f conda_environment.yml
           C:\Miniconda\condabin\conda.bat init powershell
+          C:\Miniconda\condabin\conda.bat activate simsi_transfer_gui
       - name: Avoid MKL dependence
         run: |
           C:\Miniconda\condabin\conda.bat install -c conda-forge nomkl numpy pandas pyqt pyinstaller
           C:\Miniconda\condabin\conda.bat install -c bioconda pyteomics
-      - name: Get current directory information
+      - name: Download UPX and unpack
         run: |
-          dir
-      - name: Build exe
+          curl -L https://github.com/upx/upx/releases/tag/v3.96/upx-3.96-win64.zip > C:\UPX\upx-3.96-win64.zip
+          Expand-Archive C:\UPX\upx-3.96-win64.zip -DestinationPath C:\UPX\upx-3.96\
+      - name: Build exe and compress with UPX
         run: |
-          .\gui_tools\build_gui.bat
+          cd .\gui_tools
+          build_gui.bat
+      - name: Add built .exe to release
+        run: |
+          echo "There is stuff missing here..."
