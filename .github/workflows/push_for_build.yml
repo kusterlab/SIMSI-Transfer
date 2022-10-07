@@ -21,7 +21,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Download UPX and unpack
         run: |
-          curl -L https://github.com/upx/upx/releases/tag/v3.96/upx-3.96-win64.zip > C:\UPX\upx-3.96-win64.zip
+          curl -L https://github.com/upx/upx/releases/tag/v3.96/upx-3.96-win64.zip --output C:\UPX\upx-3.96-win64.zip
           Expand-Archive C:\UPX\upx-3.96-win64.zip -DestinationPath C:\UPX\upx-3.96\
       - name: Install dependencies
         run: |
