@@ -34,22 +34,41 @@ jobs:
         python-version: [ '3.8' ]
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Echo conda variable w/ &
+      - name: Install dependencies
         run: |
-          & echo $CONDA
-      - name: Echo conda variable w/o &
+          C:\Miniconda\condabin\conda.bat env create -f conda_environment.yml
+          C:\Miniconda\condabin\conda.bat init powershell
+      - name: Avoid MKL dependence
+          C:\Miniconda\condabin\conda.bat install -c conda-forge nomkl numpy pandas pyqt pyinstaller
+          C:\Miniconda\condabin\conda.bat install -c bioconda pyteomics
+      - name: Build exe
         run: |
-          echo $CONDA
-      - name: Try running conda directly w/ &
-        run: |
-          & conda --help
-      - name: Try running conda directly w/o &
-        run: |
-          conda --help
+          build_gui.bat
+
+
+#    steps:
+#      - uses: actions/checkout@v3
+#      - uses: actions/setup-python@v3
+#        with:
+#          python-version:
+#      - name: Echo conda variable w/ &
+#        run: |
+#          & echo $CONDA
+#      - name: Echo conda variable w/o &
+#        run: |
+#          echo $CONDA
+#      - name: Try running conda directly w/ &
+#        run: |
+#          & conda --help
+#      - name: Try running conda directly w/o &
+#        run: |
+#          conda --help
+#
 #      - name: Echo help to check working conda functionality
 #        run: |
 #          # $CONDA is an environment variable pointing to the root of the miniconda directory, but it doesnt seem to work
