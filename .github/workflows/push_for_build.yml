@@ -38,12 +38,24 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Echo help to check working conda functionality
+      - name: Echo conda variable w/ &
         run: |
-          # $CONDA is an environment variable pointing to the root of the miniconda directory
-          & $CONDA/bin/conda --help
-          & $CONDA/bin/conda env list
-      - name: Install dependencies
+          & echo $CONDA
+      - name: Echo conda variable w/o &
         run: |
-          # $CONDA is an environment variable pointing to the root of the miniconda directory
-          $CONDA/bin/conda env update --file conda_environment.yml --name base
+          echo $CONDA
+      - name: Try running conda directly w/ &
+        run: |
+          & conda --help
+      - name: Try running conda directly w/o &
+        run: |
+          conda --help
+#      - name: Echo help to check working conda functionality
+#        run: |
+#          # $CONDA is an environment variable pointing to the root of the miniconda directory, but it doesnt seem to work
+#          & $CONDA/bin/conda --help
+#          & $CONDA/bin/conda env list
+#      - name: Install dependencies
+#        run: |
+#          # $CONDA is an environment variable pointing to the root of the miniconda directory
+#          $CONDA/bin/conda env update --file conda_environment.yml --name base
