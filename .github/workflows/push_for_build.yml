@@ -4,26 +4,6 @@ on:
   push:
     branches:
       - 'automatic_exe_build'
-
-    #jobs:
-    #  build:
-    #    name: 'Build .exe for Windows users'
-    #    strategy:
-    #      fail-fast: false
-    #      matrix:
-    #        python-version: [ '3.8' ]
-    #    runs-on: 'windows-latest'
-
-
-    #    defaults:
-    #      run:
-    #        shell: bash -l {0}
-    #        steps:
-    #          - run: |
-    #              conda env create -f conda_environment.yml
-    #              build_gui.bat
-
-
 jobs:
   build-windows:
     name: Executable build for Windows
@@ -39,17 +19,17 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-#      - name: Install dependencies
-#        run: |
-#          C:\Miniconda\condabin\conda.bat env create -f conda_environment.yml
-#          C:\Miniconda\condabin\conda.bat init powershell
-#      - name: Avoid MKL dependence
-#        run: |
-#          C:\Miniconda\condabin\conda.bat install -c conda-forge nomkl numpy pandas pyqt pyinstaller
-#          C:\Miniconda\condabin\conda.bat install -c bioconda pyteomics
+      - name: Install dependencies
+        run: |
+          C:\Miniconda\condabin\conda.bat env create -f conda_environment.yml
+          C:\Miniconda\condabin\conda.bat init powershell
+      - name: Avoid MKL dependence
+        run: |
+          C:\Miniconda\condabin\conda.bat install -c conda-forge nomkl numpy pandas pyqt pyinstaller
+          C:\Miniconda\condabin\conda.bat install -c bioconda pyteomics
       - name: Get current directory information
         run: |
           dir
-#      - name: Build exe
-#        run: |
-#          build_gui.bat
+      - name: Build exe
+        run: |
+          .\gui_tools\build_gui.bat
