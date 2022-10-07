@@ -26,25 +26,23 @@ on:
 
 jobs:
   build-windows:
-    name: Poetry build for Windows
+    name: Executable build for Windows
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
         python-version: [ '3.8' ]
-        poetry-version: [ 1.1.11 ]
 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Run image
-        uses: abatilo/actions-poetry@v2.0.0
-        with:
-          poetry-version: ${{ matrix.poetry-version }}
-      - name: Build package
-        run: poetry build
+      - name: Echo help to check working conda functionality
+        run: |
+          # $CONDA is an environment variable pointing to the root of the miniconda directory
+          $CONDA/bin/conda --help
+          $CONDA/bin/conda env list
       - name: Install dependencies
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
