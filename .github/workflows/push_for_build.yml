@@ -41,8 +41,8 @@ jobs:
       - name: Echo help to check working conda functionality
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
-          $CONDA/bin/conda --help
-          $CONDA/bin/conda env list
+          & $CONDA/bin/conda --help
+          & $CONDA/bin/conda env list
       - name: Install dependencies
         run: |
           # $CONDA is an environment variable pointing to the root of the miniconda directory
