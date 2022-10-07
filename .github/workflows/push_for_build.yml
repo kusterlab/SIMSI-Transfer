@@ -22,9 +22,11 @@ jobs:
       - name: Make temporary folder for UPX
         run: |
           mkdir .\UPX\
-      - name: Download UPX and unpack
+      - name: Download UPX
         run: |
           curl -L https://github.com/upx/upx/releases/tag/v3.96/upx-3.96-win64.zip --output .\UPX\upx-3.96-win64.zip
+      - name: Unpack
+        run: |
           Expand-Archive .\UPX\upx-3.96-win64.zip -DestinationPath .\UPX\upx-3.96\
       - name: Install dependencies
         run: |
