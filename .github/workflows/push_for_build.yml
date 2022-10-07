@@ -44,6 +44,7 @@ jobs:
           C:\Miniconda\condabin\conda.bat env create -f conda_environment.yml
           C:\Miniconda\condabin\conda.bat init powershell
       - name: Avoid MKL dependence
+        run: |
           C:\Miniconda\condabin\conda.bat install -c conda-forge nomkl numpy pandas pyqt pyinstaller
           C:\Miniconda\condabin\conda.bat install -c bioconda pyteomics
       - name: Build exe
