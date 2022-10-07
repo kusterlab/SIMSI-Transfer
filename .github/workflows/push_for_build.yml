@@ -23,7 +23,7 @@ jobs:
         run: |
           mkdir UPX
           curl -L https://github.com/upx/upx/releases/tag/v3.96/upx-3.96-win64.zip --output .\UPX\upx-3.96-win64.zip
-          Expand-Archive C:\UPX\upx-3.96-win64.zip -DestinationPath .\UPX\upx-3.96\
+          Expand-Archive .\UPX\upx-3.96-win64.zip -DestinationPath .\UPX\upx-3.96\
       - name: Install dependencies
         run: |
           C:\Miniconda\condabin\conda.bat env create -f conda_environment.yml
