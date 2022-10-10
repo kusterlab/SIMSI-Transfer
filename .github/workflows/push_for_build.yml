@@ -2,8 +2,8 @@ name: Push for build
 
 on:
   push:
-    branches:
-      - 'automatic_exe_build'
+    tags:
+      - 'rel-*'
 jobs:
   build-windows:
     name: Executable build for Windows
@@ -49,11 +49,11 @@ jobs:
         run: |
           cd .\gui_tools\
           & .\build_gui.bat
-#      - name: Add built .exe to release
-#        uses: svenstaro/upload-release-action@v2
-#        with:
-#          repo_token: ${{ secrets.GITHUB_TOKEN }}
-#          file: dist/*.exe
-#          tag: ${{ github.ref }}
-#          overwrite: false
-#          file_glob: true
+      - name: Add built .exe to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/SIMSI-Transfer_GUI_windows.zip
+          tag: ${{ github.ref }}
+          overwrite: false
+          file_glob: true
