@@ -45,9 +45,13 @@ jobs:
 #        run: |
 #          C:\Miniconda\condabin\conda.bat install -c conda-forge nomkl numpy pandas pyqt pyinstaller
 #          C:\Miniconda\condabin\conda.bat install -c bioconda pyteomics
+      - name: Dir
+        run: |
+          pwd
+          echo stamp
+          dir
       - name: Build exe and compress with UPX
         run: |
-          dir
           cd .\gui_tools
           build_gui.bat
 #      - name: Add built .exe to release
