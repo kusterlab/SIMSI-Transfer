@@ -15,16 +15,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
       - name: Make temporary folder for UPX
         run: |
           mkdir .\UPX\
       - name: Download UPX
         run: |
-          curl -L https://github.com/upx/upx/releases/tag/v3.96/upx-3.96-win64.zip --output .\UPX\upx-3.96-win64.zip
+          Invoke-WebRequest -uri "https://github.com/upx/upx/releases/download/v3.96/upx-3.96-win64.zip" -outfile ".\UPX\upx-3.96-win64.zip"
       - name: Unpack
 #        run: |
 #          Expand-Archive .\UPX\upx-3.96-win64.zip -DestinationPath .\UPX\upx-3.96\
@@ -38,6 +34,10 @@ jobs:
           }
 
           Unzip ".\UPX\upx-3.96-win64.zip" ".\UPX\upx-3.96\"
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           C:\Miniconda\condabin\conda.bat env create -f conda_environment.yml
