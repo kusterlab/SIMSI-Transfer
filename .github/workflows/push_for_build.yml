@@ -47,7 +47,8 @@ jobs:
           C:\Miniconda\condabin\conda.bat install -c bioconda pyteomics
       - name: Build exe and compress with UPX
         run: |
-          & .\gui_tools\build_gui.bat
+          cd .\gui_tools\
+          & .\build_gui.bat
 #      - name: Add built .exe to release
 #        uses: svenstaro/upload-release-action@v2
 #        with:
