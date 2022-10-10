@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-from os import listdir
 import shutil
 
 simsi_dist_dir = Path.cwd() / 'dist' / 'SIMSI-Transfer'
