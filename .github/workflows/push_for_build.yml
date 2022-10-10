@@ -49,6 +49,7 @@ jobs:
         run: |
           cd .\gui_tools\
           & .\build_gui.bat
+          cd ..
       - name: Add built .exe to release
         uses: svenstaro/upload-release-action@v2
         with:
