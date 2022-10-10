@@ -14,10 +14,10 @@ jobs:
         python-version: [ '3.8' ]
 
     steps:
-#      - uses: actions/checkout@v3
-#      - name: Make temporary folder for UPX
-#        run: |
-#          mkdir .\UPX\
+      - uses: actions/checkout@v3
+      - name: Make temporary folder for UPX
+        run: |
+          mkdir .\UPX\
 #      - name: Download UPX zip
 #        run: |
 #          Invoke-WebRequest -uri "https://github.com/upx/upx/releases/download/v3.96/upx-3.96-win64.zip" -outfile ".\UPX\upx-3.96-win64.zip"
