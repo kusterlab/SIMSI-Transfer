@@ -1,6 +1,7 @@
 name: Push for build
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'rel-*'
