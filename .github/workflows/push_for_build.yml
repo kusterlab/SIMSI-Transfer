@@ -52,7 +52,7 @@ jobs:
           dir
       - name: Build exe and compress with UPX
         run: |
-          cmd.exe /c build_gui.bat
+          cmd.exe /c .\build_gui.bat
 #      - name: Add built .exe to release
 #        uses: svenstaro/upload-release-action@v2
 #        with:
