@@ -5,6 +5,8 @@ on:
   push:
     tags:
       - 'rel-*'
+    branches:
+      - 'automatic_exe_build'
 jobs:
   build-windows:
     name: Executable build for Windows
