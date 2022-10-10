@@ -26,8 +26,18 @@ jobs:
         run: |
           curl -L https://github.com/upx/upx/releases/tag/v3.96/upx-3.96-win64.zip --output .\UPX\upx-3.96-win64.zip
       - name: Unpack
+#        run: |
+#          Expand-Archive .\UPX\upx-3.96-win64.zip -DestinationPath .\UPX\upx-3.96\
         run: |
-          Expand-Archive .\UPX\upx-3.96-win64.zip -DestinationPath .\UPX\upx-3.96\
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          function Unzip
+          {
+              param([string]$zipfile, [string]$outpath)
+
+              [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
+          }
+
+          Unzip ".\UPX\upx-3.96-win64.zip" ".\UPX\upx-3.96\"
       - name: Install dependencies
         run: |
           C:\Miniconda\condabin\conda.bat env create -f conda_environment.yml
