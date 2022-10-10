@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-from os import listdir
 import shutil
 
 simsi_dist_dir = Path.cwd() / 'dist' / 'SIMSI-Transfer'
@@ -17,5 +15,3 @@ for f in simsi_dist_dir.glob('*'):
 
 print("Creating zip archive")
 shutil.make_archive(Path.cwd() / 'dist' / 'SIMSI-Transfer_GUI_windows', 'zip', simsi_dist_dir)
-print(os.listdir(Path.cwd() / 'dist'))
-print("Created zip file: " + str(Path.cwd() / 'dist' / 'SIMSI-Transfer_GUI_windows.zip'))
