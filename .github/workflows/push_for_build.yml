@@ -55,7 +55,6 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/*.zip
+          file: dist\SIMSI-Transfer_GUI_windows.zip
           tag: ${{ github.ref }}
           overwrite: false
-          file_glob: true

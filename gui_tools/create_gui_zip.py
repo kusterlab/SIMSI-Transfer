@@ -17,5 +17,3 @@ for f in simsi_dist_dir.glob('*'):
 
 print("Creating zip archive")
 shutil.make_archive(Path.cwd() / 'dist' / 'SIMSI-Transfer_GUI_windows', 'zip', simsi_dist_dir)
-print(os.listdir())
-print("Created zip file: " + str(Path.cwd() / 'dist' / 'SIMSI-Transfer_GUI_windows.zip'))
