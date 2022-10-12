@@ -41,7 +41,7 @@ python gui.py
 
 ## Running SIMSI-Transfer from the command line
 
-First install SIMSI-Transfer as explained below, then run SIMSI-Transfer:
+First install SIMSI-Transfer **as explained below**, then run SIMSI-Transfer:
 
 ```shell
 python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder>
