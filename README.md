@@ -41,7 +41,7 @@ python gui.py
 
 ## Running SIMSI-Transfer from the command line
 
-First install SIMSI-Transfer as explained below, then run SIMSI-Transfer:
+First install SIMSI-Transfer **as explained below**, then run SIMSI-Transfer:
 
 ```shell
 python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder>
@@ -53,6 +53,17 @@ Alternative command for MS3 acquisition, using the TMT correction factor file ex
 python -m simsi_transfer --mq_txt_folder </path/to/txt/folder> --raw_folder </path/to/raw/folder> --output_folder </path/to/output/folder> --tmt_ms_level ms3 --tmt_requantify --tmt_reporter_correction_file </path/to/correction/factor/file.txt>
 ```
 
+Alternative command using the meta input file for MS3 acquisition, with filtered decoys:
+
+```shell
+python -m simsi_transfer --meta_input_file </path/to/meta/file> --output_folder </path/to/output/folder> --tmt_ms_level ms3 --tmt_requantify --filter_decoys
+```
+
+A list of all possible arguments is displayed using the help argument:
+```shell
+python -m simsi_transfer --help
+```
+
 ## Installation
 
 SIMSI-Transfer is available on PyPI and can be installed with `pip`:
@@ -61,7 +72,7 @@ SIMSI-Transfer is available on PyPI and can be installed with `pip`:
 pip install simsi-transfer
 ```
 
-Alternatively, you can install directly from this repository:
+Alternatively, you can install SIMSI-Transfer after cloning from this repository:
 
 ```shell
 git clone https://github.com/kusterlab/SIMSI-Transfer.git
