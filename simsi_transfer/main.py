@@ -69,7 +69,8 @@ def main(argv):
 
     logger.info(f'Clustering .mzML files')
     cluster_result_folder = output_folder / Path('maracluster_output')
-    cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, num_threads)
+    dat_files_folder = output_folder / Path('dat_files')
+    cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, dat_files_folder, num_threads)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
     plex = mq.get_plex(mq_txt_folders)
