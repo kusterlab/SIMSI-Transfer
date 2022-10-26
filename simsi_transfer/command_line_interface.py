@@ -49,7 +49,7 @@ def parse_args(argv):
                        Number of threads, by default this is equal to the number of CPU cores available on the device.
                        ''')
 
-    apars.add_argument('--tmt_reporter_correction_file', default=None, metavar="DIR",
+    apars.add_argument('--tmt_reporter_correction_file', default="", metavar="DIR",
                        help='''
                        Path to TMT correction factor file, as exported from MaxQuant.
                        ''')

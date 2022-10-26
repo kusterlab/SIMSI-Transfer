@@ -55,6 +55,8 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
             correction[i + 2, i] = correction_dataframe.iloc[i]['Correction factor +1 [%]']
             if i not in [plex_size - 1, plex_size - 2, plex_size - 3]:
                 correction[i + 4, i] = correction_dataframe.iloc[i]['Correction factor +2 [%]']
+    elif str(correction_factor_path) != ".":
+        logger.warning(f"Could not find reporter ion correction file at {str(correction_factor_path)}, no correction factors will be applied")
 
     # Normalize correction factors
     correction_normalized = (correction / correction.sum(axis=0))
@@ -73,11 +75,11 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
         from .utils.multiprocessing_pool import JobPool
         processing_pool = JobPool(processes=num_threads)
     for mzml_file, correction_factor_path in zip(mzml_files, correction_factor_paths):
+        args = (mzml_file, output_path, correction_factor_path, extraction_level, plex)
         if num_threads > 1:
-            processing_pool.applyAsync(extract_and_correct_reporters,
-                                       (mzml_file, output_path, correction_factor_path, extraction_level, plex))
+            processing_pool.applyAsync(extract_and_correct_reporters, args)
         else:
-            extract_and_correct_reporters(mzml_file, output_path, correction_factor_path, extraction_level, plex)
+            extract_and_correct_reporters(*args)
 
     if num_threads > 1:
         processing_pool.checkPool(printProgressEvery=1)
