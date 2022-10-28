@@ -36,12 +36,14 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
     for i in range(correction.shape[1]):
         correction[i, i] = 100
 
-    # Theoretical TMT Masses in m/z; same for standard TMT and TMTpro
+    # Theoretical TMT Masses in m/z; same for standard TMT and TMTpro, different for sixplex though!
     all_tmt_masses = np.array([126.127726, 127.124761, 127.131081, 128.128116, 128.134436, 129.131471,
                                129.137790, 130.134825, 130.141145, 131.138180, 131.144499, 132.141535,
                                132.147855, 133.144890, 133.151210, 134.148245, 134.154565, 135.151600])
 
     tmt_masses = all_tmt_masses[:plex_size + 2]
+    if plex_size == 6:
+        tmt_masses = [all_tmt_masses[i] for i in [0, 1, 4, 5, 8, 9, 10, 11]]
 
     np.set_printoptions(linewidth=200)
     if correction_factor_path.is_file():
