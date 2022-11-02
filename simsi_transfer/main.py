@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 def main(argv):
     meta_input_df, pvals, output_folder, num_threads, ms_level, tmt_requantify, \
-        filter_decoys, ambiguity_decision = cli.parse_args(argv)
-    
+        filter_decoys, ambiguity_decision, keep_columns = cli.parse_args(argv)
+
     raw_folders = utils.convert_to_path_list(meta_input_df['raw_folder'])
     mq_txt_folders = utils.convert_to_path_list(meta_input_df['mq_txt_folder'])
     tmt_correction_files = utils.convert_to_path_list(meta_input_df['tmt_correction_file'])
@@ -58,7 +58,7 @@ def main(argv):
 
     logger.info(f'Starting SIMSI-Transfer')
     logger.info('')
-    
+
     logger.info(f'Retrieving .raw files')
     meta_input_df['raw_files'] = meta_input_df['raw_folder'].apply(raw.get_raw_files)
     raw_files, correction_factor_paths = utils.get_raw_files_and_correction_factor_paths(meta_input_df)
