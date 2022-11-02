@@ -43,7 +43,7 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
 
     tmt_masses = all_tmt_masses[:plex_size + 2]
     if plex_size == 6:
-        tmt_masses = [all_tmt_masses[i] for i in [0, 1, 4, 5, 8, 9, 10, 11]]
+        tmt_masses = np.array([all_tmt_masses[i] for i in [0, 1, 4, 5, 8, 9, 10, 11]])
 
     np.set_printoptions(linewidth=200)
     if correction_factor_path.is_file():
