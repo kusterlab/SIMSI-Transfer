@@ -1,10 +1,11 @@
 # To run (replace "1-03" with the desired release):
 # ./update_maracluster.sh 1-03
-release=$1
-
-
+release_long=$1
+release=${release_long:0:4}
+echo $release_long
+echo $release
 # Update the linux binary
-wget https://github.com/statisticalbiotechnology/maracluster/releases/download/rel-${release}/tarball.tar.gz
+wget https://github.com/statisticalbiotechnology/maracluster/releases/download/rel-${release_long}/tarball.tar.gz
 
 tar -xzvf tarball.tar.gz
 tar -xzvf maracluster-v${release}-linux-amd64.tar.gz
@@ -18,7 +19,7 @@ rm -rf maracluster-v${release}-linux-amd64
 
 
 # Update the windows binary
-wget https://github.com/statisticalbiotechnology/maracluster/releases/download/rel-${release}/win64.zip
+wget https://github.com/statisticalbiotechnology/maracluster/releases/download/rel-${release_long}/win64.zip
 unzip win64.zip
 
 file-roller -h maracluster-v${release}-win32-msvc-x86.exe
