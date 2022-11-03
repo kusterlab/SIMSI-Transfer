@@ -78,6 +78,11 @@ def parse_args(argv):
                        'all' returns unmodified sequence with all observed PTM positions.
                        ''')
 
+    apars.add_argument('--add_plotting_columns', default=False, action='store_true',
+                       help='''
+                       Retains columns that might be needed for further processing in e.g. TMT curve plotting tools.
+                       ''')
+
     # ------------------------------------------------
     args = apars.parse_args(argv)
 
@@ -85,7 +90,7 @@ def parse_args(argv):
 
     return meta_input_df, parse_stringencies(args.stringencies), Path(
         args.output_folder), args.num_threads, args.tmt_ms_level, \
-           args.tmt_requantify, args.filter_decoys, args.ambiguity_decision
+           args.tmt_requantify, args.filter_decoys, args.ambiguity_decision, args.add_plotting_columns
 
 
 def get_input_folders(args):

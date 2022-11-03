@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 def main(argv):
     meta_input_df, pvals, output_folder, num_threads, ms_level, tmt_requantify, \
-        filter_decoys, ambiguity_decision = cli.parse_args(argv)
-    
+    filter_decoys, ambiguity_decision, curve_columns = cli.parse_args(argv)
+
     raw_folders = utils.convert_to_path_list(meta_input_df['raw_folder'])
     mq_txt_folders = utils.convert_to_path_list(meta_input_df['mq_txt_folder'])
     tmt_correction_files = utils.convert_to_path_list(meta_input_df['tmt_correction_file'])
@@ -58,10 +58,12 @@ def main(argv):
 
     logger.info(f'Starting SIMSI-Transfer')
     logger.info('')
-    
+
     logger.info(f'Retrieving .raw files')
     meta_input_df['raw_files'] = meta_input_df['raw_folder'].apply(raw.get_raw_files)
     raw_files, correction_factor_paths = utils.get_raw_files_and_correction_factor_paths(meta_input_df)
+
+    raw_filenames_input = {i.stem for i in raw_files}
 
     logger.info(f'Converting .raw files')
     mzml_folder = output_folder / Path('mzML')
@@ -76,7 +78,9 @@ def main(argv):
     plex = mq.get_plex(mq_txt_folders)
     msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify, plex=plex)
 
-    # TODO: Add check if raw_files(maracluster) == raw_files(msmsScans)
+    raw_filenames_mq = set(msmsscans_mq['Raw file'].unique())
+    if raw_filenames_mq != raw_filenames_input:
+        raise ValueError(f'The raw files listed as input and the raw files in the MaxQuant search results are not the same!')
 
     if tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
@@ -88,15 +92,16 @@ def main(argv):
         corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder, plex)
         msmsscans_mq = tmt_processing.merge_with_corrected_tmt(msmsscans_mq, corrected_tmt)
 
-    logger.info(f'Reading in MaxQuant msms.txt file and filtering out decoy hits')
+    logger.info(f'Reading in MaxQuant msms.txt file')
     msms_mq = mq.process_and_concat(mq_txt_folders, mq.read_msms_txt)
-    # TODO: check if we should also transfer decoys
     if filter_decoys:
+        logger.info(f'Filtering out decoy hits')
         msms_mq = msms_mq[msms_mq['Reverse'] != '+']
 
-    logger.info(f'Reading in MaxQuant evidence.txt file and filtering out decoy hits')
+    logger.info(f'Reading in MaxQuant evidence.txt file')
     evidence_mq = mq.process_and_concat(mq_txt_folders, mq.read_evidence_txt)
     if filter_decoys:
+        logger.info(f'Filtering out decoy hits')
         evidence_mq = evidence_mq[evidence_mq['Reverse'] != '+']
     rawfile_metadata = mq.get_rawfile_metadata(evidence_mq)
 
@@ -125,6 +130,8 @@ def main(argv):
 
         logger.info(f'Building SIMSI-Transfer msms.txt file for {pval}.')
         msms_simsi = simsi_output.remove_unidentified_scans(msmsscans_simsi)
+        if curve_columns:
+            pass
         simsi_output.export_msms(msms_simsi, output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer msms.txt assembly.')
 

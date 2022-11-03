@@ -1,3 +1,9 @@
+v0.4.7
+- Fixed TMT6plex handling; now takes correct masses
+
+v0.4.6
+- Fixed .exe building
+
 v0.4.5
 - Updated MaRaCluster to v1.03
 
