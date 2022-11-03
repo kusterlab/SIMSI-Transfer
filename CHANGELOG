@@ -1,3 +1,6 @@
+v0.4.8
+- Fixed MaRaCluster .dat file handling
+
 v0.4.7
 - Fixed TMT6plex handling; now takes correct masses
 
