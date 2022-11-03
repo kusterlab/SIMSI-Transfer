@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def main(argv):
     meta_input_df, pvals, output_folder, num_threads, ms_level, tmt_requantify, \
-        filter_decoys, ambiguity_decision, curve_columns = cli.parse_args(argv)
+    filter_decoys, ambiguity_decision, curve_columns = cli.parse_args(argv)
 
     raw_folders = utils.convert_to_path_list(meta_input_df['raw_folder'])
     mq_txt_folders = utils.convert_to_path_list(meta_input_df['mq_txt_folder'])
@@ -88,15 +88,17 @@ def main(argv):
         corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder, plex)
         msmsscans_mq = tmt_processing.merge_with_corrected_tmt(msmsscans_mq, corrected_tmt)
 
-    logger.info(f'Reading in MaxQuant msms.txt file and filtering out decoy hits')
+    logger.info(f'Reading in MaxQuant msms.txt file')
     msms_mq = mq.process_and_concat(mq_txt_folders, mq.read_msms_txt)
     # TODO: check if we should also transfer decoys
     if filter_decoys:
+        logger.info(f'Filtering out decoy hits')
         msms_mq = msms_mq[msms_mq['Reverse'] != '+']
 
-    logger.info(f'Reading in MaxQuant evidence.txt file and filtering out decoy hits')
+    logger.info(f'Reading in MaxQuant evidence.txt file')
     evidence_mq = mq.process_and_concat(mq_txt_folders, mq.read_evidence_txt)
     if filter_decoys:
+        logger.info(f'Filtering out decoy hits')
         evidence_mq = evidence_mq[evidence_mq['Reverse'] != '+']
     rawfile_metadata = mq.get_rawfile_metadata(evidence_mq)
 
