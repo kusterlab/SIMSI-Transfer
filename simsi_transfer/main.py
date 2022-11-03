@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def main(argv):
     meta_input_df, pvals, output_folder, num_threads, ms_level, tmt_requantify, \
-        filter_decoys, ambiguity_decision, keep_columns = cli.parse_args(argv)
+        filter_decoys, ambiguity_decision, curve_columns = cli.parse_args(argv)
 
     raw_folders = utils.convert_to_path_list(meta_input_df['raw_folder'])
     mq_txt_folders = utils.convert_to_path_list(meta_input_df['mq_txt_folder'])
@@ -125,6 +125,8 @@ def main(argv):
 
         logger.info(f'Building SIMSI-Transfer msms.txt file for {pval}.')
         msms_simsi = simsi_output.remove_unidentified_scans(msmsscans_simsi)
+        if curve_columns:
+            pass
         simsi_output.export_msms(msms_simsi, output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer msms.txt assembly.')
 
