@@ -63,6 +63,8 @@ def main(argv):
     meta_input_df['raw_files'] = meta_input_df['raw_folder'].apply(raw.get_raw_files)
     raw_files, correction_factor_paths = utils.get_raw_files_and_correction_factor_paths(meta_input_df)
 
+    raw_filenames_input = {i.stem for i in raw_files}
+
     logger.info(f'Converting .raw files')
     mzml_folder = output_folder / Path('mzML')
     mzml_files = raw.convert_raw_mzml_batch(raw_files, mzml_folder, num_threads)
@@ -76,7 +78,9 @@ def main(argv):
     plex = mq.get_plex(mq_txt_folders)
     msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify, plex=plex)
 
-    # TODO: Add check if raw_files(maracluster) == raw_files(msmsScans)
+    raw_filenames_mq = set(msmsscans_mq['Raw file'].unique())
+    if raw_filenames_mq != raw_filenames_input:
+        raise ValueError(f'The raw files listed as input and the raw files in the MaxQuant search results are not the same!')
 
     if tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
@@ -90,7 +94,6 @@ def main(argv):
 
     logger.info(f'Reading in MaxQuant msms.txt file')
     msms_mq = mq.process_and_concat(mq_txt_folders, mq.read_msms_txt)
-    # TODO: check if we should also transfer decoys
     if filter_decoys:
         logger.info(f'Filtering out decoy hits')
         msms_mq = msms_mq[msms_mq['Reverse'] != '+']
