@@ -4,15 +4,11 @@ from PyQt5.QtCore import QObject, QThread, pyqtSignal # https://realpython.com/p
 import sys
 import logging
 import time
-import datetime
 import multiprocessing
-import argparse
 from logging.handlers import QueueListener
 
 import simsi_transfer.main as simsi_transfer
 import simsi_transfer.utils.multiprocessing_pool as pool
-
-import numpy as np
 
 
 logger = logging.getLogger()
