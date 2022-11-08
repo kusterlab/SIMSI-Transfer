@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QObject, QThread, pyqtSignal # https://realpython.com/python-pyqt-qthread/
+from PyQt5.QtCore import QObject, QThread, pyqtSignal  # https://realpython.com/python-pyqt-qthread/
 
 import sys
 import logging
@@ -10,15 +10,19 @@ from logging.handlers import QueueListener
 import simsi_transfer.main as simsi_transfer
 import simsi_transfer.utils.multiprocessing_pool as pool
 
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, extra_params):
+def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, metafile_path, extra_params):
     try:
-        # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir] + extra_params.split())
-        logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir] + extra_params.split())
+        if not metafile_path:
+            # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir] + extra_params.split())
+            logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir] + extra_params.split())
+        else:
+            # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir, '--meta_input_file', metafile_path] + extra_params.split())
+            logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir,
+                         '--meta_input_file', metafile_path] + extra_params.split())
     except SystemExit as e:
         logger.info(f"Error while running SIMSI-Transfer, exited with error code {e}.")
     except Exception as e:
@@ -62,6 +66,52 @@ class LogHandler(logging.Handler):
     def emit(self, record):
         msg = self.format(record)
         self.emitter.sigLog.emit(msg)
+
+
+class FileSelect(QtWidgets.QWidget):
+    def __init__(self, file_type, file_extensions, file_hint='', folder_select=False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.file_type = file_type
+        self.file_hint = file_hint
+        self.file_extensions = file_extensions
+
+        self.label_text = f"Select {self.file_type} file"
+        if folder_select:
+            self.label_text = f"Select {self.file_type} folder"
+
+        self.file_hint_text = ""
+        if len(file_hint) > 0:
+            self.file_hint_text = f'<br><font color="grey">{self.file_hint}</font>'
+        self.label = QtWidgets.QLabel(self.label_text + self.file_hint_text)
+
+        self.hbox_layout = QtWidgets.QHBoxLayout()
+        self.hbox_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.line_edit = QtWidgets.QLineEdit()
+        self.browse_button = QtWidgets.QPushButton("Browse")
+        if folder_select:
+            self.browse_button.clicked.connect(self.select_dir)
+        else:
+            self.browse_button.clicked.connect(self.select_file)
+        self.hbox_layout.addWidget(self.line_edit, stretch=1)
+        self.hbox_layout.addWidget(self.browse_button)
+
+        self.setLayout(self.hbox_layout)
+
+    def select_file(self):
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(self, self.label_text, '', self.file_extensions)
+        self.line_edit.setText(filename)
+
+    def select_dir(self):
+        output_dir = QtWidgets.QFileDialog.getExistingDirectory(self, self.label_text, '',
+                                                                QtWidgets.QFileDialog.ShowDirsOnly)
+        self.line_edit.setText(output_dir)
+
+    def get_file(self):
+        return self.line_edit.text()
+
+    def setButtonsEnabled(self, enable):
+        self.browse_button.setEnabled(enable)
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -110,17 +160,17 @@ class MainWindow(QtWidgets.QWidget):
 
     def _add_metafile_input_tab(self):
         self.metafile_tab = QtWidgets.QWidget()
+        self.metafile_widget = FileSelect('metafile', 'Comma-separated file (*.txt *.csv *.tsv)')
 
         self.metafile_layout = QtWidgets.QFormLayout()
-        self._add_metafile_path_field(self.metafile_layout)
-
+        self.metafile_layout.addRow(self.metafile_widget.label, self.metafile_widget)
         self.metafile_tab.setLayout(self.metafile_layout)
         self.tabs.addTab(self.metafile_tab, "Metafile input")
 
     def _add_mq_txt_dir_field(self, layout):
         # evidence.txt input
         self.mq_txt_dir_label = QtWidgets.QLabel("Select MaxQuant combined/txt folder")
-        #self.mq_txt_dir_label.setMargin(10)
+        # self.mq_txt_dir_label.setMargin(10)
 
         self.mq_txt_dir_widget = QtWidgets.QWidget()
 
@@ -130,36 +180,17 @@ class MainWindow(QtWidgets.QWidget):
         self.mq_txt_dir_line_edit = QtWidgets.QLineEdit()
         self.mq_txt_dir_browse_button = QtWidgets.QPushButton("Browse")
         self.mq_txt_dir_browse_button.clicked.connect(self.get_mq_txt_dir)
-        self.mq_txt_dir_hbox_layout.addWidget(self.mq_txt_dir_line_edit, stretch = 1)
+        self.mq_txt_dir_hbox_layout.addWidget(self.mq_txt_dir_line_edit, stretch=1)
         self.mq_txt_dir_hbox_layout.addWidget(self.mq_txt_dir_browse_button)
 
         self.mq_txt_dir_widget.setLayout(self.mq_txt_dir_hbox_layout)
 
         layout.addRow(self.mq_txt_dir_label, self.mq_txt_dir_widget)
 
-    def _add_metafile_path_field(self, layout):
-        # metafile.csv input
-        self.metafile_path = QtWidgets.QLabel("Select path to metafile")
-
-        self.metafile_path_widget = QtWidgets.QWidget()
-
-        self.metafile_path_hbox_layout = QtWidgets.QHBoxLayout()
-        self.metafile_path_hbox_layout.setContentsMargins(0, 0, 0, 0)
-
-        self.metafile_path_line_edit = QtWidgets.QLineEdit()
-        self.metafile_path_browse_button = QtWidgets.QPushButton("Browse")
-        self.metafile_path_browse_button.clicked.connect(self.get_metafile_path)
-        self.metafile_path_hbox_layout.addWidget(self.metafile_path_line_edit, stretch=1)
-        self.metafile_path_hbox_layout.addWidget(self.metafile_path_browse_button)
-
-        self.metafile_path_widget.setLayout(self.metafile_path_hbox_layout)
-
-        layout.addRow(self.metafile_path, self.metafile_path_widget)
-
     def _add_raw_dir_field(self, layout):
         # fasta file input
         self.raw_dir_label = QtWidgets.QLabel("Select folder with RAW files")
-        #self.raw_dir_label.setMargin(10)
+        # self.raw_dir_label.setMargin(10)
 
         self.raw_dir_widget = QtWidgets.QWidget()
 
@@ -169,7 +200,7 @@ class MainWindow(QtWidgets.QWidget):
         self.raw_dir_line_edit = QtWidgets.QLineEdit()
         self.raw_dir_browse_button = QtWidgets.QPushButton("Browse")
         self.raw_dir_browse_button.clicked.connect(self.get_raw_dir)
-        self.raw_dir_hbox_layout.addWidget(self.raw_dir_line_edit, stretch = 1)
+        self.raw_dir_hbox_layout.addWidget(self.raw_dir_line_edit, stretch=1)
         self.raw_dir_hbox_layout.addWidget(self.raw_dir_browse_button)
 
         self.raw_dir_widget.setLayout(self.raw_dir_hbox_layout)
@@ -179,7 +210,7 @@ class MainWindow(QtWidgets.QWidget):
     def _add_output_dir_field(self, layout):
         # fasta file input
         self.output_dir_label = QtWidgets.QLabel("Select output folder")
-        #self.output_dir_label.setMargin(10)
+        # self.output_dir_label.setMargin(10)
 
         self.output_dir_widget = QtWidgets.QWidget()
 
@@ -189,7 +220,7 @@ class MainWindow(QtWidgets.QWidget):
         self.output_dir_line_edit = QtWidgets.QLineEdit()
         self.output_dir_browse_button = QtWidgets.QPushButton("Browse")
         self.output_dir_browse_button.clicked.connect(self.get_output_dir)
-        self.output_dir_hbox_layout.addWidget(self.output_dir_line_edit, stretch = 1)
+        self.output_dir_hbox_layout.addWidget(self.output_dir_line_edit, stretch=1)
         self.output_dir_hbox_layout.addWidget(self.output_dir_browse_button)
 
         self.output_dir_widget.setLayout(self.output_dir_hbox_layout)
@@ -199,7 +230,7 @@ class MainWindow(QtWidgets.QWidget):
     def _add_extra_params_field(self, layout):
         # additional parameters input, TODO: make user friendly options for each important parameter
         self.args_label = QtWidgets.QLabel("Additional parameters")
-        #self.args_label.setMargin(10)
+        # self.args_label.setMargin(10)
 
         self.args_line_edit = QtWidgets.QLineEdit()
 
@@ -208,7 +239,7 @@ class MainWindow(QtWidgets.QWidget):
     def _add_run_button(self, layout):
         self.run_button = QtWidgets.QPushButton("Run")
         self.run_button.clicked.connect(self.run_simsi_transfer)
-        self.run_button.setContentsMargins(20,100,20,100)
+        self.run_button.setContentsMargins(20, 100, 20, 100)
 
         layout.addRow(self.run_button)
 
@@ -220,25 +251,28 @@ class MainWindow(QtWidgets.QWidget):
         layout.addRow(self.log_text_area.widget)
 
     def get_mq_txt_dir(self):
-        mq_txt_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select MaxQuant combined/txt folder' , '', QtWidgets.QFileDialog.ShowDirsOnly)
+        mq_txt_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select MaxQuant combined/txt folder', '',
+                                                                QtWidgets.QFileDialog.ShowDirsOnly)
         self.mq_txt_dir_line_edit.setText(mq_txt_dir)
 
     def get_metafile_path(self):
-        metafile_path = QtWidgets.QFileDialog.getOpenFileName(self, 'Select path to metafile' , '')
+        metafile_path = QtWidgets.QFileDialog.getOpenFileName(self, 'Select path to metafile', '')
 
     def get_raw_dir(self):
-        raw_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select folder with RAW files' , '', QtWidgets.QFileDialog.ShowDirsOnly)
+        raw_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select folder with RAW files', '',
+                                                             QtWidgets.QFileDialog.ShowDirsOnly)
         self.raw_dir_line_edit.setText(raw_dir)
 
     def get_output_dir(self):
-        output_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select output folder' , '', QtWidgets.QFileDialog.ShowDirsOnly)
+        output_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select output folder', '',
+                                                                QtWidgets.QFileDialog.ShowDirsOnly)
         self.output_dir_line_edit.setText(output_dir)
 
     def set_buttons_enabled_state(self, enable):
         self.mq_txt_dir_browse_button.setEnabled(enable)
         self.raw_dir_browse_button.setEnabled(enable)
         self.output_dir_browse_button.setEnabled(enable)
-        #self.run_button.setEnabled(enable)
+        # self.run_button.setEnabled(enable)
         # Cannot stop a QThread if it doesn't have an own event loop
         self.run_button.clicked.disconnect()
         if enable:
@@ -249,13 +283,22 @@ class MainWindow(QtWidgets.QWidget):
             self.run_button.clicked.connect(self.stop_simsi_transfer)
 
     def run_simsi_transfer(self):
-        mq_txt_dir = self.mq_txt_dir_line_edit.text()
-        raw_dir = self.raw_dir_line_edit.text()
+        # initialize all parameters as empty values and then override?
+        mq_txt_dir = ''
+        raw_dir = ''
+        metafile_path = False
+        if self.tabs.currentIndex() == 0:
+            mq_txt_dir = self.mq_txt_dir_line_edit.text()
+            raw_dir = self.raw_dir_line_edit.text()
+        else:
+            metafile_path = self.metafile_widget.get_file()
+
         output_dir = self.output_dir_line_edit.text()
         extra_params = self.args_line_edit.text()
 
         self.set_buttons_enabled_state(False)
-        self.pool.applyAsync(run_simsi_transfer, (mq_txt_dir, raw_dir, output_dir, extra_params), callback=self.on_simsi_finished)
+        self.pool.applyAsync(run_simsi_transfer, (mq_txt_dir, raw_dir, output_dir, metafile_path, extra_params),
+                             callback=self.on_simsi_finished)
 
     def on_simsi_finished(self, return_code):
         self.set_buttons_enabled_state(True)
