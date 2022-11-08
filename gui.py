@@ -14,15 +14,16 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, metafile_path, extra_params):
+def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, metafile_path, stringencies, extra_params):
     try:
         if not metafile_path:
-            # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir] + extra_params.split())
-            logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir] + extra_params.split())
-        else:
-            # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir, '--meta_input_file', metafile_path] + extra_params.split())
+            # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir, '--stringencies', stringencies] + extra_params.split())
             logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir,
-                         '--meta_input_file', metafile_path] + extra_params.split())
+                         '--stringencies', stringencies] + extra_params.split())
+        else:
+            # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir, '--meta_input_file', metafile_path, '--stringencies', stringencies] + extra_params.split())
+            logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir,
+                         '--meta_input_file', metafile_path, '--stringencies', stringencies] + extra_params.split())
     except SystemExit as e:
         logger.info(f"Error while running SIMSI-Transfer, exited with error code {e}.")
     except Exception as e:
@@ -129,6 +130,7 @@ class MainWindow(QtWidgets.QWidget):
 
         layout.addRow(self.tabs)
         self._add_output_dir_field(layout)
+        self._add_stringencies_field(layout)
         self._add_extra_params_field(layout)
         self._add_run_button(layout)
         self._add_log_textarea(layout)
@@ -228,13 +230,18 @@ class MainWindow(QtWidgets.QWidget):
         layout.addRow(self.output_dir_label, self.output_dir_widget)
 
     def _add_extra_params_field(self, layout):
-        # additional parameters input, TODO: make user friendly options for each important parameter
         self.args_label = QtWidgets.QLabel("Additional parameters")
-        # self.args_label.setMargin(10)
 
         self.args_line_edit = QtWidgets.QLineEdit()
 
         layout.addRow(self.args_label, self.args_line_edit)
+
+    def _add_stringencies_field(self, layout):
+        self.args_label = QtWidgets.QLabel("MaRaCluster stringencies")
+
+        self.stringency_line = QtWidgets.QLineEdit('10, 15, 20')
+
+        layout.addRow(self.args_label, self.stringency_line)
 
     def _add_run_button(self, layout):
         self.run_button = QtWidgets.QPushButton("Run")
@@ -287,6 +294,7 @@ class MainWindow(QtWidgets.QWidget):
         mq_txt_dir = ''
         raw_dir = ''
         metafile_path = False
+        stringencies = '10, 15, 20'
         if self.tabs.currentIndex() == 0:
             mq_txt_dir = self.mq_txt_dir_line_edit.text()
             raw_dir = self.raw_dir_line_edit.text()
@@ -295,9 +303,11 @@ class MainWindow(QtWidgets.QWidget):
 
         output_dir = self.output_dir_line_edit.text()
         extra_params = self.args_line_edit.text()
+        stringencies = self.stringency_line.text()
 
         self.set_buttons_enabled_state(False)
-        self.pool.applyAsync(run_simsi_transfer, (mq_txt_dir, raw_dir, output_dir, metafile_path, extra_params),
+        self.pool.applyAsync(run_simsi_transfer,
+                             (mq_txt_dir, raw_dir, output_dir, metafile_path, stringencies, extra_params),
                              callback=self.on_simsi_finished)
 
     def on_simsi_finished(self, return_code):
