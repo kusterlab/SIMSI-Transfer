@@ -14,16 +14,36 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, metafile_path, stringencies, extra_params):
+def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, metafile_path, stringencies, tmt_params, extra_params):
+    parameters = []
+    if mq_txt_dir:
+        parameters.extend(['--mq_txt_folder', mq_txt_dir])
+    if raw_dir:
+        parameters.extend(['--raw_folder', raw_dir])
+    if output_dir:
+        parameters.extend(['--output_folder', output_dir])
+    if metafile_path:
+        parameters.extend(['--meta_input_file', metafile_path])
+    if stringencies:
+        parameters.extend(['--stringencies', stringencies])
+    if tmt_params:
+        parameters.extend(tmt_params)
+    if extra_params:
+        parameters.extend(extra_params.split())
     try:
-        if not metafile_path:
-            # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir, '--stringencies', stringencies] + extra_params.split())
-            logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir,
-                         '--stringencies', stringencies] + extra_params.split())
-        else:
-            # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir, '--meta_input_file', metafile_path, '--stringencies', stringencies] + extra_params.split())
-            logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir,
-                         '--meta_input_file', metafile_path, '--stringencies', stringencies] + extra_params.split())
+        # simsi_transfer.main(parameters)
+        logger.info(parameters)
+        # if not metafile_path:
+        #     # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir, '--stringencies', stringencies] + extra_params.split())
+        #     logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir,
+        #                  '--stringencies', stringencies] + tmt_params + extra_params.split())
+        #     logger.info(parameters)
+        # else:
+        #     # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir, '--meta_input_file', metafile_path, '--stringencies', stringencies] + extra_params.split())
+        #     logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir,
+        #                  '--meta_input_file', metafile_path, '--stringencies',
+        #                  stringencies] + tmt_params + extra_params.split())
+        #     logger.info(parameters)
     except SystemExit as e:
         logger.info(f"Error while running SIMSI-Transfer, exited with error code {e}.")
     except Exception as e:
@@ -115,6 +135,97 @@ class FileSelect(QtWidgets.QWidget):
         self.browse_button.setEnabled(enable)
 
 
+class TMTGroup(QtWidgets.QGroupBox):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.tmt_group_layout = QtWidgets.QGridLayout()
+        self.setLayout(self.tmt_group_layout)
+
+        self.ms_level_label = QtWidgets.QLabel("TMT MS level")
+        self.ms_level_select = QtWidgets.QComboBox()
+        self.ms_level_select.addItems(['MS2', 'MS3'])
+        self.ms_level_select.setCurrentText('MS3')
+
+        self.requantify_label = QtWidgets.QLabel("Requantify TMT?")
+        self.requantify_checkbox = QtWidgets.QCheckBox()
+
+        self.tmt_group_layout.addWidget(self.ms_level_label, 0, 0)
+        self.tmt_group_layout.addWidget(self.ms_level_select, 0, 1)
+        self.tmt_group_layout.addWidget(self.requantify_label, 0, 3)
+        self.tmt_group_layout.addWidget(self.requantify_checkbox, 0, 4)
+
+        for col in range(5):
+            self.tmt_group_layout.setColumnStretch(col, 1)
+
+    def get_params(self):
+        returnval = ["--tmt_ms_level", str(self.ms_level_select.currentText()).lower()]
+        if self.requantify_checkbox.isChecked():
+            returnval.append("--tmt_requantify")
+        return returnval
+
+
+# class ParameterGroup(QtWidgets.QGroupBox):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#
+#         self.parameter_group_layout = QtWidgets.QGridLayout()
+#         self.setLayout(self.parameter_group_layout)
+#
+#         self.min_length_label = QtWidgets.QLabel("Min peptide length")
+#         self.min_length_spinbox = QtWidgets.QSpinBox()
+#         self.min_length_spinbox.setValue(digest.MIN_PEPLEN_DEFAULT)
+#         self.min_length_spinbox.setRange(1, 20)
+#
+#         self.max_length_label = QtWidgets.QLabel("Max peptide length")
+#         self.max_length_spinbox = QtWidgets.QSpinBox()
+#         self.max_length_spinbox.setValue(digest.MAX_PEPLEN_DEFAULT)
+#         self.max_length_spinbox.setRange(1, 100)
+#
+#         self.max_cleavages_label = QtWidgets.QLabel("Max miscleavages")
+#         self.max_cleavages_spinbox = QtWidgets.QSpinBox()
+#         self.max_cleavages_spinbox.setValue(digest.CLEAVAGES_DEFAULT)
+#         self.max_cleavages_spinbox.setRange(1, 10)
+#
+#         self.enzyme_label = QtWidgets.QLabel("Enzyme")
+#         self.enzyme_select = QtWidgets.QComboBox()
+#         self.enzyme_select.addItems(digest.ENZYME_CLEAVAGE_RULES.keys())
+#         self.enzyme_select.setCurrentText(digest.ENZYME_DEFAULT)
+#
+#         self.digestion_label = QtWidgets.QLabel("Digestion")
+#         self.digestion_select = QtWidgets.QComboBox()
+#         self.digestion_select.addItems(["full", "semi", "none"])
+#         self.digestion_select.setCurrentText(digest.DIGESTION_DEFAULT)
+#
+#         self.special_aas_label = QtWidgets.QLabel("Special AAs")
+#         self.special_aas_line_edit = QtWidgets.QLineEdit()
+#         self.special_aas_line_edit.setText(digest.SPECIAL_AAS_DEFAULT)
+#
+#         self.parameter_group_layout.addWidget(self.enzyme_label, 0, 0)
+#         self.parameter_group_layout.addWidget(self.enzyme_select, 0, 1)
+#         self.parameter_group_layout.addWidget(self.min_length_label, 0, 2)
+#         self.parameter_group_layout.addWidget(self.min_length_spinbox, 0, 3)
+#         self.parameter_group_layout.addWidget(self.digestion_label, 0, 4)
+#         self.parameter_group_layout.addWidget(self.digestion_select, 0, 5)
+#
+#         self.parameter_group_layout.addWidget(self.max_cleavages_label, 1, 0)
+#         self.parameter_group_layout.addWidget(self.max_cleavages_spinbox, 1, 1)
+#         self.parameter_group_layout.addWidget(self.max_length_label, 1, 2)
+#         self.parameter_group_layout.addWidget(self.max_length_spinbox, 1, 3)
+#         self.parameter_group_layout.addWidget(self.special_aas_label, 1, 4)
+#         self.parameter_group_layout.addWidget(self.special_aas_line_edit, 1, 5)
+#
+#         for col in range(6):
+#             self.parameter_group_layout.setColumnStretch(col, 1)
+#
+#     def get_params(self):
+#         return ["--min-length", str(self.min_length_spinbox.value()),
+#                 "--max-length", str(self.max_length_spinbox.value()),
+#                 "--cleavages", str(self.max_cleavages_spinbox.value()),
+#                 "--enzyme", self.enzyme_select.currentText(),
+#                 "--digestion", self.digestion_select.currentText(),
+#                 "--special-aas", self.special_aas_line_edit.text()]
+
 class MainWindow(QtWidgets.QWidget):
 
     def __init__(self, *args, **kwargs):
@@ -131,7 +242,14 @@ class MainWindow(QtWidgets.QWidget):
         layout.addRow(self.tabs)
         self._add_output_dir_field(layout)
         self._add_stringencies_field(layout)
+
+        self.tmt_group = TMTGroup('TMT parameters')
+        # self.parameter_group = ParameterGroup('SIMSI parameters')
         self._add_extra_params_field(layout)
+
+        layout.addRow(self.tmt_group)
+        # layout.addRow(self.parameter_group)
+
         self._add_run_button(layout)
         self._add_log_textarea(layout)
 
@@ -294,7 +412,6 @@ class MainWindow(QtWidgets.QWidget):
         mq_txt_dir = ''
         raw_dir = ''
         metafile_path = False
-        stringencies = '10, 15, 20'
         if self.tabs.currentIndex() == 0:
             mq_txt_dir = self.mq_txt_dir_line_edit.text()
             raw_dir = self.raw_dir_line_edit.text()
@@ -304,10 +421,11 @@ class MainWindow(QtWidgets.QWidget):
         output_dir = self.output_dir_line_edit.text()
         extra_params = self.args_line_edit.text()
         stringencies = self.stringency_line.text()
+        tmt_params = self.tmt_group.get_params()
 
         self.set_buttons_enabled_state(False)
         self.pool.applyAsync(run_simsi_transfer,
-                             (mq_txt_dir, raw_dir, output_dir, metafile_path, stringencies, extra_params),
+                             (mq_txt_dir, raw_dir, output_dir, metafile_path, stringencies, tmt_params, extra_params),
                              callback=self.on_simsi_finished)
 
     def on_simsi_finished(self, return_code):
