@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QObject, QThread, pyqtSignal  # https://realpython.com/python-pyqt-qthread/
+from PyQt5.QtCore import QObject, QThread, pyqtSignal, Qt  # https://realpython.com/python-pyqt-qthread/
 
 import sys
 import logging
@@ -14,7 +14,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, metafile_path, stringencies, tmt_params, extra_params):
+def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, metafile_path, tmt_params, other_params, extra_params):
     parameters = []
     if mq_txt_dir:
         parameters.extend(['--mq_txt_folder', mq_txt_dir])
@@ -24,10 +24,10 @@ def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, metafile_path, stringenc
         parameters.extend(['--output_folder', output_dir])
     if metafile_path:
         parameters.extend(['--meta_input_file', metafile_path])
-    if stringencies:
-        parameters.extend(['--stringencies', stringencies])
     if tmt_params:
         parameters.extend(tmt_params)
+    if other_params:
+        parameters.extend(other_params)
     if extra_params:
         parameters.extend(extra_params.split())
     try:
@@ -143,6 +143,8 @@ class TMTGroup(QtWidgets.QGroupBox):
         self.setLayout(self.tmt_group_layout)
 
         self.ms_level_label = QtWidgets.QLabel("TMT MS level")
+        self.ms_level_label.setAlignment(Qt.Al)
+        self.ms_level_label.setAlignment(Qt.AlignVCenter)
         self.ms_level_select = QtWidgets.QComboBox()
         self.ms_level_select.addItems(['MS2', 'MS3'])
         self.ms_level_select.setCurrentText('MS3')
@@ -172,8 +174,8 @@ class ParameterGroup(QtWidgets.QGroupBox):
         self.parameter_group_layout = QtWidgets.QGridLayout()
         self.setLayout(self.parameter_group_layout)
 
-        self.keep_decoy_label = QtWidgets.QLabel("Keep decoys")
-        self.keep_decoy_checkbox = QtWidgets.QCheckBox()
+        self.filter_decoy_label = QtWidgets.QLabel("Filter decoys")
+        self.filter_decoy_checkbox = QtWidgets.QCheckBox()
 
         self.plotting_columns_label = QtWidgets.QLabel("Keep plotting columns")
         self.plotting_columns_checkbox = QtWidgets.QCheckBox()
@@ -188,8 +190,11 @@ class ParameterGroup(QtWidgets.QGroupBox):
         self.threads_spinbox.setValue(1)
         self.threads_spinbox.setRange(1, 100)
 
-        self.parameter_group_layout.addWidget(self.keep_decoy_label, 0, 0)
-        self.parameter_group_layout.addWidget(self.keep_decoy_checkbox, 0, 1)
+        self.stringency_label = QtWidgets.QLabel("MaRaCluster stringencies")
+        self.stringency_line = QtWidgets.QLineEdit('10, 15, 20')
+
+        self.parameter_group_layout.addWidget(self.filter_decoy_label, 0, 0)
+        self.parameter_group_layout.addWidget(self.filter_decoy_checkbox, 0, 1)
         self.parameter_group_layout.addWidget(self.plotting_columns_label, 0, 3)
         self.parameter_group_layout.addWidget(self.plotting_columns_checkbox, 0, 4)
 
@@ -198,16 +203,23 @@ class ParameterGroup(QtWidgets.QGroupBox):
         self.parameter_group_layout.addWidget(self.threads_label, 1, 3)
         self.parameter_group_layout.addWidget(self.threads_spinbox, 1, 4)
 
+        self.parameter_group_layout.addWidget(self.stringency_label, 2, 0)
+        self.parameter_group_layout.addWidget(self.stringency_line, 2, 1)
+
         for col in range(5):
             self.parameter_group_layout.setColumnStretch(col, 1)
 
     def get_params(self):
-        return ["--min-length", str(self.keep_decoy_spinbox.value()),
-                "--max-length", str(self.max_length_spinbox.value()),
-                "--cleavages", str(self.max_cleavages_spinbox.value()),
-                "--enzyme", self.enzyme_select.currentText(),
-                "--digestion", self.digestion_select.currentText(),
-                "--special-aas", self.special_aas_line_edit.text()]
+        returnval = [
+            '--stringencies', str(self.stringency_line.text()),
+            '--num_threads', str(self.threads_spinbox.value()),
+            '--ambiguity_decision', str(self.ambiguity_select.currentText())
+        ]
+        if self.filter_decoy_checkbox.isChecked():
+            returnval.append('--filter_decoys')
+        if self.plotting_columns_checkbox.isChecked():
+            returnval.append('--add_plotting_columns')
+        return returnval
 
 class MainWindow(QtWidgets.QWidget):
 
@@ -224,14 +236,13 @@ class MainWindow(QtWidgets.QWidget):
 
         layout.addRow(self.tabs)
         self._add_output_dir_field(layout)
-        self._add_stringencies_field(layout)
 
         self.tmt_group = TMTGroup('TMT parameters')
-        # self.parameter_group = ParameterGroup('SIMSI parameters')
+        self.parameter_group = ParameterGroup('SIMSI parameters')
         self._add_extra_params_field(layout)
 
         layout.addRow(self.tmt_group)
-        # layout.addRow(self.parameter_group)
+        layout.addRow(self.parameter_group)
 
         self._add_run_button(layout)
         self._add_log_textarea(layout)
@@ -337,13 +348,6 @@ class MainWindow(QtWidgets.QWidget):
 
         layout.addRow(self.args_label, self.args_line_edit)
 
-    def _add_stringencies_field(self, layout):
-        self.args_label = QtWidgets.QLabel("MaRaCluster stringencies")
-
-        self.stringency_line = QtWidgets.QLineEdit('10, 15, 20')
-
-        layout.addRow(self.args_label, self.stringency_line)
-
     def _add_run_button(self, layout):
         self.run_button = QtWidgets.QPushButton("Run")
         self.run_button.clicked.connect(self.run_simsi_transfer)
@@ -402,13 +406,14 @@ class MainWindow(QtWidgets.QWidget):
             metafile_path = self.metafile_widget.get_file()
 
         output_dir = self.output_dir_line_edit.text()
-        extra_params = self.args_line_edit.text()
-        stringencies = self.stringency_line.text()
         tmt_params = self.tmt_group.get_params()
+        other_params = self.parameter_group.get_params()
+
+        extra_params = self.args_line_edit.text()
 
         self.set_buttons_enabled_state(False)
         self.pool.applyAsync(run_simsi_transfer,
-                             (mq_txt_dir, raw_dir, output_dir, metafile_path, stringencies, tmt_params, extra_params),
+                             (mq_txt_dir, raw_dir, output_dir, metafile_path, tmt_params, other_params, extra_params),
                              callback=self.on_simsi_finished)
 
     def on_simsi_finished(self, return_code):
