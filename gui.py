@@ -143,8 +143,7 @@ class TMTGroup(QtWidgets.QGroupBox):
         self.setLayout(self.tmt_group_layout)
 
         self.ms_level_label = QtWidgets.QLabel("TMT MS level")
-        self.ms_level_label.setAlignment(Qt.Al)
-        self.ms_level_label.setAlignment(Qt.AlignVCenter)
+        # self.ms_level_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.ms_level_select = QtWidgets.QComboBox()
         self.ms_level_select.addItems(['MS2', 'MS3'])
         self.ms_level_select.setCurrentText('MS3')
@@ -180,7 +179,7 @@ class ParameterGroup(QtWidgets.QGroupBox):
         self.plotting_columns_label = QtWidgets.QLabel("Keep plotting columns")
         self.plotting_columns_checkbox = QtWidgets.QCheckBox()
 
-        self.ambiguity_label = QtWidgets.QLabel("Ambiguous cluster handling")
+        self.ambiguity_label = QtWidgets.QLabel("PSM ambiguity")
         self.ambiguity_select = QtWidgets.QComboBox()
         self.ambiguity_select.addItems(['majority', 'all', 'none'])
         self.ambiguity_select.setCurrentText('majority')
@@ -200,11 +199,11 @@ class ParameterGroup(QtWidgets.QGroupBox):
 
         self.parameter_group_layout.addWidget(self.ambiguity_label, 1, 0)
         self.parameter_group_layout.addWidget(self.ambiguity_select, 1, 1)
-        self.parameter_group_layout.addWidget(self.threads_label, 1, 3)
-        self.parameter_group_layout.addWidget(self.threads_spinbox, 1, 4)
+        self.parameter_group_layout.addWidget(self.stringency_label, 1, 3)
+        self.parameter_group_layout.addWidget(self.stringency_line, 1, 4)
 
-        self.parameter_group_layout.addWidget(self.stringency_label, 2, 0)
-        self.parameter_group_layout.addWidget(self.stringency_line, 2, 1)
+        self.parameter_group_layout.addWidget(self.threads_label, 2, 0)
+        self.parameter_group_layout.addWidget(self.threads_spinbox, 2, 1)
 
         for col in range(5):
             self.parameter_group_layout.setColumnStretch(col, 1)
