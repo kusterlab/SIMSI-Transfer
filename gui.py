@@ -31,19 +31,8 @@ def run_simsi_transfer(mq_txt_dir, raw_dir, output_dir, metafile_path, tmt_param
     if extra_params:
         parameters.extend(extra_params.split())
     try:
-        # simsi_transfer.main(parameters)
-        logger.info(parameters)
-        # if not metafile_path:
-        #     # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir, '--stringencies', stringencies] + extra_params.split())
-        #     logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir,
-        #                  '--stringencies', stringencies] + tmt_params + extra_params.split())
-        #     logger.info(parameters)
-        # else:
-        #     # simsi_transfer.main(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir, '--meta_input_file', metafile_path, '--stringencies', stringencies] + extra_params.split())
-        #     logger.info(['--mq_txt_folder', mq_txt_dir, '--raw_folder', raw_dir, '--output_folder', output_dir,
-        #                  '--meta_input_file', metafile_path, '--stringencies',
-        #                  stringencies] + tmt_params + extra_params.split())
-        #     logger.info(parameters)
+        simsi_transfer.main(parameters)
+        # logger.info(parameters)
     except SystemExit as e:
         logger.info(f"Error while running SIMSI-Transfer, exited with error code {e}.")
     except Exception as e:
@@ -229,6 +218,7 @@ class MainWindow(QtWidgets.QWidget):
 
         self.setWindowTitle("SIMSI-Transfer")
 
+
         self.tabs = QtWidgets.QTabWidget()
         self._add_single_search_input_tab()
         self._add_metafile_input_tab()
@@ -238,12 +228,12 @@ class MainWindow(QtWidgets.QWidget):
 
         self.tmt_group = TMTGroup('TMT parameters')
         self.parameter_group = ParameterGroup('SIMSI parameters')
-        self._add_extra_params_field(layout)
 
         layout.addRow(self.tmt_group)
         layout.addRow(self.parameter_group)
 
-        self._add_run_button(layout)
+        self._add_extra_params_field(layout)
+        self._add_buttons(layout)
         self._add_log_textarea(layout)
 
         self.setLayout(layout)
@@ -260,6 +250,15 @@ class MainWindow(QtWidgets.QWidget):
         self.pool = pool.JobPool(processes=1, warningFilter="default", queue=self.q)
 
         self.resize(700, self.height())
+
+    def _add_buttons(self, layout):
+        self.help_button = QtWidgets.QPushButton("Help")
+        self.help_button.clicked.connect(self.run_simsi_help)
+
+        self.run_button = QtWidgets.QPushButton("Run")
+        self.run_button.clicked.connect(self.run_simsi_transfer)
+
+        layout.addRow(self.help_button, self.run_button)
 
     def _add_single_search_input_tab(self):
         self.singlesearch_tab = QtWidgets.QWidget()
@@ -347,13 +346,6 @@ class MainWindow(QtWidgets.QWidget):
 
         layout.addRow(self.args_label, self.args_line_edit)
 
-    def _add_run_button(self, layout):
-        self.run_button = QtWidgets.QPushButton("Run")
-        self.run_button.clicked.connect(self.run_simsi_transfer)
-        self.run_button.setContentsMargins(20, 100, 20, 100)
-
-        layout.addRow(self.run_button)
-
     def _add_log_textarea(self, layout):
         self.log_text_area = QTextEditLogger(self)
         self.log_text_area.setLevel(logging.INFO)
@@ -392,6 +384,9 @@ class MainWindow(QtWidgets.QWidget):
         else:
             self.run_button.setText("Stop")
             self.run_button.clicked.connect(self.stop_simsi_transfer)
+
+    def run_simsi_help(self):
+        self.pool.applyAsync(run_simsi_transfer, ('', '', '', '', [], [], '--help'), callback=self.on_simsi_finished)
 
     def run_simsi_transfer(self):
         # initialize all parameters as empty values and then override?
