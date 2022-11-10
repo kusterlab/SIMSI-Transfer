@@ -133,7 +133,7 @@ def main(argv):
         logger.info(f'Building SIMSI-Transfer msms.txt file for {pval}.')
         msms_simsi = simsi_output.remove_unidentified_scans(msmsscans_simsi)
         if curve_columns:
-            pass
+            raise NotImplementedError()
         simsi_output.export_msms(msms_simsi, output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer msms.txt assembly.')
 
