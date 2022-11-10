@@ -139,6 +139,7 @@ class TMTGroup(QtWidgets.QGroupBox):
 
         self.requantify_label = QtWidgets.QLabel("Requantify TMT?")
         self.requantify_checkbox = QtWidgets.QCheckBox()
+        self.requantify_checkbox.setChecked(True)
 
         self.tmt_group_layout.addWidget(self.ms_level_label, 0, 0)
         self.tmt_group_layout.addWidget(self.ms_level_select, 0, 1)
@@ -181,6 +182,11 @@ class ParameterGroup(QtWidgets.QGroupBox):
         self.stringency_label = QtWidgets.QLabel("MaRaCluster stringencies")
         self.stringency_line = QtWidgets.QLineEdit('10, 15, 20')
 
+        self.maxPEP_label = QtWidgets.QLabel("Max. PEP [%]")
+        self.maxPEP_spinbox = QtWidgets.QSpinBox()
+        self.maxPEP_spinbox.setValue(5)
+        self.maxPEP_spinbox.setRange(1, 10)
+
         self.parameter_group_layout.addWidget(self.filter_decoy_label, 0, 0)
         self.parameter_group_layout.addWidget(self.filter_decoy_checkbox, 0, 1)
         # self.parameter_group_layout.addWidget(self.plotting_columns_label, 0, 3)
@@ -191,8 +197,11 @@ class ParameterGroup(QtWidgets.QGroupBox):
         self.parameter_group_layout.addWidget(self.ambiguity_label, 1, 0)
         self.parameter_group_layout.addWidget(self.ambiguity_select, 1, 1)
 
-        self.parameter_group_layout.addWidget(self.threads_label, 1, 3)
-        self.parameter_group_layout.addWidget(self.threads_spinbox, 1, 4)
+        self.parameter_group_layout.addWidget(self.maxPEP_label, 1, 3)
+        self.parameter_group_layout.addWidget(self.maxPEP_spinbox, 1, 4)
+
+        self.parameter_group_layout.addWidget(self.threads_label, 2, 0)
+        self.parameter_group_layout.addWidget(self.threads_spinbox, 2, 1)
 
         for col in range(5):
             self.parameter_group_layout.setColumnStretch(col, 1)
@@ -201,13 +210,15 @@ class ParameterGroup(QtWidgets.QGroupBox):
         returnval = [
             '--stringencies', str(self.stringency_line.text()),
             '--num_threads', str(self.threads_spinbox.value()),
-            '--ambiguity_decision', str(self.ambiguity_select.currentText())
+            '--ambiguity_decision', str(self.ambiguity_select.currentText()),
+            '--maximum_pep', str(self.maxPEP_spinbox.value())
         ]
         if self.filter_decoy_checkbox.isChecked():
             returnval.append('--filter_decoys')
         # if self.plotting_columns_checkbox.isChecked():
         #     returnval.append('--add_plotting_columns')
         return returnval
+
 
 class MainWindow(QtWidgets.QWidget):
 
@@ -217,7 +228,6 @@ class MainWindow(QtWidgets.QWidget):
         layout = QtWidgets.QFormLayout()
 
         self.setWindowTitle("SIMSI-Transfer")
-
 
         self.tabs = QtWidgets.QTabWidget()
         self._add_single_search_input_tab()
