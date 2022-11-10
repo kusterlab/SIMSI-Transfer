@@ -83,14 +83,19 @@ def parse_args(argv):
                        Retains columns that might be needed for further processing in e.g. TMT curve plotting tools.
                        ''')
 
+    apars.add_argument('--maximum_pep', type=int, default=5, metavar='N',
+                       help='''
+                       Maximum Posterior Error Probability (PEP) of PSMs to be considered for transfers.
+                       ''')
+
     # ------------------------------------------------
     args = apars.parse_args(argv)
 
     meta_input_df = get_input_folders(args)
 
-    return meta_input_df, parse_stringencies(args.stringencies), Path(
-        args.output_folder), args.num_threads, args.tmt_ms_level, \
-           args.tmt_requantify, args.filter_decoys, args.ambiguity_decision, args.add_plotting_columns
+    return meta_input_df, parse_stringencies(args.stringencies), Path(args.output_folder), args.num_threads, \
+           args.tmt_ms_level, args.tmt_requantify, args.filter_decoys, args.ambiguity_decision, \
+           args.add_plotting_columns, args.maximum_pep
 
 
 def get_input_folders(args):

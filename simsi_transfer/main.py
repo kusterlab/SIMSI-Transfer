@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def main(argv):
     meta_input_df, pvals, output_folder, num_threads, ms_level, tmt_requantify, \
-    filter_decoys, ambiguity_decision, curve_columns = cli.parse_args(argv)
+    filter_decoys, ambiguity_decision, curve_columns, max_pep = cli.parse_args(argv)
 
     raw_folders = utils.convert_to_path_list(meta_input_df['raw_folder'])
     mq_txt_folders = utils.convert_to_path_list(meta_input_df['mq_txt_folder'])
@@ -76,11 +76,13 @@ def main(argv):
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
     plex = mq.get_plex(mq_txt_folders)
-    msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify, plex=plex)
+    msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify,
+                                         plex=plex)
 
     raw_filenames_mq = set(msmsscans_mq['Raw file'].unique())
     if raw_filenames_mq != raw_filenames_input:
-        raise ValueError(f'The raw files listed as input and the raw files in the MaxQuant search results are not the same!')
+        raise ValueError(
+            f'The raw files listed as input and the raw files in the MaxQuant search results are not the same!')
 
     if tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
