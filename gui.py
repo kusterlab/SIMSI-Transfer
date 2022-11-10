@@ -162,11 +162,11 @@ class ParameterGroup(QtWidgets.QGroupBox):
         self.parameter_group_layout = QtWidgets.QGridLayout()
         self.setLayout(self.parameter_group_layout)
 
-        self.filter_decoy_label = QtWidgets.QLabel("Filter decoys")
+        self.filter_decoy_label = QtWidgets.QLabel("Remove decoys")
         self.filter_decoy_checkbox = QtWidgets.QCheckBox()
 
-        self.plotting_columns_label = QtWidgets.QLabel("Keep plotting columns")
-        self.plotting_columns_checkbox = QtWidgets.QCheckBox()
+        # self.plotting_columns_label = QtWidgets.QLabel("Keep plotting columns")
+        # self.plotting_columns_checkbox = QtWidgets.QCheckBox()
 
         self.ambiguity_label = QtWidgets.QLabel("PSM ambiguity")
         self.ambiguity_select = QtWidgets.QComboBox()
@@ -183,16 +183,16 @@ class ParameterGroup(QtWidgets.QGroupBox):
 
         self.parameter_group_layout.addWidget(self.filter_decoy_label, 0, 0)
         self.parameter_group_layout.addWidget(self.filter_decoy_checkbox, 0, 1)
-        self.parameter_group_layout.addWidget(self.plotting_columns_label, 0, 3)
-        self.parameter_group_layout.addWidget(self.plotting_columns_checkbox, 0, 4)
+        # self.parameter_group_layout.addWidget(self.plotting_columns_label, 0, 3)
+        # self.parameter_group_layout.addWidget(self.plotting_columns_checkbox, 0, 4)
+        self.parameter_group_layout.addWidget(self.stringency_label, 0, 3)
+        self.parameter_group_layout.addWidget(self.stringency_line, 0, 4)
 
         self.parameter_group_layout.addWidget(self.ambiguity_label, 1, 0)
         self.parameter_group_layout.addWidget(self.ambiguity_select, 1, 1)
-        self.parameter_group_layout.addWidget(self.stringency_label, 1, 3)
-        self.parameter_group_layout.addWidget(self.stringency_line, 1, 4)
 
-        self.parameter_group_layout.addWidget(self.threads_label, 2, 0)
-        self.parameter_group_layout.addWidget(self.threads_spinbox, 2, 1)
+        self.parameter_group_layout.addWidget(self.threads_label, 1, 3)
+        self.parameter_group_layout.addWidget(self.threads_spinbox, 1, 4)
 
         for col in range(5):
             self.parameter_group_layout.setColumnStretch(col, 1)
@@ -205,8 +205,8 @@ class ParameterGroup(QtWidgets.QGroupBox):
         ]
         if self.filter_decoy_checkbox.isChecked():
             returnval.append('--filter_decoys')
-        if self.plotting_columns_checkbox.isChecked():
-            returnval.append('--add_plotting_columns')
+        # if self.plotting_columns_checkbox.isChecked():
+        #     returnval.append('--add_plotting_columns')
         return returnval
 
 class MainWindow(QtWidgets.QWidget):
@@ -386,7 +386,9 @@ class MainWindow(QtWidgets.QWidget):
             self.run_button.clicked.connect(self.stop_simsi_transfer)
 
     def run_simsi_help(self):
-        self.pool.applyAsync(run_simsi_transfer, ('', '', '', '', [], [], '--help'), callback=self.on_simsi_finished)
+        import webbrowser
+        webbrowser.open('https://github.com/kusterlab/SIMSI-Transfer')
+        # self.pool.applyAsync(run_simsi_transfer, ('', '', '', '', [], [], '--help'), callback=self.on_simsi_finished)
 
     def run_simsi_transfer(self):
         # initialize all parameters as empty values and then override?
