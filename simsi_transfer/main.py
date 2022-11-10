@@ -126,7 +126,7 @@ def main(argv):
 
         logger.info(f'Starting cluster-based identity transfer for {pval}.')
         annotated_clusters = transfer.flag_ambiguous_clusters(annotated_clusters)
-        msmsscans_simsi = transfer.transfer(annotated_clusters, ambiguity_decision=ambiguity_decision)
+        msmsscans_simsi = transfer.transfer(annotated_clusters, ambiguity_decision=ambiguity_decision, max_pep=max_pep)
         simsi_output.export_msmsscans(msmsscans_simsi, output_folder, pval)
         logger.info(f'Finished identity transfer.')
 

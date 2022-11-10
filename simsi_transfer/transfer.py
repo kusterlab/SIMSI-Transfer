@@ -17,26 +17,28 @@ PHOSPHO_REGEX = re.compile(r'([STY])\(Phospho \(STY\)\)')
 PROBABILITY_REGEX = re.compile(r'\((\d(?:\.?\d+)?)\)')
 
 
-def transfer(summary_df, mask=False, ambiguity_decision='majority'):
+def transfer(summary_df, max_pep, mask=False, ambiguity_decision='majority'):
     """
     Main function for transfers by clustering. Transfers identifications for merged dataframe and adds a column for
     identification type. Transferred columns are Sequence, Modified sequence, Proteins, Gene names, Protein Names,
     Charge, m/z, and Mass.
     :param summary_df: Summary dataframe, merged from cleaned msms.txt and MaRaCluster clusters.tsv file
+    :param max_pep: Maximum PEP of a PSM to be considered for transfers
     :param mask: if false, uses "identification" column from summary frame. If set to a value, transfer uses the
     'identification_{mask}' column, needed for the masking analysis
     :param ambiguity_decision: if 'all', returns raw sequences with potential phospho positions when encountering isomer
     clusters; if 'majority', decides for one sequence by majority vote
     :return: DataFrame with transferred identifications resembling MaxQuant msmsScans.txt
     """
+    ################################################## GET PEP COL #####################################################
     if mask:
         identification_column = f'identification_{mask}'
     else:
         identification_column = 'identification'
-        
+
     agg_funcs = {'Sequence': utils.get_unique_else_nan,
                  'Modifications': utils.get_unique_else_nan,
-                 'Modified sequence' : get_consensus_modified_sequence,
+                 'Modified sequence': get_consensus_modified_sequence,
                  'Phospho (STY) Probabilities': calculate_average_probabilities,
                  'Proteins': utils.csv_list_unique,
                  'Gene Names': utils.csv_list_unique,
@@ -46,12 +48,16 @@ def transfer(summary_df, mask=False, ambiguity_decision='majority'):
                  'Mass': 'mean',
                  'Missed cleavages': utils.get_unique_else_nan,
                  'Length': utils.get_unique_else_nan,
+                 'PEP': 'max',
                  'Reverse': utils.get_unique_else_nan}
     if ambiguity_decision == 'majority':
         # TODO: Generate modified sequence from probability string rather than taking it from the cluster
         agg_funcs['Modified sequence'] = lambda s: get_consensus_modified_sequence(s, get_most_common_sequence)
-    
+
     identified_scans = summary_df['Modified sequence'].notna()
+    if max_pep:
+        identified_scans = identified_scans.loc[
+            (identified_scans['PEP'].astype(float) <= max_pep / 100) | (identified_scans['Reverse'] == '+')]
     cluster_info_df = summary_df[identified_scans].groupby('clusterID', as_index=False).agg(agg_funcs)
     # Mark all clusters with a unique identification as transferred ('t').
     # Identifications by MQ will overwrite this column as direct identification ('d') a few lines below.
@@ -87,7 +93,8 @@ def remove_probabilities_from_sequence(sequence: str) -> str:
     return re.sub(PROBABILITY_REGEX, '', sequence)
 
 
-def check_ambiguity(sequences: List[str], transform_sequence: Callable[[List[str]], List[str]] = transform_phospho_psp_format):
+def check_ambiguity(sequences: List[str],
+                    transform_sequence: Callable[[List[str]], List[str]] = transform_phospho_psp_format):
     sequences = utils.remove_nan_values(set(sequences))
     if len(sequences) == 0:
         return np.nan, np.nan
@@ -121,11 +128,12 @@ def sum_dictionaries(dictionary):
 
 def average_dictionaries(dictionary):
     summed_dictionary = sum_dictionaries(dictionary)
-    
+
     num_dictionaries = len(dictionary)
+
     def get_average_and_round(x):
         return round(x / num_dictionaries, 3)
-    
+
     return {pos: get_average_and_round(summed_prob) for pos, summed_prob in summed_dictionary.items()}
 
 
@@ -142,7 +150,7 @@ def calculate_average_probabilities(mod_probability_sequences):
 
     mod_probabilities = [get_mod_probabilities_dict(p) for p in mod_probability_sequences]
     average_mod_probabilities = average_dictionaries(mod_probabilities)
-    
+
     sequence = remove_probabilities_from_sequence(mod_probability_sequences[0])
     sequence_with_probabilities = add_probabilities_to_sequence(sequence, average_mod_probabilities)
     # # this does not work for multiple phosphorylations in one sequence
@@ -164,7 +172,7 @@ def get_modified_sequence_annotation(sequences, sequences_psp_format):
 def get_most_common_sequence(sequences, sequences_psp_format):
     sequences = utils.remove_nan_values(sequences)
     return collections.Counter(sequences).most_common(1)[0][0]
- 
+
 
 def get_consensus_modified_sequence(sequences, consensus_function=get_modified_sequence_annotation):
     unique_sequences, sequences_psp_format = check_ambiguity(sequences)
