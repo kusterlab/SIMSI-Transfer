@@ -55,10 +55,13 @@ def transfer(summary_df, max_pep, mask=False, ambiguity_decision='majority'):
         agg_funcs['Modified sequence'] = lambda s: get_consensus_modified_sequence(s, get_most_common_sequence)
 
     identified_scans = summary_df['Modified sequence'].notna()
+    logger.info('Passed 1')
+    logger.info(summary_df.columns)
+    pep_filtered = pd.Series([True for i in range(len(summary_df))])
     if max_pep:
-        identified_scans = identified_scans.loc[
-            (identified_scans['PEP'].astype(float) <= max_pep / 100) | (identified_scans['Reverse'] == '+')]
-    cluster_info_df = summary_df[identified_scans].groupby('clusterID', as_index=False).agg(agg_funcs)
+        pep_filtered = (summary_df['PEP'].astype(float) <= max_pep / 100) | (summary_df['Reverse'] == '+')
+    logger.info('Passed 2')
+    cluster_info_df = summary_df[identified_scans & pep_filtered].groupby('clusterID', as_index=False).agg(agg_funcs)
     # Mark all clusters with a unique identification as transferred ('t').
     # Identifications by MQ will overwrite this column as direct identification ('d') a few lines below.
     cluster_info_df[identification_column] = np.where(cluster_info_df['Modified sequence'].notna(), 't', None)
