@@ -57,7 +57,7 @@ def transfer(summary_df, max_pep, mask=False, ambiguity_decision='majority'):
     identified_scans = summary_df['Modified sequence'].notna()
     pep_filtered = pd.Series([True for i in range(len(summary_df))])
     if max_pep:
-        pep_filtered = (summary_df['PEP'].astype(float) <= max_pep / 100) | (summary_df['Reverse'] == '+')
+        pep_filtered = summary_df['PEP'].astype(float) <= max_pep / 100
     cluster_info_df = summary_df[identified_scans & pep_filtered].groupby('clusterID', as_index=False).agg(agg_funcs)
     # Mark all clusters with a unique identification as transferred ('t').
     # Identifications by MQ will overwrite this column as direct identification ('d') a few lines below.
