@@ -85,7 +85,7 @@ def parse_args(argv):
 
     apars.add_argument('--maximum_pep', type=int, default=5, metavar='N',
                        help='''
-                       Maximum Posterior Error Probability (PEP) of PSMs to be considered for transfers.
+                       Maximum Posterior Error Probability (PEP) in percent of PSMs to be considered for transfers.
                        ''')
 
     # ------------------------------------------------
