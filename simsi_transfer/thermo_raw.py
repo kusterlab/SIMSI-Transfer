@@ -94,7 +94,8 @@ def get_raw_files(raw_folder: str) -> List[Path]:
     
     if len(raw_files) == 0:
         raise ValueError(f'Failed getting raw files, {raw_folder} did not contain any .mzML or .raw files.')
-        
+
+    raw_files.sort()
     logger.info(f"Found {len(raw_files)} raw files in the search directory")
     return raw_files
 
