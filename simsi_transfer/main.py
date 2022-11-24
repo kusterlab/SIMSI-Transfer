@@ -5,6 +5,7 @@ from datetime import datetime
 import logging
 import time
 
+from . import __version__, __copyright__
 from . import command_line_interface as cli
 from . import maxquant as mq
 from . import simsi_output
@@ -13,11 +14,7 @@ from . import maracluster as cluster
 from . import tmt_processing
 from . import transfer
 from . import evidence
-from . import version
 from .utils import utils
-
-__version__ = version.get_version_from_pyproject()
-__copyright__ = '''Copyright (c) 2021-2022 Firas Hamood & Matthew The. All rights reserved. Written by Firas Hamood (firas.hamood@tum.de) and Matthew The (matthew.the@tum.de) at the Chair of Proteomics and Bioanalytics at the Technical University of Munich.'''
 
 logger = logging.getLogger(__name__)
 

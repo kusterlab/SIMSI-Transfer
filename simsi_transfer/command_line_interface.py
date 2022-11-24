@@ -5,6 +5,8 @@ import argparse
 
 import pandas as pd
 
+from . import __version__, __copyright__
+
 logger = logging.getLogger(__name__)
 
 
@@ -15,8 +17,9 @@ class ArgumentParserWithLogger(argparse.ArgumentParser):
 
 
 def parse_args(argv):
+    desc = f'SIMSI-Transfer version {__version__}\n{__copyright__}' 
     apars = ArgumentParserWithLogger(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        description=desc, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     apars.add_argument('--mq_txt_folder', default=None, metavar="DIR",
                        help='''
