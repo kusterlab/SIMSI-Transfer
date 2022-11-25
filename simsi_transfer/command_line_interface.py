@@ -83,7 +83,7 @@ def parse_args(argv):
                        Retains columns that might be needed for further processing in e.g. TMT curve plotting tools.
                        ''')
 
-    apars.add_argument('--maximum_pep', type=int, default=5, metavar='N',
+    apars.add_argument('--maximum_pep', type=int, default=100, metavar='N',
                        help='''
                        Maximum Posterior Error Probability (PEP) in percent of PSMs to be considered for transfers.
                        ''')

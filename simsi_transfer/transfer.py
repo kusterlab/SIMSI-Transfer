@@ -17,7 +17,7 @@ PHOSPHO_REGEX = re.compile(r'([STY])\(Phospho \(STY\)\)')
 PROBABILITY_REGEX = re.compile(r'\((\d(?:\.?\d+)?)\)')
 
 
-def transfer(summary_df, max_pep, mask=False, ambiguity_decision='majority'):
+def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority'):
     """
     Main function for transfers by clustering. Transfers identifications for merged dataframe and adds a column for
     identification type. Transferred columns are Sequence, Modified sequence, Proteins, Gene names, Protein Names,
@@ -30,15 +30,22 @@ def transfer(summary_df, max_pep, mask=False, ambiguity_decision='majority'):
     clusters; if 'majority', decides for one sequence by majority vote
     :return: DataFrame with transferred identifications resembling MaxQuant msmsScans.txt
     """
-    ################################################## GET PEP COL #####################################################
     if mask:
         identification_column = f'identification_{mask}'
     else:
         identification_column = 'identification'
 
+    if ambiguity_decision == 'majority':
+        # TODO: Generate modified sequence from probability string rather than taking it from the cluster
+        mod_seq_func = lambda s: get_consensus_modified_sequence(s, get_most_common_sequence)
+    elif ambiguity_decision == 'all':
+        mod_seq_func = get_consensus_modified_sequence
+    else:
+        raise ValueError("The parameter 'ambiguity_decision' has to be set on 'all' or 'majority'!")
+
     agg_funcs = {'Sequence': utils.get_unique_else_nan,
                  'Modifications': utils.get_unique_else_nan,
-                 'Modified sequence': get_consensus_modified_sequence,
+                 'Modified sequence': mod_seq_func,
                  'Phospho (STY) Probabilities': calculate_average_probabilities,
                  'Proteins': utils.csv_list_unique,
                  'Gene Names': utils.csv_list_unique,
@@ -50,12 +57,9 @@ def transfer(summary_df, max_pep, mask=False, ambiguity_decision='majority'):
                  'Length': utils.get_unique_else_nan,
                  'PEP': 'max',
                  'Reverse': utils.get_unique_else_nan}
-    if ambiguity_decision == 'majority':
-        # TODO: Generate modified sequence from probability string rather than taking it from the cluster
-        agg_funcs['Modified sequence'] = lambda s: get_consensus_modified_sequence(s, get_most_common_sequence)
 
     identified_scans = summary_df['Modified sequence'].notna()
-    pep_filtered = pd.Series([True for i in range(len(summary_df))])
+    pep_filtered = pd.Series(np.ones_like(summary_df.index), dtype='bool')
     if max_pep:
         pep_filtered = summary_df['PEP'].astype(float) <= max_pep / 100
     cluster_info_df = summary_df[identified_scans & pep_filtered].groupby('clusterID', as_index=False).agg(agg_funcs)
@@ -63,14 +67,21 @@ def transfer(summary_df, max_pep, mask=False, ambiguity_decision='majority'):
     # Identifications by MQ will overwrite this column as direct identification ('d') a few lines below.
     cluster_info_df[identification_column] = np.where(cluster_info_df['Modified sequence'].notna(), 't', None)
 
-    replacement_dict = {k: "d_" + k for k in agg_funcs.keys()}
+    replacement_dict = {k: "grouped_" + k for k in agg_funcs.keys()}
     cluster_info_df.rename(columns=replacement_dict, inplace=True)
 
     summary_df = pd.merge(left=summary_df, right=cluster_info_df, on=['clusterID'], how='left')
     summary_df.loc[identified_scans, identification_column] = 'd'
+    # Now we have 'd' in every ID that came from MaxQuant and 't' in every ID that came from the clustering
+    # And now we copy the contents of the 'grouped_...' columns into the original columns for every row where we have a 't'
     summary_df.loc[
+        # Aren't all of these cells by definition NaNs? Can we make use of that?
+        # Like 'Merge, and if you find two columns with the same name always use the value that is not NaN!'
+        # Then we could do this directly in the merge and wouldn't have to go over the df again here
+        # Try pd.DataFrame.combine(). For this the dfs would need to be in the same shape though.
         summary_df[identification_column] == 't', replacement_dict.keys()] = summary_df.loc[
         summary_df[identification_column] == 't', replacement_dict.values()].to_numpy()
+    # The 'grouped_...' columns have made themselves redundant
     summary_df.drop(columns=replacement_dict.values(), inplace=True)
     return summary_df
 
@@ -79,6 +90,7 @@ def transform_phospho_psp_format(sequences: List[str]) -> List[str]:
     """Replaces phosphorylation modification by lower case letter (PhosphositePlus convention), 
     e.g. 'AAAAAAAGDS(Phospho (STY))DS(Phospho (STY))WDADAFSVEDPVRK' => 'AAAAAAAGDsDsWDADAFSVEDPVRK'
     """
+    sequences = [re.sub('_', '', x) for x in sequences]
     return [re.sub(PHOSPHO_REGEX, lambda pat: pat.group(1).lower(), x) for x in sequences]
 
 
@@ -161,6 +173,7 @@ def calculate_average_probabilities(mod_probability_sequences):
 
 def get_modified_sequence_annotation(sequences, sequences_psp_format):
     # TODO: Make ambiguous localization handling work for acetylation (and p-ac-combinations) as well
+    # TODO: If underscores are handed over in the modified seq, the modification positions are incorrect in the end!
     num_mods = len(re.findall(r'[sty]', sequences_psp_format[0]))
     phospho_positions = {m.start() + 1 for x in sequences_psp_format for m in re.finditer(r'[sty]', x)}
     phospho_positions = sorted(list(phospho_positions))
