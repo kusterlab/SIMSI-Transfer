@@ -61,8 +61,8 @@ def match_precursor_grouped(msms_scan: pd.Series, allpeptides_grouped: pd.core.g
 
 
 def match_precursor(msms_scan: pd.Series, allpeptides: pd.DataFrame, ppm_tol: float = 20.0):
-    precursors = allpeptides[(get_ppm_diff(allpeptides['m/z'], msms_scan['m/z']) < ppm_tol) & \
-                             (allpeptides['Min scan number'] <= msms_scan['MS scan number']) & \
+    precursors = allpeptides[(get_ppm_diff(allpeptides['m/z'], msms_scan['m/z']) < ppm_tol) &
+                             (allpeptides['Min scan number'] <= msms_scan['MS scan number']) &
                              (allpeptides['Max scan number'] >= msms_scan['MS scan number'])]
     if len(precursors.index) == 0:
         return ['MSMS', np.NaN]
