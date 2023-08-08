@@ -1,13 +1,13 @@
 import os
 from sys import platform
-from typing import Optional, List, Any, Callable
+from typing import Optional, List
 from pathlib import Path
 import logging
 
 from .utils import subprocess_with_logger as subprocess
-from .utils import utils
 
-logger = logging.getLogger(__name__)
+# hacky way to get the package logger instead of just __main__ when running as a module
+logger = logging.getLogger(__package__ + "." + __file__)
 
 
 def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip: bool = False, ms_level: str = "2-") -> Path:
@@ -51,7 +51,6 @@ def convert_raw_mzml_batch(raw_files: List[Path], output_folder: Optional[Path] 
         output_folder.mkdir(parents=True)
     
     if num_threads > 1:
-        import multiprocessing
         from .utils.multiprocessing_pool import JobPool
         processingPool = JobPool(processes=num_threads)
     
@@ -102,7 +101,25 @@ def get_raw_files(raw_folder: str) -> List[Path]:
 
 if __name__ == "__main__":
     from sys import argv
-    if len(argv) == 2:
-        converter = convert_raw_mzml(argv[1], ms_level = "2-")
-    else:
-        logger.error("Please specify a rawfile")
+    import argparse
+    from .command_line_interface import ArgumentParserWithLogger
+    from . import __version__, __copyright__
+
+    desc = f'SIMSI-raw-convert version {__version__}\n{__copyright__}' 
+    apars = ArgumentParserWithLogger(
+        description=desc, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    apars.add_argument('--raw_file', default=None, metavar="R", required=True,
+                       help='''
+                       Path to raw file you want to convert.
+                       ''')
+
+    apars.add_argument('--mzml_output_file', default=None, metavar="M",
+                       help='''Output path to mzML file.''')
+    
+    args = apars.parse_args(argv[1:])
+
+    logger.info(f'{desc}')
+    logger.info(f'Issued command: {os.path.basename(__file__)} {" ".join(map(str, argv))}')
+
+    converter = convert_raw_mzml(Path(args.raw_file), Path(args.mzml_output_file), ms_level = "2-")
