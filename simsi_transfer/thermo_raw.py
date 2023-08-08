@@ -99,6 +99,23 @@ def get_raw_files(raw_folder: str) -> List[Path]:
     return raw_files
 
 
+def check_valid_mzml(mzml_file: Path):
+    from pyteomics import mzml
+    import lxml
+
+    logger.info(f"Checking if {mzml_file} can be read by pyteomics")
+    try:
+        with mzml.read(str(mzml_file)) as reader:
+            ids = list()
+            for i, item in enumerate(reader):
+                ids.append((i, item['id']))
+    except lxml.etree.XMLSyntaxError as e:
+        logger.error("Found invalid symbol, check the error message for the line in the mzML where parsing failed.")
+        raise e
+
+    logger.info(f"{mzml_file} was successfully read by pyteomics")
+
+
 if __name__ == "__main__":
     from sys import argv
     import argparse
@@ -117,9 +134,15 @@ if __name__ == "__main__":
     apars.add_argument('--mzml_output_file', default=None, metavar="M",
                        help='''Output path to mzML file.''')
     
+    apars.add_argument('--validate', default=False, action='store_true',
+                       help='''Check if mzML file can be read by pyteomics.''')
+    
     args = apars.parse_args(argv[1:])
 
     logger.info(f'{desc}')
     logger.info(f'Issued command: {os.path.basename(__file__)} {" ".join(map(str, argv))}')
 
     converter = convert_raw_mzml(Path(args.raw_file), Path(args.mzml_output_file), ms_level = "2-")
+
+    if args.validate:
+        check_valid_mzml(Path(args.mzml_output_file))
