@@ -173,6 +173,7 @@ def calculate_evidence_columns(summary, plex):
             **{f'Reporter intensity count {i}': pd.NamedAgg(column=f'Reporter intensity {i}', aggfunc='count') for i in
                range(1, plex + 1)},                                                                         # calculated by SIMSI-Transfer
             'Reverse': pd.NamedAgg(column='Reverse', aggfunc='first'),                                      # from msms.txt
+            'Potential contaminant': pd.NamedAgg(column='Potential contaminant', aggfunc='first'),          # from msms.txt
             'summary_ID': pd.NamedAgg(column='summary_ID', aggfunc=csv_list),                               # assigned by SIMSI-Transfer
             'Transferred spectra count': pd.NamedAgg(column='identification', aggfunc=count_transferred)    # calculated by SIMSI-Transfer
         })
@@ -190,6 +191,7 @@ def calculate_evidence_columns(summary, plex):
     evidence = evidence.astype({'Length': 'int64', 'Missed cleavages': 'int64', 'Fraction': 'int64', 'Charge': 'int64',
                                 'MS/MS scan number': 'int64'})
     evidence['Reverse'].fillna('', inplace=True)
+    evidence['Potential contaminant'].fillna('', inplace=True)
     evidence = evidence.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge'])
     return evidence
 
