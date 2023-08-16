@@ -150,7 +150,7 @@ def average_dictionaries(dictionary):
 
 
 def add_probabilities_to_sequence(sequence, probability_dict):
-    for position, probability in reversed(list(probability_dict.items())):
+    for position, probability in reversed(sorted(list(probability_dict.items()))):
         sequence = sequence[:position] + f'({probability})' + sequence[position:]
     return sequence
 
