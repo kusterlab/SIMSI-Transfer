@@ -189,6 +189,11 @@ def calculate_evidence_columns(summary, plex):
     evidence.loc[no_fraction_rows, 'Fraction'] = -1
     evidence = evidence.astype({'Length': 'int64', 'Missed cleavages': 'int64', 'Fraction': 'int64', 'Charge': 'int64',
                                 'MS/MS scan number': 'int64'})
+    # Add new column "Potential contaminant" and fill with "+" wherever "Leading proteins" contains the substrting "CON"
+    # TODO: Some very specific proteins are not flagged with "CON" but are flagged as "Potential contaminants" in MQ;
+    #  these are not flagged by this method. Replace with search for known list of contaminants
+    evidence['Potential contaminant'] = evidence['Leading proteins'].str.contains('CON', regex=False).replace(
+        {True: '+', False: ''})
     evidence['Reverse'].fillna('', inplace=True)
     evidence = evidence.sort_values(by=['Sequence', 'Modified sequence', 'Raw file', 'Charge'])
     return evidence
