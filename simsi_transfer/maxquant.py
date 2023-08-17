@@ -48,7 +48,7 @@ def read_msms_txt(mq_txt_folder):
     columns = ['Raw file', 'Scan number', 'Sequence', 'Modified sequence', 'Phospho (STY) Probabilities', 'Length',
                'Modifications', 'Missed cleavages', 'Proteins', 'Gene Names', 'Protein Names',
                'Charge', 'Mass error [ppm]', 'PIF', 'Precursor Intensity', 'PEP', 'Score',
-               'Delta score', 'Reverse', 'Potential contaminant']
+               'Delta score', 'Reverse']
     msmstxt = pd.read_csv(mq_txt_folder / Path('msms.txt'), sep='\t',
                           usecols=lambda x: x in columns)
     

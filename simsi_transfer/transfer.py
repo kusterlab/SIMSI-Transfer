@@ -56,8 +56,7 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
                  'Missed cleavages': utils.get_unique_else_nan,
                  'Length': utils.get_unique_else_nan,
                  'PEP': 'max',
-                 'Reverse': utils.get_unique_else_nan,
-                 'Potential contaminant': utils.get_unique_else_nan}
+                 'Reverse': utils.get_unique_else_nan}
 
     identified_scans = summary_df['Modified sequence'].notna()
     pep_filtered = pd.Series(np.ones_like(summary_df.index), dtype='bool')
