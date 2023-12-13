@@ -18,6 +18,10 @@ def csv_list_unique(x: pd.Series) -> str:
     return ";".join(apply_and_flatten(x, semicolon_split))
 
 
+def csv_unique(s: str) -> str:
+    return ";".join(sorted(set([x for x in s.split(";") if len(x) > 0])))
+
+
 def convert_to_path_list(s):
     return list(map(Path, s.tolist()))
 

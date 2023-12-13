@@ -23,8 +23,8 @@ class TestCalculateEvidenceColumns:
             "Charge": [2, 3, 2],
             "Length": [10, 15, 12],
             "Missed cleavages": [1, 2, 0],
-            "Proteins": ["ProteinA", "ProteinB", "ProteinC"],
-            "Leading proteins": ["LeadA", "LeadB", "LeadC"],
+            "Proteins": ["ProteinA;ProteinC", "ProteinB", "ProteinC"],
+            "Leading proteins": ["LeadA", "LeadB", "LeadC;LeadA"],
             "Gene Names": ["GeneA", "GeneB", "GeneC"],
             "Protein Names": ["NameA", "NameB", "NameC"],
             "new_type": ["TypeA", "TypeB", "TypeC"],
@@ -98,6 +98,8 @@ class TestCalculateEvidenceColumns:
         assert calculated_evidence.loc[1, "Transferred spectra count"] == 1
         assert calculated_evidence.loc[1, "Reporter intensity corrected 1"] == 26
         assert calculated_evidence.loc[1, "Reporter intensity count 1"] == 2
+        assert calculated_evidence.loc[1, "summary_ID"] == "1;3"
+        
         assert calculated_evidence.loc[2, "Reverse"] == "+"
         assert calculated_evidence.loc[2, "Transferred spectra count"] == 1
         

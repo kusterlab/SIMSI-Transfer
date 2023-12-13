@@ -150,7 +150,7 @@ def assign_evidence_feature(
     return summary
 
 
-def calculate_evidence_columns(summary, plex):
+def calculate_evidence_columns(summary: pd.DataFrame, plex: int):
     # replacing zeros with NaNs to count later
     logger.info("Assigned evidence features; calculating column values...")
     reps = [f"Reporter intensity {i}" for i in range(1, plex + 1)]
@@ -160,17 +160,16 @@ def calculate_evidence_columns(summary, plex):
         by=["Sequence", "Modified sequence", "Raw file", "Charge"]
     ).reset_index(drop=True)
 
+    # add semicolon to columns which will be concatenated. this allows us to use the 
+    # fast "sum" aggfunc instead of a slow custom string function
+    concat_cols = ["Proteins", "Leading proteins", "scanID", "summary_ID"]
+    summary[concat_cols] = summary[concat_cols].apply(lambda col: col.astype(str) + ";")
+
     summary_grouped = summary.groupby("evidence_ID")
 
     # Column generation
     # TODO: Sort for keeping best hit at top; best hit definition needed
     # TODO: Check every column; what is needed and is something missing?
-
-    def csv_list(x):
-        return ";".join(map(str, x))
-
-    def count_transferred(ids):
-        return (ids == "t").sum()
 
     evidence = summary_grouped.agg(
         **{
@@ -187,12 +186,8 @@ def calculate_evidence_columns(summary, plex):
             "Missed cleavages": pd.NamedAgg(
                 column="Missed cleavages", aggfunc="first"
             ),  # from msms.txt
-            "Proteins": pd.NamedAgg(
-                column="Proteins", aggfunc=utils.csv_list_unique
-            ),  # from msms.txt
-            "Leading proteins": pd.NamedAgg(
-                column="Leading proteins", aggfunc=utils.csv_list_unique
-            ),
+            "Proteins": pd.NamedAgg(column="Proteins", aggfunc="sum"),  # from msms.txt
+            "Leading proteins": pd.NamedAgg(column="Leading proteins", aggfunc="sum"),
             # from evidence.txt, NaN if scan not matched to precursor in evidence.txt
             "Gene Names": pd.NamedAgg(
                 column="Gene Names", aggfunc="first"
@@ -214,24 +209,24 @@ def calculate_evidence_columns(summary, plex):
             "m/z": pd.NamedAgg(column="m/z", aggfunc="first"),  # from msmsScans.txt
             "Mass": pd.NamedAgg(column="Mass", aggfunc="first"),  # from msmsScans.txt
             "Mass error [ppm]": pd.NamedAgg(
-                column="Mass error [ppm]", aggfunc=min
+                column="Mass error [ppm]", aggfunc="min"
             ),  # from msms.txt, NaN if Type=MSMS
             "Retention time": pd.NamedAgg(
                 column="Retention time", aggfunc="first"
             ),  # from msmsScans.txt
-            "PEP": pd.NamedAgg(column="PEP", aggfunc=min),  # from msms.txt
+            "PEP": pd.NamedAgg(column="PEP", aggfunc="min"),  # from msms.txt
             "MS/MS count": pd.NamedAgg(
                 column="Sequence", aggfunc="size"
             ),  # calculated by SIMSI-Transfer
             "MS/MS all scan numbers": pd.NamedAgg(
-                column="scanID", aggfunc=csv_list
+                column="scanID", aggfunc="sum"
             ),  # calculated by SIMSI-Transfer
             "MS/MS scan number": pd.NamedAgg(
                 column="scanID", aggfunc="first"
             ),  # calculated by SIMSI-Transfer
-            "Score": pd.NamedAgg(column="Score", aggfunc=max),  # from msms.txt
+            "Score": pd.NamedAgg(column="Score", aggfunc="max"),  # from msms.txt
             "Delta score": pd.NamedAgg(
-                column="Delta score", aggfunc=max
+                column="Delta score", aggfunc="max"
             ),  # from msms.txt
             "Intensity": pd.NamedAgg(column="Intensity", aggfunc="sum"),
             # from evidence.txt, supplemented from allPeptides.txt
@@ -256,14 +251,28 @@ def calculate_evidence_columns(summary, plex):
             },  # calculated by SIMSI-Transfer
             "Reverse": pd.NamedAgg(column="Reverse", aggfunc="first"),  # from msms.txt
             "summary_ID": pd.NamedAgg(
-                column="summary_ID", aggfunc=csv_list
+                column="summary_ID", aggfunc="sum"
             ),  # assigned by SIMSI-Transfer
             "Transferred spectra count": pd.NamedAgg(
-                column="identification", aggfunc=count_transferred
-            )
-            # calculated by SIMSI-Transfer
+                column="identification", aggfunc="sum"
+            ),  # calculated by SIMSI-Transfer
         }
     )
+
+    for col in [
+        "Proteins",
+        "Leading proteins",
+        "MS/MS all scan numbers",
+        "MS/MS scan number",
+        "summary_ID",
+    ]:
+        evidence[col] = evidence[col].apply(utils.csv_unique)
+    
+    evidence["Transferred spectra count"] = evidence[
+        "Transferred spectra count"
+    ].str.count("t")
+
+    # evidence["Leading proteins"] = evidence["Leading proteins"].apply(utils.csv_list_unique)
     evidence["id"] = evidence.index  # evidence_ID
 
     # Checking for entries without "Fraction"; these are caused when one or more raw files in a maxquant search generate
@@ -323,16 +332,14 @@ def build_evidence_grouped(
         if raw_file not in allpeptides_groups.groups:
             logger.warning(f"{raw_file} missing in allPeptides.txt, skipping this file")
             continue
-        
+
         evidence_group = evidence_groups.get_group(raw_file)
         allpeptides_group = allpeptides_groups.get_group(raw_file)
 
         evidence_all = pd.concat(
             [
                 evidence_all,
-                build_evidence(
-                    summary_group, evidence_group, allpeptides_group, plex
-                ),
+                build_evidence(summary_group, evidence_group, allpeptides_group, plex),
             ],
             ignore_index=True,
         )
