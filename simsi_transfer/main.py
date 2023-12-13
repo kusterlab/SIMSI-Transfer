@@ -137,7 +137,7 @@ def main(argv):
         statistics[pval] = simsi_output.count_clustering_parameters(msms_simsi)
 
         logger.info(f'Starting SIMSI-Transfer evidence.txt building for {pval}.')
-        evidence_simsi = evidence.build_evidence(msms_simsi, evidence_mq, allpeptides_mq, plex)
+        evidence_simsi = evidence.build_evidence_grouped(msms_simsi, evidence_mq, allpeptides_mq, plex)
         simsi_output.export_simsi_evidence_file(evidence_simsi, output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
         logger.info('')
