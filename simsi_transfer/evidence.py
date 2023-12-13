@@ -160,7 +160,7 @@ def calculate_evidence_columns(summary: pd.DataFrame, plex: int):
         by=["Sequence", "Modified sequence", "Raw file", "Charge"]
     ).reset_index(drop=True)
 
-    # add semicolon to columns which will be concatenated. this allows us to use the 
+    # add semicolon to columns which will be concatenated. this allows us to use the
     # fast "sum" aggfunc instead of a slow custom string function
     concat_cols = ["Proteins", "Leading proteins", "scanID", "summary_ID"]
     summary[concat_cols] = summary[concat_cols].apply(lambda col: col.astype(str) + ";")
@@ -267,7 +267,7 @@ def calculate_evidence_columns(summary: pd.DataFrame, plex: int):
         "summary_ID",
     ]:
         evidence[col] = evidence[col].apply(utils.csv_unique)
-    
+
     evidence["Transferred spectra count"] = evidence[
         "Transferred spectra count"
     ].str.count("t")
@@ -307,7 +307,11 @@ def calculate_evidence_columns(summary: pd.DataFrame, plex: int):
 
 
 def build_evidence_grouped(
-    summary: pd.DataFrame, evidence: pd.DataFrame, allpeptides: pd.DataFrame, plex: int
+    summary: pd.DataFrame,
+    evidence: pd.DataFrame,
+    allpeptides: pd.DataFrame,
+    plex: int,
+    num_threads: int,
 ):
     """
     Optimized merging function to group dataframes by 'Raw file', perform the merge per group,
@@ -316,15 +320,23 @@ def build_evidence_grouped(
     :param msms_df: MaxQuant msms.txt dataframe
     :return: Merged dataframe
     """
-    # Create an empty dataframe to store the merged results
-    evidence_all = pd.DataFrame()
+    logger.debug(f"summary memory usage: {utils.get_dataframe_size(summary)}")
+    logger.debug(f"evidence memory usage: {utils.get_dataframe_size(evidence)}")
+    logger.debug(f"allPeptides memory usage: {utils.get_dataframe_size(allpeptides)}")
 
     # Group dataframes by 'Raw file'
     summary_groups = summary.groupby("Raw file")
     evidence_groups = evidence.groupby("Raw file")
     allpeptides_groups = allpeptides.groupby("Raw file")
 
+    multithreading = num_threads > 1
+    if multithreading:
+        from .utils.multiprocessing_pool import JobPool
+
+        job_pool = JobPool(processes=num_threads)
+
     # Iterate through each group and merge
+    evidences = []
     for raw_file, summary_group in summary_groups:
         if raw_file not in evidence_groups.groups:
             logger.warning(f"{raw_file} missing in evidence.txt, skipping this file")
@@ -336,14 +348,16 @@ def build_evidence_grouped(
         evidence_group = evidence_groups.get_group(raw_file)
         allpeptides_group = allpeptides_groups.get_group(raw_file)
 
-        evidence_all = pd.concat(
-            [
-                evidence_all,
-                build_evidence(summary_group, evidence_group, allpeptides_group, plex),
-            ],
-            ignore_index=True,
-        )
-    return evidence_all
+        args = (summary_group, evidence_group, allpeptides_group, plex)
+        if multithreading:
+            job_pool.applyAsync(build_evidence, args)
+        else:
+            evidences.append(build_evidence(*args))
+
+    if multithreading:
+        evidences = job_pool.checkPool(printProgressEvery=1)
+
+    return pd.concat(evidences, ignore_index=True)
 
 
 def build_evidence(

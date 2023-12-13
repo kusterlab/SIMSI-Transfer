@@ -73,3 +73,15 @@ def remove_modifications(mod_sequence: str, remove_phospho_only: bool = False) -
     raw_sequence = raw_sequence.replace('(Oxidation (M))', '')
     raw_sequence = raw_sequence.replace('_', '')
     return raw_sequence
+
+
+def human_readable_size(size, decimal_places=2):
+    for unit in ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']:
+        if size < 1024.0 or unit == 'PiB':
+            break
+        size /= 1024.0
+    return f"{size:.{decimal_places}f} {unit}"
+
+
+def get_dataframe_size(df: pd.DataFrame):
+    return human_readable_size(df.memory_usage(deep=True).sum())
