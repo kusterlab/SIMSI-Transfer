@@ -124,11 +124,15 @@ def main(argv):
         logger.info(f'Starting cluster-based identity transfer for {pval}.')
         annotated_clusters = transfer.flag_ambiguous_clusters(annotated_clusters)
         msmsscans_simsi = transfer.transfer(annotated_clusters, ambiguity_decision=ambiguity_decision, max_pep=max_pep)
+        del annotated_clusters
+
         simsi_output.export_msmsscans(msmsscans_simsi, output_folder, pval)
         logger.info(f'Finished identity transfer.')
 
         logger.info(f'Building SIMSI-Transfer msms.txt file for {pval}.')
         msms_simsi = simsi_output.remove_unidentified_scans(msmsscans_simsi)
+        del msmsscans_simsi
+        
         if curve_columns:
             raise NotImplementedError()
         simsi_output.export_msms(msms_simsi, output_folder, pval)
@@ -137,10 +141,12 @@ def main(argv):
         statistics[pval] = simsi_output.count_clustering_parameters(msms_simsi)
 
         logger.info(f'Starting SIMSI-Transfer evidence.txt building for {pval}.')
-        evidence_simsi = evidence.build_evidence_grouped(msms_simsi, evidence_mq, allpeptides_mq, plex)
+        evidence_simsi = evidence.build_evidence_grouped(msms_simsi, evidence_mq, allpeptides_mq, plex, num_threads=num_threads)
         simsi_output.export_simsi_evidence_file(evidence_simsi, output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
         logger.info('')
+
+        del msms_simsi, evidence_simsi
 
     endtime = datetime.now()
     logger.info(f'Successfully finished transfers for all stringencies.')
