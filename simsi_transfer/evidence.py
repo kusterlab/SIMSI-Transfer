@@ -287,11 +287,11 @@ def calculate_evidence_columns(summary: pd.DataFrame, plex: int):
     evidence.loc[no_fraction_rows, "Fraction"] = -1
     evidence = evidence.astype(
         {
-            "Length": "int64",
-            "Missed cleavages": "int64",
-            "Fraction": "int64",
-            "Charge": "int64",
-            "MS/MS scan number": "int64",
+            "Length": "int8",
+            "Missed cleavages": "int8",
+            "Fraction": "int8",
+            "Charge": "int8",
+            "MS/MS scan number": "int32",
         }
     )
 
@@ -299,7 +299,6 @@ def calculate_evidence_columns(summary: pd.DataFrame, plex: int):
     evidence.loc[mask, "Potential contaminant"] = "+"
     evidence.loc[~mask, "Potential contaminant"] = ""
 
-    evidence["Reverse"].fillna("", inplace=True)
     evidence = evidence.sort_values(
         by=["Sequence", "Modified sequence", "Raw file", "Charge"]
     )
