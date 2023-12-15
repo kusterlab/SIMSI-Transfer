@@ -39,6 +39,6 @@ RUN ZIP=ubuntu.tar.gz && \
     dpkg -i maracluster-v1-01-linux-amd64.deb && \
     rm /tmp/$ZIP
 
+RUN pip install memory_profiler
 
 ADD simsi_transfer/ /root/simsi_transfer
-
