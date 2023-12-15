@@ -74,8 +74,8 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
         output_path.mkdir(parents=True)
 
     if num_threads > 1:
-        from job_pool.job_pool import JobPool
-        processing_pool = JobPool(processes=num_threads)
+        from job_pool import JobPool
+        processing_pool = JobPool(processes=num_threads, write_progress_to_logger=True)
     for mzml_file, correction_factor_path in zip(mzml_files, correction_factor_paths):
         args = (mzml_file, output_path, correction_factor_path, extraction_level, plex)
         if num_threads > 1:
@@ -84,7 +84,7 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
             extract_and_correct_reporters(*args)
 
     if num_threads > 1:
-        processing_pool.checkPool(printProgressEvery=1)
+        processing_pool.checkPool()
 
 
 def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path, extraction_level, plex):

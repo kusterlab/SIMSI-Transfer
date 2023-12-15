@@ -51,8 +51,8 @@ def convert_raw_mzml_batch(raw_files: List[Path], output_folder: Optional[Path] 
         output_folder.mkdir(parents=True)
     
     if num_threads > 1:
-        from job_pool.job_pool import JobPool
-        processingPool = JobPool(processes=num_threads)
+        from job_pool import JobPool
+        processingPool = JobPool(processes=num_threads, write_progress_to_logger=True)
     
     mzml_files = []
     for raw_file in raw_files:
@@ -69,7 +69,7 @@ def convert_raw_mzml_batch(raw_files: List[Path], output_folder: Optional[Path] 
             mzml_files.append(raw_file)
     
     if len(mzml_files) == 0 and num_threads > 1:
-        mzml_files = processingPool.checkPool(printProgressEvery = 1)
+        mzml_files = processingPool.checkPool()
         
     return mzml_files
     

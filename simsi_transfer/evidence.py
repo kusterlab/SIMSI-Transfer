@@ -331,9 +331,9 @@ def build_evidence_grouped(
 
     multithreading = num_threads > 1
     if multithreading:
-        from job_pool.job_pool import JobPool
+        from job_pool import JobPool
 
-        job_pool = JobPool(processes=num_threads)
+        job_pool = JobPool(processes=num_threads, write_progress_to_logger=True)
 
     # Iterate through each group and merge
     evidences = []
@@ -355,7 +355,7 @@ def build_evidence_grouped(
             evidences.append(build_evidence(*args))
 
     if multithreading:
-        evidences = job_pool.checkPool(printProgressEvery=1)
+        evidences = job_pool.checkPool()
 
     return pd.concat(evidences, ignore_index=True)
 
