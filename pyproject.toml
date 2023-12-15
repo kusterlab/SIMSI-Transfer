@@ -20,10 +20,15 @@ numpy = "^1.18.1"
 pandas = "^2.0.0"
 pyteomics = "^4.5.3"
 lxml = "^4.8.0"
+job-pool = "^0.2.1"
+pyqt5 = {version = "^5.15.7", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
 pytest-cov = "^2.12.1"
+
+[tool.poetry.extras]
+gui = ["pyqt5"]
 
 [build-system]
 requires = ["poetry>=1.5.1"]

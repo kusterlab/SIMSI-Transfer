@@ -74,7 +74,7 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
         output_path.mkdir(parents=True)
 
     if num_threads > 1:
-        from .utils.multiprocessing_pool import JobPool
+        from job_pool.job_pool import JobPool
         processing_pool = JobPool(processes=num_threads)
     for mzml_file, correction_factor_path in zip(mzml_files, correction_factor_paths):
         args = (mzml_file, output_path, correction_factor_path, extraction_level, plex)

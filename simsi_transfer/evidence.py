@@ -40,8 +40,9 @@ def assign_evidence_type(summary: pd.DataFrame, type_column_name: str = "new_typ
 
 def assign_missing_precursors(summary: pd.DataFrame, allpeptides: pd.DataFrame):
     """
-    find precursors in allPeptides.txt for transferred MS2 scans in runs where the (peptide, charge) combination was previously not identified
-    currently very slow (~500 MS2 scans / second). The apply function could be parallelized with the multiprocessing or Dask modules
+    find precursors in allPeptides.txt for transferred MS2 scans in runs where the 
+    (peptide, charge) combination was previously not identified currently very slow 
+    (~500 MS2 scans / second).
     """
     group_key = ["Raw file", "Charge"]
     allpeptides_grouped = {
@@ -330,7 +331,7 @@ def build_evidence_grouped(
 
     multithreading = num_threads > 1
     if multithreading:
-        from .utils.multiprocessing_pool import JobPool
+        from job_pool.job_pool import JobPool
 
         job_pool = JobPool(processes=num_threads)
 
