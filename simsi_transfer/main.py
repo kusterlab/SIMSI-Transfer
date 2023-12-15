@@ -66,13 +66,17 @@ def main(argv):
     mzml_folder = output_folder / Path('mzML')
     mzml_files = raw.convert_raw_mzml_batch(raw_files, mzml_folder, num_threads)
 
-    logger.info(f'Clustering .mzML files')
     cluster_result_folder = output_folder / Path('maracluster_output')
-    dat_files_folder = output_folder / Path('dat_files')
-    cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, dat_files_folder, num_threads)
+    if not cluster.has_previous_run(cluster_result_folder, mzml_files, pvals):
+        logger.info(f'Clustering .mzML files')
+        dat_files_folder = output_folder / Path('dat_files')
+        cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, dat_files_folder, num_threads)
+    else:
+        logger.info("Found previous MaRaCluster run, skipping clustering")
+
+    plex = mq.get_plex(mq_txt_folders)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
-    plex = mq.get_plex(mq_txt_folders)
     msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify,
                                          plex=plex)
 
