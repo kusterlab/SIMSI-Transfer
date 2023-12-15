@@ -22,7 +22,7 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip:
         output_path = input_path.stem + ".mzML"
     
     if output_path.is_file():
-        logger.info(f"Found converted file at {output_path}, skipping conversion")
+        logger.debug(f"Found converted file at {output_path}, skipping conversion")
         return output_path
     
     if gzip:
@@ -37,7 +37,7 @@ def convert_raw_mzml(input_path: Path, output_path: Optional[Path] = None, gzip:
     
     exec_path = Path(__file__).parent.absolute() # get path of parent directory of current file
     exec_command = f"{mono} {exec_path}/utils/ThermoRawFileParser/ThermoRawFileParser.exe {gzip} --msLevel \"{ms_level}\" -i \"{input_path}\" -b \"{output_path}.tmp\""
-    logger.info(f"Converting thermo rawfile to mzml with the command: '{exec_command}'")
+    logger.debug(f"Converting thermo rawfile to mzml with the command: '{exec_command}'")
     subprocess.run(exec_command)
     
     # only rename the file now, so that we don't have a partially converted file if something fails
@@ -95,7 +95,7 @@ def get_raw_files(raw_folder: str) -> List[Path]:
         raise ValueError(f'Failed getting raw files, {raw_folder} did not contain any .mzML or .raw files.')
 
     raw_files.sort()
-    logger.info(f"Found {len(raw_files)} raw files in the search directory")
+    logger.debug(f"Found {len(raw_files)} raw files in the search directory")
     return raw_files
 
 

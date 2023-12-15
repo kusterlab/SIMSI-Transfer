@@ -90,7 +90,7 @@ def remove_unidentified_scans(summary):
     return summary
 
 
-def annotate_clusters(msmsscansdf, msmsdf, rawfile_metadata, clusterfile):
+def annotate_clusters(msmsscansdf, msmsdf, rawfile_metadata, cluster_results):
     """
     Merges msmsscans.txt, msms.txt, and MaRaCluster clusters to generate summary file
     :param msmsscansdf:
@@ -99,7 +99,7 @@ def annotate_clusters(msmsscansdf, msmsdf, rawfile_metadata, clusterfile):
     :param clusterfile:
     :return:
     """
-    summary = merge_with_msmsscanstxt(clusterfile, msmsscansdf)
+    summary = merge_with_msmsscanstxt(cluster_results, msmsscansdf)
     summary = merge_with_summarytxt(summary, rawfile_metadata)
     summary = merge_with_msmstxt(summary, msmsdf)
     return summary

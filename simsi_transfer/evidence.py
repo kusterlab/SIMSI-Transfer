@@ -62,7 +62,7 @@ def assign_missing_precursors(summary: pd.DataFrame, allpeptides: pd.DataFrame):
     num_new_assigned_precursor = (
         summary.loc[missing_precursor]["new_type"] == "MULTI-MSMS"
     ).sum()
-    logger.info(
+    logger.debug(
         f"Assigned precursor to {num_new_assigned_precursor} out of {missing_precursor.sum()} unassigned MS2 spectra"
     )
     return summary
@@ -152,7 +152,7 @@ def assign_evidence_feature(
 
 def calculate_evidence_columns(summary: pd.DataFrame, plex: int):
     # replacing zeros with NaNs to count later
-    logger.info("Assigned evidence features; calculating column values...")
+    logger.debug("Assigned evidence features; calculating column values...")
     reps = [f"Reporter intensity {i}" for i in range(1, plex + 1)]
     reps.extend([f"Reporter intensity corrected {i}" for i in range(1, plex + 1)])
     summary[reps] = summary[reps].replace({0: np.nan})

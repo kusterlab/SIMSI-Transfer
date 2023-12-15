@@ -151,13 +151,13 @@ def read_allpeptides_txt(mq_txt_folder):
         "Max scan number": "int32",
         "Intensity": "float32",
     }
-    evidence = pd.read_csv(
+    allpeptides = pd.read_csv(
         mq_txt_folder / Path("allPeptides.txt"),
         sep="\t",
         usecols=columns.keys(),
         dtype=columns,
     )
-    return evidence
+    return allpeptides
 
 
 def get_rawfile_metadata(evidence_txt):
