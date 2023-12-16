@@ -34,7 +34,7 @@ def has_previous_run(mainpath: Path, mzml_files: List[Path], pvals: List[float])
 
 def read_cluster_results(mainpath, pval):
     maracluster_df = pd.read_csv(mainpath / Path(f'MaRaCluster.clusters_{pval}.tsv'),
-                                 sep='\t', names=['Raw file', 'scanID', 'clusterID'])
+                                 sep='\t', names=['Raw file', 'scanID', 'clusterID'], engine="pyarrow")
     maracluster_df['Raw file'] = maracluster_df['Raw file'].apply(get_file_name)
     return maracluster_df
 

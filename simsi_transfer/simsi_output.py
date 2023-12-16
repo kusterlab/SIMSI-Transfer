@@ -21,6 +21,10 @@ def export_msms(msms_simsi, mainpath, pval):
     export_csv(msms_simsi, 'msms', mainpath, pval, sort_columns=['Sequence', 'Modified sequence'])
 
 
+def export_simsi_evidence_file(evidence_file, mainpath, pval):
+    export_csv(evidence_file, 'evidence', mainpath, pval, sort_columns=['Sequence', 'Modified sequence'])
+
+
 def export_csv(df: pd.DataFrame, filename: str, mainpath, pval, sort_columns=None):
     sumpath = mainpath / Path('summaries')
     if not os.path.exists(sumpath):
@@ -32,12 +36,6 @@ def export_csv(df: pd.DataFrame, filename: str, mainpath, pval, sort_columns=Non
         df.sort_values(by=sort_columns)
     path = pval_path / Path(f'{pval}_{filename}.txt')
     df.to_csv(path, sep='\t', index=False, na_rep='NaN')
-
-
-def export_simsi_evidence_file(evidence_file, mainpath, pval):
-    sumpath = mainpath / Path('summaries')
-    pval_path = sumpath / Path(pval)
-    evidence_file.to_csv(pval_path / Path(f'{pval}_evidence.txt'), sep='\t', index=False, na_rep='NaN')
 
 
 def count_clustering_parameters(summary, rawtrans=False):

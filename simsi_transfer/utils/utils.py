@@ -1,8 +1,14 @@
 from typing import List, Callable, Any
 from pathlib import Path
+import logging
 
 import pandas as pd
 import numpy as np
+from job_pool.tqdm_logger import TqdmToLogger
+from tqdm import tqdm
+
+
+logger = logging.getLogger(__name__)
 
 
 def csv_list_unique(x: pd.Series) -> str:
@@ -85,3 +91,11 @@ def human_readable_size(size, decimal_places=2):
 
 def get_dataframe_size(df: pd.DataFrame):
     return human_readable_size(df.memory_usage(deep=True).sum())
+
+
+def process_and_concat(input_folders: List[Any], reading_function: Callable, **kwargs) -> pd.DataFrame:
+    tqdm_out = TqdmToLogger(logger, level=logging.INFO)
+    return pd.concat(
+        [reading_function(f, **kwargs) for f in tqdm(input_folders, file=tqdm_out, mininterval=10)],
+        axis=0,
+    )

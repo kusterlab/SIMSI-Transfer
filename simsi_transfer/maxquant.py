@@ -1,17 +1,12 @@
 import logging
 import re
-import warnings
 from pathlib import Path
-from typing import List, Callable, Any
 
 import pandas as pd
 import numpy as np
 
+
 logger = logging.getLogger(__name__)
-
-
-def process_and_concat(input_folders: List[Any], reading_function: Callable, **kwargs):
-    return pd.concat([reading_function(f, **kwargs) for f in input_folders], axis=0)
 
 
 def get_plex(input_folders):
@@ -50,6 +45,7 @@ def read_msmsscans_txt(mq_txt_folder, tmt_requantify, plex):
         sep="\t",
         usecols=columns.keys(),
         dtype=columns,
+        engine="pyarrow",
     )
 
     msmsscans = msmsscans.rename(columns={"Scan number": "scanID"})
@@ -83,11 +79,19 @@ def read_msms_txt(mq_txt_folder):
         "Delta score": "float32",
         "Reverse": "category",
     }
+
+    columns_present = pd.read_csv(
+        mq_txt_folder / Path("msms.txt"), nrows=0, sep="\t"
+    ).columns.tolist()
+
+    columns_to_read = {c: t for c, t in columns.items() if c in columns_present}
+
     msmstxt = pd.read_csv(
         mq_txt_folder / Path("msms.txt"),
         sep="\t",
-        usecols=lambda x: x in columns.keys(),
-        dtype=columns,
+        usecols=columns_to_read.keys(),
+        dtype=columns_to_read,
+        engine="pyarrow",
     )
 
     for col, dtype in columns.items():
@@ -95,7 +99,6 @@ def read_msms_txt(mq_txt_folder):
             logger.warning(f"Missing column in msms.txt, filled with numpy NaN: {col}")
             msmstxt[col] = np.NaN
             msmstxt[col] = msmstxt[col].astype(dtype)
-
 
     msmstxt = msmstxt.rename(columns={"Scan number": "scanID"})
     return msmstxt
@@ -125,11 +128,19 @@ def read_evidence_txt(mq_txt_folder):
         "Intensity": "float32",
         "Reverse": "category",
     }
+
+    columns_present = pd.read_csv(
+        mq_txt_folder / Path("evidence.txt"), nrows=0, sep="\t"
+    ).columns.tolist()
+
+    columns_to_read = {c: t for c, t in columns.items() if c in columns_present}
+
     evidence = pd.read_csv(
         mq_txt_folder / Path("evidence.txt"),
         sep="\t",
-        usecols=lambda x: x in columns.keys(),
-        dtype=columns,
+        usecols=columns_to_read.keys(),
+        dtype=columns_to_read,
+        engine="pyarrow",
     )
     return evidence
 
@@ -156,6 +167,7 @@ def read_allpeptides_txt(mq_txt_folder):
         sep="\t",
         usecols=columns.keys(),
         dtype=columns,
+        engine="pyarrow",
     )
     return allpeptides
 

@@ -77,7 +77,7 @@ def main(argv):
     plex = mq.get_plex(mq_txt_folders)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
-    msmsscans_mq = mq.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify,
+    msmsscans_mq = utils.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify,
                                          plex=plex)
 
     raw_filenames_mq = set(msmsscans_mq['Raw file'].unique())
@@ -96,20 +96,20 @@ def main(argv):
         msmsscans_mq = tmt_processing.merge_with_corrected_tmt(msmsscans_mq, corrected_tmt)
 
     logger.info(f'Reading in MaxQuant msms.txt file')
-    msms_mq = mq.process_and_concat(mq_txt_folders, mq.read_msms_txt)
+    msms_mq = utils.process_and_concat(mq_txt_folders, mq.read_msms_txt)
     if filter_decoys:
         logger.info(f'Filtering out decoy hits')
         msms_mq = msms_mq[msms_mq['Reverse'] != '+']
 
     logger.info(f'Reading in MaxQuant evidence.txt file')
-    evidence_mq = mq.process_and_concat(mq_txt_folders, mq.read_evidence_txt)
+    evidence_mq = utils.process_and_concat(mq_txt_folders, mq.read_evidence_txt)
     if filter_decoys:
         logger.info(f'Filtering out decoy hits')
         evidence_mq = evidence_mq[evidence_mq['Reverse'] != '+']
     rawfile_metadata = mq.get_rawfile_metadata(evidence_mq)
 
     logger.info(f'Reading in MaxQuant allPeptides.txt file')
-    allpeptides_mq = mq.process_and_concat(mq_txt_folders, mq.read_allpeptides_txt)
+    allpeptides_mq = utils.process_and_concat(mq_txt_folders, mq.read_allpeptides_txt)
 
     statistics = dict()
 

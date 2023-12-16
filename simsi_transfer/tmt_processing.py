@@ -1,5 +1,3 @@
-import time
-import os
 import sys
 import re
 from typing import List
@@ -9,6 +7,8 @@ import logging
 import pandas as pd
 import numpy as np
 from pyteomics import mzml
+
+from .utils import utils
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +163,7 @@ def read_extracted_tmt_file(extracted_tmt_file: Path, plex: int):
         **{f"raw_TMT{i}": "float32" for i in range(1, plex + 1)},
         **{f"corr_TMT{i}": "float32" for i in range(1, plex + 1)},
     }
+    # engine="pyarrow" is not faster for these small files.
     return pd.read_csv(
         extracted_tmt_file,
         sep="\t",
@@ -178,12 +179,7 @@ def assemble_corrected_tmt_table(mzml_files: List[Path], extracted_folder: Path,
         get_extracted_tmt_file_name(extracted_folder, mzml_file) 
         for mzml_file in mzml_files
     ]
-    corrected_tmt: pd.DataFrame = pd.concat(
-        [
-            read_extracted_tmt_file(extracted_tmt_file, plex)
-            for extracted_tmt_file in extracted_tmt_files
-        ]
-    )
+    corrected_tmt = utils.process_and_concat(extracted_tmt_files, read_extracted_tmt_file, plex=plex)
     
     corrected_tmt = corrected_tmt.reset_index(drop=True)
     corrected_tmt = corrected_tmt.rename(columns={
