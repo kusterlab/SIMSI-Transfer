@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 
 def main(argv):
     meta_input_df, pvals, output_folder, num_threads, ms_level, tmt_requantify, \
-    filter_decoys, ambiguity_decision, curve_columns, max_pep = cli.parse_args(argv)
+    filter_decoys, skip_annotated_clusters, skip_msmsscans, skip_msms, skip_evidence, \
+    ambiguity_decision, curve_columns, max_pep = cli.parse_args(argv)
 
     raw_folders = utils.convert_to_path_list(meta_input_df['raw_folder'])
     mq_txt_folders = utils.convert_to_path_list(meta_input_df['mq_txt_folder'])
@@ -122,16 +123,26 @@ def main(argv):
         annotated_clusters = simsi_output.annotate_clusters(msmsscans_mq, msms_mq, rawfile_metadata, cluster_results)
         del cluster_results
 
-        simsi_output.export_annotated_clusters(annotated_clusters, output_folder, pval)
+        if not skip_annotated_clusters:
+            simsi_output.export_annotated_clusters(annotated_clusters, output_folder, pval)
         logger.info(f'Finished file merge.')
+
+        if skip_msmsscans and skip_msms and skip_evidence:
+            del annotated_clusters
+            continue
 
         logger.info(f'Starting cluster-based identity transfer for {pval}.')
         annotated_clusters = transfer.flag_ambiguous_clusters(annotated_clusters)
         msmsscans_simsi = transfer.transfer(annotated_clusters, ambiguity_decision=ambiguity_decision, max_pep=max_pep)
         del annotated_clusters
 
-        simsi_output.export_msmsscans(msmsscans_simsi, output_folder, pval)
+        if not skip_msmsscans:
+            simsi_output.export_msmsscans(msmsscans_simsi, output_folder, pval)
         logger.info(f'Finished identity transfer.')
+
+        if skip_msms and skip_evidence:
+            del msmsscans_simsi
+            continue
 
         logger.info(f'Building SIMSI-Transfer msms.txt file for {pval}.')
         msms_simsi = simsi_output.remove_unidentified_scans(msmsscans_simsi)
@@ -139,8 +150,14 @@ def main(argv):
         
         if curve_columns:
             raise NotImplementedError()
-        simsi_output.export_msms(msms_simsi, output_folder, pval)
+        
+        if not skip_msms:
+            simsi_output.export_msms(msms_simsi, output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer msms.txt assembly.')
+
+        if skip_evidence:
+            del msms_simsi
+            continue
 
         statistics[pval] = simsi_output.count_clustering_parameters(msms_simsi)
 
@@ -149,7 +166,6 @@ def main(argv):
         simsi_output.export_simsi_evidence_file(evidence_simsi, output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
         logger.info('')
-
         del msms_simsi, evidence_simsi
 
     endtime = datetime.now()

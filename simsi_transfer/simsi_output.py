@@ -10,18 +10,22 @@ logger = logging.getLogger(__name__)
 
 
 def export_annotated_clusters(annotated_clusters, mainpath, pval):
+    logger.info(f'Writing {pval}_annotated_clusters.txt.')
     export_csv(annotated_clusters, 'annotated_clusters', mainpath, pval)
 
 
 def export_msmsscans(msmsscans_simsi, mainpath, pval):
+    logger.info(f'Writing {pval}_msmsScans.txt for {pval}.')
     export_csv(msmsscans_simsi, 'msmsScans', mainpath, pval, sort_columns=['Raw file', 'scanID'])
 
 
 def export_msms(msms_simsi, mainpath, pval):
+    logger.info(f'Writing {pval}_msms.txt for {pval}.')
     export_csv(msms_simsi, 'msms', mainpath, pval, sort_columns=['Sequence', 'Modified sequence'])
 
 
 def export_simsi_evidence_file(evidence_file, mainpath, pval):
+    logger.info(f'Writing {pval}_evidence.txt for {pval}.')
     export_csv(evidence_file, 'evidence', mainpath, pval, sort_columns=['Sequence', 'Modified sequence'])
 
 
@@ -97,6 +101,7 @@ def annotate_clusters(msmsscansdf, msmsdf, rawfile_metadata, cluster_results):
     :param clusterfile:
     :return:
     """
+    logger.info(f'Annotating clusters with search engine results.')
     summary = merge_with_msmsscanstxt(cluster_results, msmsscansdf)
     summary = merge_with_summarytxt(summary, rawfile_metadata)
     summary = merge_with_msmstxt(summary, msmsdf)

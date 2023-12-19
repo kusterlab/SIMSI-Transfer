@@ -320,9 +320,9 @@ def build_evidence_grouped(
     :param msms_df: MaxQuant msms.txt dataframe
     :return: Merged dataframe
     """
-    logger.debug(f"summary memory usage: {utils.get_dataframe_size(summary)}")
-    logger.debug(f"evidence memory usage: {utils.get_dataframe_size(evidence)}")
-    logger.debug(f"allPeptides memory usage: {utils.get_dataframe_size(allpeptides)}")
+    # logger.debug(f"summary memory usage: {utils.get_dataframe_size(summary)}")
+    # logger.debug(f"evidence memory usage: {utils.get_dataframe_size(evidence)}")
+    # logger.debug(f"allPeptides memory usage: {utils.get_dataframe_size(allpeptides)}")
 
     # Group dataframes by 'Raw file'
     summary_groups = summary.groupby("Raw file")
