@@ -50,6 +50,7 @@ def main(argv):
     logger.info(f"Raw file folder = {raw_folders}")
     logger.info(f"Stringencies = {','.join(map(str, pvals))}")
     logger.info(f"Output folder = {args.output_folder}")
+    logger.info(f"Cache folder = {args.cache_folder}")
     logger.info(f"Number of threads = {args.num_threads}")
     logger.info(f"TMT correction file = {tmt_correction_files}")
     logger.info(f"TMT MS level = {args.tmt_ms_level}")
