@@ -20,7 +20,7 @@ numpy = "^1.18.1"
 pandas = ">=1.4.0"
 pyteomics = "^4.5.3"
 lxml = "^4.8.0"
-job-pool = "^0.2.4"
+job-pool = ">=0.2.6"
 pyqt5 = {version = "5.15.7", optional = true}
 pyqt5-qt5 = {version = "5.15.2", optional = true}
 pyarrow = "^14.0.1"
@@ -34,5 +34,5 @@ pytest-cov = "^2.12.1"
 gui = ["pyqt5", "pyqt5-qt5"]
 
 [build-system]
-requires = ["poetry>=1.5.1"]
-build-backend = "poetry.masonry.api"
+requires = ["poetry-core>=1.5.1"]
+build-backend = "poetry.core.masonry.api"
