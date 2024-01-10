@@ -1,5 +1,3 @@
-import time
-import os
 import sys
 import re
 from typing import List
@@ -9,6 +7,8 @@ import logging
 import pandas as pd
 import numpy as np
 from pyteomics import mzml
+
+from .utils import utils
 
 logger = logging.getLogger(__name__)
 
@@ -74,8 +74,8 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
         output_path.mkdir(parents=True)
 
     if num_threads > 1:
-        from .utils.multiprocessing_pool import JobPool
-        processing_pool = JobPool(processes=num_threads)
+        from job_pool import JobPool
+        processing_pool = JobPool(processes=num_threads, write_progress_to_logger=True)
     for mzml_file, correction_factor_path in zip(mzml_files, correction_factor_paths):
         args = (mzml_file, output_path, correction_factor_path, extraction_level, plex)
         if num_threads > 1:
@@ -84,7 +84,7 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
             extract_and_correct_reporters(*args)
 
     if num_threads > 1:
-        processing_pool.checkPool(printProgressEvery=1)
+        processing_pool.checkPool()
 
 
 def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path, extraction_level, plex):
@@ -96,15 +96,15 @@ def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path
 
     tmt_raw_columns, tmt_corrected_columns = get_tmt_columns(plex)
 
-    convert_dict_raw = {k: 'float64' for k in tmt_raw_columns}
-    convert_dict_corr = {k: 'float64' for k in tmt_corrected_columns}
-    convert_dict_other = {'raw_file': 'str', 'scanID': 'int'}
+    convert_dict_raw = {k: 'float32' for k in tmt_raw_columns}
+    convert_dict_corr = {k: 'float32' for k in tmt_corrected_columns}
+    convert_dict_other = {'raw_file': 'str', 'scanID': 'int32'}
     convert_dict = {**convert_dict_raw, **convert_dict_corr, **convert_dict_other}
     dfcol = convert_dict.keys()
 
     output_file = get_extracted_tmt_file_name(output_path, mzml_file)
     if Path(output_file).is_file():
-        logger.info(f"Found extracted reporter ions at {output_file}, skipping extraction")
+        logger.debug(f"Found extracted reporter ions at {output_file}, skipping extraction")
         return
 
     logger.info('Performing extraction for ' + mzml_file.name)
@@ -116,7 +116,7 @@ def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path
             if item['ms level'] != extraction_level:
                 continue
 
-            scanseries = pd.Series(index=dfcol, dtype='float64')
+            scanseries = pd.Series(index=dfcol, dtype='float32')
 
             if extraction_level == 2:
                 scanseries['scanID'] = re.search(r'scan=(\d+)', item['id'])[1]
@@ -156,18 +156,31 @@ def get_extracted_tmt_file_name(output_path: str, mzml_file: Path):
     return f'{output_path}/ext_{mzml_file.name}.txt'
 
 
-def assemble_corrected_tmt_table(mzml_files, extracted_folder, plex):
-    logger.info('Assembling corrected reporter ion tables')
-    # tmt_raw_columns, tmt_corrected_columns = get_tmt_columns(plex)
-    # corrected_tmt = pd.DataFrame(columns=['raw_file', 'scanID'] + tmt_raw_columns + tmt_corrected_columns)
-    corrected_tmts = list()
-    for mzml_file in mzml_files:
-        tmt_file = get_extracted_tmt_file_name(extracted_folder, mzml_file)
-        logger.debug(f'  Appending {tmt_file}')
-        df = pd.read_csv(tmt_file, sep='\t')
-        corrected_tmts.append(df)
-    corrected_tmt = pd.concat(corrected_tmts)
+def read_extracted_tmt_file(extracted_tmt_file: Path, plex: int):
+    columns = {
+        "raw_file": "object",
+        "scanID": "int32",
+        **{f"raw_TMT{i}": "float32" for i in range(1, plex + 1)},
+        **{f"corr_TMT{i}": "float32" for i in range(1, plex + 1)},
+    }
+    # engine="pyarrow" is not faster for these small files.
+    return pd.read_csv(
+        extracted_tmt_file,
+        sep="\t",
+        usecols=columns.keys(),
+        dtype=columns,
+    )
 
+
+def assemble_corrected_tmt_table(mzml_files: List[Path], extracted_folder: Path, plex: int):
+    logger.info('Assembling corrected reporter ion tables')
+
+    extracted_tmt_files = [
+        get_extracted_tmt_file_name(extracted_folder, mzml_file) 
+        for mzml_file in mzml_files
+    ]
+    corrected_tmt = utils.process_and_concat(extracted_tmt_files, read_extracted_tmt_file, plex=plex)
+    
     corrected_tmt = corrected_tmt.reset_index(drop=True)
     corrected_tmt = corrected_tmt.rename(columns={
         'raw_file': 'Raw file',

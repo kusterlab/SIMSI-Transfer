@@ -17,14 +17,22 @@ include = [
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "^1.18.1"
-pandas = "^1.3.0"
+pandas = ">=1.4.0"
 pyteomics = "^4.5.3"
 lxml = "^4.8.0"
+job-pool = "^0.2.4"
+pyqt5 = {version = "5.15.7", optional = true}
+pyqt5-qt5 = {version = "5.15.2", optional = true}
+pyarrow = "^14.0.1"
+tqdm = "^4.66.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
 pytest-cov = "^2.12.1"
 
+[tool.poetry.extras]
+gui = ["pyqt5", "pyqt5-qt5"]
+
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=1.5.1"]
 build-backend = "poetry.masonry.api"

@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
 ENV HOME /root
 WORKDIR /root
 
-RUN pip install poetry==1.1.10
+RUN pip install poetry==1.5.1
 # poetry uses virtualenvs by default -> we want global installation
 RUN poetry config virtualenvs.create false
 ADD pyproject.toml /root/pyproject.toml
@@ -39,6 +39,6 @@ RUN ZIP=ubuntu.tar.gz && \
     dpkg -i maracluster-v1-01-linux-amd64.deb && \
     rm /tmp/$ZIP
 
+RUN pip install memory_profiler
 
 ADD simsi_transfer/ /root/simsi_transfer
-

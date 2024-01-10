@@ -74,6 +74,26 @@ def parse_args(argv):
                        Removes decoys from MaxQuant results before PSM transfer.
                        ''')
 
+    apars.add_argument('--skip_annotated_clusters', default=False, action='store_true',
+                       help='''
+                       Skip writing the p<x>_annotated_clusters.txt output files.
+                       ''')
+    
+    apars.add_argument('--skip_msmsscans', default=False, action='store_true',
+                       help='''
+                       Skip writing the p<x>_msmsScans.txt output files.
+                       ''')
+    
+    apars.add_argument('--skip_msms', default=False, action='store_true',
+                       help='''
+                       Skip writing the p<x>_msms.txt output files.
+                       ''')
+    
+    apars.add_argument('--skip_evidence', default=False, action='store_true',
+                       help='''
+                       Skip writing the p<x>_evidence.txt output files.
+                       ''')
+    
     apars.add_argument('--ambiguity_decision', default='majority', metavar="S",
                        help='''
                        Determines which modified sequence to set for PTM-ambiguous clusters: 
@@ -97,7 +117,8 @@ def parse_args(argv):
     meta_input_df = get_input_folders(args)
 
     return meta_input_df, parse_stringencies(args.stringencies), Path(args.output_folder), args.num_threads, \
-           args.tmt_ms_level, args.tmt_requantify, args.filter_decoys, args.ambiguity_decision, \
+           args.tmt_ms_level, args.tmt_requantify, args.filter_decoys, args.skip_annotated_clusters, \
+           args.skip_msmsscans, args.skip_msms, args.skip_evidence, args.ambiguity_decision, \
            args.add_plotting_columns, args.maximum_pep
 
 

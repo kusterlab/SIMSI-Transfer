@@ -3,7 +3,7 @@ import io
 import pytest
 import pandas as pd
 
-import simsi_transfer.maxquant as mq
+import simsi_transfer.utils.utils as mq
 
 pd.set_option('display.max_columns', None)
 

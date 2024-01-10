@@ -1,8 +1,14 @@
 from typing import List, Callable, Any
 from pathlib import Path
+import logging
 
 import pandas as pd
 import numpy as np
+from job_pool.tqdm_logger import TqdmToLogger
+from tqdm import tqdm
+
+
+logger = logging.getLogger(__name__)
 
 
 def csv_list_unique(x: pd.Series) -> str:
@@ -16,6 +22,10 @@ def csv_list_unique(x: pd.Series) -> str:
     def semicolon_split(x):
         return x.split(";")
     return ";".join(apply_and_flatten(x, semicolon_split))
+
+
+def csv_unique(s: str) -> str:
+    return ";".join(sorted(set([x for x in s.split(";") if len(x) > 0])))
 
 
 def convert_to_path_list(s):
@@ -69,3 +79,23 @@ def remove_modifications(mod_sequence: str, remove_phospho_only: bool = False) -
     raw_sequence = raw_sequence.replace('(Oxidation (M))', '')
     raw_sequence = raw_sequence.replace('_', '')
     return raw_sequence
+
+
+def human_readable_size(size, decimal_places=2):
+    for unit in ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']:
+        if size < 1024.0 or unit == 'PiB':
+            break
+        size /= 1024.0
+    return f"{size:.{decimal_places}f} {unit}"
+
+
+def get_dataframe_size(df: pd.DataFrame):
+    return human_readable_size(df.memory_usage(deep=True).sum())
+
+
+def process_and_concat(input_folders: List[Any], reading_function: Callable, **kwargs) -> pd.DataFrame:
+    tqdm_out = TqdmToLogger(logger, level=logging.INFO)
+    return pd.concat(
+        [reading_function(f, **kwargs) for f in tqdm(input_folders, file=tqdm_out, mininterval=10)],
+        axis=0,
+    )

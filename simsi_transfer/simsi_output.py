@@ -10,15 +10,23 @@ logger = logging.getLogger(__name__)
 
 
 def export_annotated_clusters(annotated_clusters, mainpath, pval):
+    logger.info(f'Writing {pval}_annotated_clusters.txt.')
     export_csv(annotated_clusters, 'annotated_clusters', mainpath, pval)
 
 
 def export_msmsscans(msmsscans_simsi, mainpath, pval):
+    logger.info(f'Writing {pval}_msmsScans.txt for {pval}.')
     export_csv(msmsscans_simsi, 'msmsScans', mainpath, pval, sort_columns=['Raw file', 'scanID'])
 
 
 def export_msms(msms_simsi, mainpath, pval):
+    logger.info(f'Writing {pval}_msms.txt for {pval}.')
     export_csv(msms_simsi, 'msms', mainpath, pval, sort_columns=['Sequence', 'Modified sequence'])
+
+
+def export_simsi_evidence_file(evidence_file, mainpath, pval):
+    logger.info(f'Writing {pval}_evidence.txt for {pval}.')
+    export_csv(evidence_file, 'evidence', mainpath, pval, sort_columns=['Sequence', 'Modified sequence'])
 
 
 def export_csv(df: pd.DataFrame, filename: str, mainpath, pval, sort_columns=None):
@@ -32,12 +40,6 @@ def export_csv(df: pd.DataFrame, filename: str, mainpath, pval, sort_columns=Non
         df.sort_values(by=sort_columns)
     path = pval_path / Path(f'{pval}_{filename}.txt')
     df.to_csv(path, sep='\t', index=False, na_rep='NaN')
-
-
-def export_simsi_evidence_file(evidence_file, mainpath, pval):
-    sumpath = mainpath / Path('summaries')
-    pval_path = sumpath / Path(pval)
-    evidence_file.to_csv(pval_path / Path(f'{pval}_evidence.txt'), sep='\t', index=False, na_rep='NaN')
 
 
 def count_clustering_parameters(summary, rawtrans=False):
@@ -90,7 +92,7 @@ def remove_unidentified_scans(summary):
     return summary
 
 
-def annotate_clusters(msmsscansdf, msmsdf, rawfile_metadata, clusterfile):
+def annotate_clusters(msmsscansdf, msmsdf, rawfile_metadata, cluster_results):
     """
     Merges msmsscans.txt, msms.txt, and MaRaCluster clusters to generate summary file
     :param msmsscansdf:
@@ -99,7 +101,8 @@ def annotate_clusters(msmsscansdf, msmsdf, rawfile_metadata, clusterfile):
     :param clusterfile:
     :return:
     """
-    summary = merge_with_msmsscanstxt(clusterfile, msmsscansdf)
+    logger.info(f'Annotating clusters with search engine results.')
+    summary = merge_with_msmsscanstxt(cluster_results, msmsscansdf)
     summary = merge_with_summarytxt(summary, rawfile_metadata)
     summary = merge_with_msmstxt(summary, msmsdf)
     return summary

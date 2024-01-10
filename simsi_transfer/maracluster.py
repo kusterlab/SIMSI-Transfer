@@ -1,7 +1,6 @@
 from sys import platform
 import subprocess
 import logging
-import re
 from typing import List
 from pathlib import Path
 
@@ -12,9 +11,30 @@ from .utils import subprocess_with_logger as subprocess
 logger = logging.getLogger(__name__)
 
 
+def has_previous_run(mainpath: Path, mzml_files: List[Path], pvals: List[float]):
+    if not (mainpath / Path(f'file_list.txt')).is_file():
+        return False
+    
+    with open(mainpath / Path(f'file_list.txt'), 'r') as file:
+        file_list = set(Path(line.rstrip()) for line in file)
+        mzml_file_list = set(mzml_files)
+        if mzml_file_list != file_list:
+            logger.warning("Found previous MaRaCluster run with a different file list")
+            logger.warning(f"- Missing in file_list.txt: {mzml_file_list.difference(file_list)}")
+            logger.warning(f"- Missing in mzml_files: {file_list.difference(mzml_file_list)}")
+            logger.warning("Rerunning MaRaCluster")
+            return False
+
+    for pval in pvals:
+        if not (mainpath / Path(f'MaRaCluster.clusters_p{pval}.tsv')).is_file():
+            return False
+    
+    return True
+
+
 def read_cluster_results(mainpath, pval):
     maracluster_df = pd.read_csv(mainpath / Path(f'MaRaCluster.clusters_{pval}.tsv'),
-                                 sep='\t', names=['Raw file', 'scanID', 'clusterID'])
+                                 sep='\t', names=['Raw file', 'scanID', 'clusterID'], engine="pyarrow")
     maracluster_df['Raw file'] = maracluster_df['Raw file'].apply(get_file_name)
     return maracluster_df
 

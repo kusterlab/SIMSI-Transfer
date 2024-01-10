@@ -7,8 +7,9 @@ import time
 import multiprocessing
 from logging.handlers import QueueListener
 
+import job_pool.job_pool as pool
+
 import simsi_transfer.main as simsi_transfer
-import simsi_transfer.utils.multiprocessing_pool as pool
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
