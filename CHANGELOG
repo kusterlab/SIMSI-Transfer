@@ -1,3 +1,15 @@
+v0.6.0
+- Add cache folder option to reuse previously generated results from a different SIMSI run (#27)
+- Memory and runtime optimizations (#26)
+- Hotfix for NaN handling in evidence assembly
+- Added "Potential contaminant" column in SIMSI output based on the "Proteins" column
+- Added sorting step to prevent rare event of incorrect probability strings
+- Added validation option for mzml conversion
+- Improved raw file converter interface
+- Removing importlib dependency from poetry
+- Improved SIMSI version retrieval for logger
+- Added sorting of raw files to prevent downstream problems
+
 v0.5.0
 - New GUI! Now it supports all parameters usually needed
 - Added optional filter for maximum Posterior Error Probability considered for transfers

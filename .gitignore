@@ -11,3 +11,4 @@ build
 htmlcov
 dist
 mprofile*.dat
+data/example

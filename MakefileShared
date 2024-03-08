@@ -1,5 +1,5 @@
 IMAGE ?= simsi_transfer
-DATA ?= $(HOME)
+DATA ?= $(HOME)/git/simsi_transfer/data/example/
 OUT_DIR ?= $(DATA)
 
 LOCAL_DIR ?= /root/data
