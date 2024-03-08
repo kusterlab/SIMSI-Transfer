@@ -42,9 +42,18 @@ def parse_args(argv):
                        The higher the stringency value, the more strict the clustering is.
                        ''')
 
-    apars.add_argument('--output_folder', default="./simsi_output", metavar="DIR",
+    apars.add_argument('--output_folder', type=Path, default=Path("./simsi_output"), metavar="DIR",
                        help='''
-                       Full path to desired SIMSI output folder.
+                       Full path to SIMSI output folder. This folder will contain the 
+                       MaRaCluster results and a "summaries" folder which contains the 
+                       SIMSI results in MaxQuant output format.
+                       ''')
+    
+    apars.add_argument('--cache_folder', type=Path, default=Path("./simsi_output"), metavar="DIR",
+                       help='''
+                       Full path to SIMSI cache folder. The cache folder stores the mzML, 
+                       extracted TMT intensities and MaRaCluster dat files such that 
+                       they can be reused in multiple SIMSI runs.
                        ''')
 
     apars.add_argument('--num_threads', type=int, default=min(multiprocessing.cpu_count(), 4), metavar='N',
@@ -114,12 +123,7 @@ def parse_args(argv):
     # ------------------------------------------------
     args = apars.parse_args(argv)
 
-    meta_input_df = get_input_folders(args)
-
-    return meta_input_df, parse_stringencies(args.stringencies), Path(args.output_folder), args.num_threads, \
-           args.tmt_ms_level, args.tmt_requantify, args.filter_decoys, args.skip_annotated_clusters, \
-           args.skip_msmsscans, args.skip_msms, args.skip_evidence, args.ambiguity_decision, \
-           args.add_plotting_columns, args.maximum_pep
+    return args
 
 
 def get_input_folders(args):

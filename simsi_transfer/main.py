@@ -20,19 +20,20 @@ logger = logging.getLogger(__name__)
 
 
 def main(argv):
-    meta_input_df, pvals, output_folder, num_threads, ms_level, tmt_requantify, \
-    filter_decoys, skip_annotated_clusters, skip_msmsscans, skip_msms, skip_evidence, \
-    ambiguity_decision, curve_columns, max_pep = cli.parse_args(argv)
+    args = cli.parse_args(argv)
+
+    pvals = cli.parse_stringencies(args.stringencies)
+    meta_input_df = cli.get_input_folders(args)
 
     raw_folders = utils.convert_to_path_list(meta_input_df['raw_folder'])
     mq_txt_folders = utils.convert_to_path_list(meta_input_df['mq_txt_folder'])
     tmt_correction_files = utils.convert_to_path_list(meta_input_df['tmt_correction_file'])
 
-    if not output_folder.is_dir():
-        output_folder.mkdir(parents=True)
+    args.output_folder.mkdir(parents=True, exist_ok=True)
+    args.cache_folder.mkdir(parents=True, exist_ok=True)
 
     module_name = ".".join(__name__.split(".")[:-1])
-    file_logger = logging.FileHandler(output_folder / Path('SIMSI.log'))
+    file_logger = logging.FileHandler(args.output_folder / Path('SIMSI.log'))
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     formatter.converter = time.gmtime
     file_logger.setFormatter(formatter)
@@ -48,10 +49,11 @@ def main(argv):
     logger.info(f"MaxQuant txt folder = {mq_txt_folders}")
     logger.info(f"Raw file folder = {raw_folders}")
     logger.info(f"Stringencies = {','.join(map(str, pvals))}")
-    logger.info(f"Output folder = {output_folder}")
-    logger.info(f"Number of threads = {num_threads}")
+    logger.info(f"Output folder = {args.output_folder}")
+    logger.info(f"Cache folder = {args.cache_folder}")
+    logger.info(f"Number of threads = {args.num_threads}")
     logger.info(f"TMT correction file = {tmt_correction_files}")
-    logger.info(f"TMT MS level = {ms_level}")
+    logger.info(f"TMT MS level = {args.tmt_ms_level}")
     logger.info('')
 
     logger.info(f'Starting SIMSI-Transfer')
@@ -64,21 +66,21 @@ def main(argv):
     raw_filenames_input = {i.stem for i in raw_files}
 
     logger.info(f'Converting .raw files')
-    mzml_folder = output_folder / Path('mzML')
-    mzml_files = raw.convert_raw_mzml_batch(raw_files, mzml_folder, num_threads)
+    mzml_folder = args.cache_folder / Path('mzML')
+    mzml_files = raw.convert_raw_mzml_batch(raw_files, mzml_folder, args.num_threads)
 
-    cluster_result_folder = output_folder / Path('maracluster_output')
+    cluster_result_folder = args.output_folder / Path('maracluster_output')
     if not cluster.has_previous_run(cluster_result_folder, mzml_files, pvals):
         logger.info(f'Clustering .mzML files')
-        dat_files_folder = output_folder / Path('dat_files')
-        cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, dat_files_folder, num_threads)
+        dat_files_folder = args.cache_folder / Path('dat_files')
+        cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, dat_files_folder, args.num_threads)
     else:
         logger.info("Found previous MaRaCluster run, skipping clustering")
 
     plex = mq.get_plex(mq_txt_folders)
 
     logger.info(f'Reading in MaxQuant msmsscans.txt file')
-    msmsscans_mq = utils.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=tmt_requantify,
+    msmsscans_mq = utils.process_and_concat(mq_txt_folders, mq.read_msmsscans_txt, tmt_requantify=args.tmt_requantify,
                                          plex=plex)
 
     raw_filenames_mq = set(msmsscans_mq['Raw file'].unique())
@@ -86,25 +88,25 @@ def main(argv):
         raise ValueError(
             f'The raw files listed as input and the raw files in the MaxQuant search results are not the same!')
 
-    if tmt_requantify:
+    if args.tmt_requantify:
         logger.info(f'Extracting correct reporter ion intensities from .mzML files')
-        extracted_folder = output_folder / Path('extracted')
+        extracted_folder = args.cache_folder / Path('extracted')
         tmt_processing.extract_tmt_reporters(mzml_files=mzml_files, output_path=extracted_folder,
                                              correction_factor_paths=correction_factor_paths, plex=plex,
-                                             num_threads=num_threads)
+                                             num_threads=args.num_threads)
 
         corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder, plex)
         msmsscans_mq = tmt_processing.merge_with_corrected_tmt(msmsscans_mq, corrected_tmt)
 
     logger.info(f'Reading in MaxQuant msms.txt file')
     msms_mq = utils.process_and_concat(mq_txt_folders, mq.read_msms_txt)
-    if filter_decoys:
+    if args.filter_decoys:
         logger.info(f'Filtering out decoy hits')
         msms_mq = msms_mq[msms_mq['Reverse'] != '+']
 
     logger.info(f'Reading in MaxQuant evidence.txt file')
     evidence_mq = utils.process_and_concat(mq_txt_folders, mq.read_evidence_txt)
-    if filter_decoys:
+    if args.filter_decoys:
         logger.info(f'Filtering out decoy hits')
         evidence_mq = evidence_mq[evidence_mq['Reverse'] != '+']
     rawfile_metadata = mq.get_rawfile_metadata(evidence_mq)
@@ -123,24 +125,24 @@ def main(argv):
         annotated_clusters = simsi_output.annotate_clusters(msmsscans_mq, msms_mq, rawfile_metadata, cluster_results)
         del cluster_results
 
-        if not skip_annotated_clusters:
-            simsi_output.export_annotated_clusters(annotated_clusters, output_folder, pval)
+        if not args.skip_annotated_clusters:
+            simsi_output.export_annotated_clusters(annotated_clusters, args.output_folder, pval)
         logger.info(f'Finished file merge.')
 
-        if skip_msmsscans and skip_msms and skip_evidence:
+        if args.skip_msmsscans and args.skip_msms and args.skip_evidence:
             del annotated_clusters
             continue
 
         logger.info(f'Starting cluster-based identity transfer for {pval}.')
         annotated_clusters = transfer.flag_ambiguous_clusters(annotated_clusters)
-        msmsscans_simsi = transfer.transfer(annotated_clusters, ambiguity_decision=ambiguity_decision, max_pep=max_pep)
+        msmsscans_simsi = transfer.transfer(annotated_clusters, ambiguity_decision=args.ambiguity_decision, max_pep=args.maximum_pep)
         del annotated_clusters
 
-        if not skip_msmsscans:
-            simsi_output.export_msmsscans(msmsscans_simsi, output_folder, pval)
+        if not args.skip_msmsscans:
+            simsi_output.export_msmsscans(msmsscans_simsi, args.output_folder, pval)
         logger.info(f'Finished identity transfer.')
 
-        if skip_msms and skip_evidence:
+        if args.skip_msms and args.skip_evidence:
             del msmsscans_simsi
             continue
 
@@ -148,22 +150,22 @@ def main(argv):
         msms_simsi = simsi_output.remove_unidentified_scans(msmsscans_simsi)
         del msmsscans_simsi
         
-        if curve_columns:
+        if args.add_plotting_columns:
             raise NotImplementedError()
         
-        if not skip_msms:
-            simsi_output.export_msms(msms_simsi, output_folder, pval)
+        if not args.skip_msms:
+            simsi_output.export_msms(msms_simsi, args.output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer msms.txt assembly.')
 
-        if skip_evidence:
+        if args.skip_evidence:
             del msms_simsi
             continue
 
         statistics[pval] = simsi_output.count_clustering_parameters(msms_simsi)
 
         logger.info(f'Starting SIMSI-Transfer evidence.txt building for {pval}.')
-        evidence_simsi = evidence.build_evidence_grouped(msms_simsi, evidence_mq, allpeptides_mq, plex, num_threads=num_threads)
-        simsi_output.export_simsi_evidence_file(evidence_simsi, output_folder, pval)
+        evidence_simsi = evidence.build_evidence_grouped(msms_simsi, evidence_mq, allpeptides_mq, plex, num_threads=args.num_threads)
+        simsi_output.export_simsi_evidence_file(evidence_simsi, args.output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
         logger.info('')
         del msms_simsi, evidence_simsi
