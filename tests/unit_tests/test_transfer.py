@@ -82,6 +82,7 @@ def summary_df():
     df['Mass'] = 1000.0
     df['Missed cleavages'] = 0
     df['Length'] = 1
+    df['PEP'] = 0.01
     df['Reverse'] = ""
     return df
 
