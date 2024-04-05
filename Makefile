@@ -40,9 +40,6 @@ compress: run_simsi_transfer
 all: compress
 
 
-run_local:
-	python3 -u -m simsi_transfer "$(DATA)"
-
 clean_data_folder: 
 	rm -rf "$(DATA)/{proc,msms,percolator,mzML,msms.prosit}"
 

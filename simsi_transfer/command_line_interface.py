@@ -163,5 +163,14 @@ def parse_stringencies(stringencies):
     return stringencies
 
 
+def parse_tmt_ms_level(extraction_level: str):
+    if extraction_level == "ms2":
+        return 2
+    elif extraction_level == "ms3":
+        return 3
+    else:
+        raise ValueError("--tmt_ms_level should be either ms2 or ms3.")
+
+
 if __name__ == '__main__':
     raise NotImplementedError('Do not run this script.')

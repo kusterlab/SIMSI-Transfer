@@ -24,6 +24,7 @@ def main(argv):
 
     pvals = cli.parse_stringencies(args.stringencies)
     meta_input_df = cli.get_input_folders(args)
+    tmt_ms_level = cli.parse_tmt_ms_level(args.tmt_ms_level)
 
     raw_folders = utils.convert_to_path_list(meta_input_df['raw_folder'])
     mq_txt_folders = utils.convert_to_path_list(meta_input_df['mq_txt_folder'])
@@ -53,7 +54,7 @@ def main(argv):
     logger.info(f"Cache folder = {args.cache_folder}")
     logger.info(f"Number of threads = {args.num_threads}")
     logger.info(f"TMT correction file = {tmt_correction_files}")
-    logger.info(f"TMT MS level = {args.tmt_ms_level}")
+    logger.info(f"TMT MS level = {tmt_ms_level}")
     logger.info('')
 
     logger.info(f'Starting SIMSI-Transfer')
@@ -93,7 +94,7 @@ def main(argv):
         extracted_folder = args.cache_folder / Path('extracted')
         tmt_processing.extract_tmt_reporters(mzml_files=mzml_files, output_path=extracted_folder,
                                              correction_factor_paths=correction_factor_paths, plex=plex,
-                                             num_threads=args.num_threads)
+                                             extraction_level=tmt_ms_level, num_threads=args.num_threads)
 
         corrected_tmt = tmt_processing.assemble_corrected_tmt_table(mzml_files, extracted_folder, plex)
         msmsscans_mq = tmt_processing.merge_with_corrected_tmt(msmsscans_mq, corrected_tmt)

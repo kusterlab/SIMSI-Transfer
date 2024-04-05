@@ -66,7 +66,7 @@ def get_correction_factors(correction_factor_path: Path, plex_size):
 
 
 def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_factor_paths: List[Path], plex: int,
-                          num_threads: int = 1, extraction_level: int = 3):
+                          extraction_level: int, num_threads: int = 1):
     """
     Takes about 1.5 minute for a 700MB file with 40k MS2 scans
     """
@@ -199,7 +199,7 @@ def merge_with_corrected_tmt(msmsscans_df, corrected_tmt):
 
 if __name__ == "__main__":
     input_files_arg = Path(sys.argv[1])
-    extraction_level_arg = int(sys.argv[2])
+    extraction_level_arg = sys.argv[2]
     output_path_arg = Path(sys.argv[3])
 
     extract_tmt_reporters([input_files_arg], output_path_arg, extraction_level=extraction_level_arg, plex=11)
