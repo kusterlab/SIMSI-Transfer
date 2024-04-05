@@ -1,3 +1,6 @@
+v0.6.1
+- Fix missing tmt_ms_level argument for tmt_requantify
+
 v0.6.0
 - Add cache folder option to reuse previously generated results from a different SIMSI run (#27)
 - Memory and runtime optimizations (#26)
