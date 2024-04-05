@@ -129,9 +129,9 @@ def parse_args(argv):
 def get_input_folders(args):
     if args.meta_input_file:
         if args.raw_folder:
-            logging.error("Cannot use the --raw_folder and --meta_input_file parameters at the same time.")
+            raise ValueError("Cannot use the --raw_folder and --meta_input_file parameters at the same time.")
         if args.mq_txt_folder:
-            logging.error("Cannot use the --mq_txt_folder and --meta_input_file parameters at the same time.")
+            raise ValueError("Cannot use the --mq_txt_folder and --meta_input_file parameters at the same time.")
 
         meta_input_df = pd.read_csv(args.meta_input_file, sep='\t')
         meta_input_df.columns = ['mq_txt_folder', 'raw_folder', 'tmt_correction_file'][:len(meta_input_df.columns)]
@@ -139,9 +139,9 @@ def get_input_folders(args):
             meta_input_df['tmt_correction_file'] = args.tmt_reporter_correction_file
     else:
         if not args.raw_folder:
-            logging.error("Missing --raw_folder argument")
+            raise ValueError("Missing --raw_folder argument")
         if not args.mq_txt_folder:
-            logging.error("Missing --mq_txt_folder argument")
+            raise ValueError("Missing --mq_txt_folder argument")
 
         meta_input_df = pd.DataFrame(
             list(zip([args.mq_txt_folder], [args.raw_folder], [args.tmt_reporter_correction_file])),
@@ -157,7 +157,7 @@ def parse_stringencies(stringencies):
         try:
             stringencies = [int(i) for i in stringencies.split(',')]
         except ValueError:
-            logger.error(
+            raise ValueError(
                 'This is not a stringency list. Please input the list in the following format: 30,25,20,15,10,5')
 
     return stringencies
