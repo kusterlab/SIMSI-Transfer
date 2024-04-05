@@ -17,7 +17,7 @@ def get_tmt_columns(plex):
     return [f'raw_TMT{i}' for i in range(1, plex + 3)], [f'corr_TMT{i}' for i in range(1, plex + 1)]
 
 
-def get_correction_factors(correction_factor_path: Path, plex_size):
+def get_correction_factors(correction_factor_path: Path, plex_size: int):
     # correction = np.array([[100, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # 126 C Tag
     #                        [0.0, 100, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # 127 N Tag
     #                        [0.0, 0.0, 100, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # 127 C Tag
@@ -87,7 +87,7 @@ def extract_tmt_reporters(mzml_files: List[Path], output_path: Path, correction_
         processing_pool.checkPool()
 
 
-def extract_and_correct_reporters(mzml_file, output_path, correction_factor_path, extraction_level, plex):
+def extract_and_correct_reporters(mzml_file: Path, output_path: str, correction_factor_path: Path, extraction_level: int, plex: int):
     tmt_masses, correction_normalized = get_correction_factors(correction_factor_path, plex_size=plex)
 
     tolerance = 6 * 1e-3 / 2
@@ -191,7 +191,7 @@ def assemble_corrected_tmt_table(mzml_files: List[Path], extracted_folder: Path,
     return corrected_tmt
 
 
-def merge_with_corrected_tmt(msmsscans_df, corrected_tmt):
+def merge_with_corrected_tmt(msmsscans_df: pd.DataFrame, corrected_tmt: pd.DataFrame):
     logger.info('Merging corrected reporter ion tables into msmsScans.txt')
     return pd.merge(left=msmsscans_df, right=corrected_tmt, on=['Raw file', 'scanID'], how='left',
                     validate='one_to_one')
