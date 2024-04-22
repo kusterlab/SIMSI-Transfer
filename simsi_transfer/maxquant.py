@@ -24,6 +24,8 @@ def read_msmsscans_txt(mq_txt_folder, tmt_requantify, plex):
     """
     Open msms.txt output file and subselect relevant columns
     :param mq_txt_folder: Processing path containing the 'combined' folder from MQ search
+    :param tmt_requantify: Boolean indicating whether TMT reporter intensities need to be corrected later on
+    :param plex: Number of TMT channels used in the experiment
     :return: truncated msmsscans.txt dataframe
     """
     columns = {
