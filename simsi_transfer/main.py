@@ -158,17 +158,15 @@ def main(argv):
             simsi_output.export_msms(msms_simsi, args.output_folder, pval)
         logger.info(f'Finished SIMSI-Transfer msms.txt assembly.')
 
-        if args.skip_evidence:
-            del msms_simsi
-            continue
-
         statistics[pval] = simsi_output.count_clustering_parameters(msms_simsi)
 
-        logger.info(f'Starting SIMSI-Transfer evidence.txt building for {pval}.')
-        evidence_simsi = evidence.build_evidence_grouped(msms_simsi, evidence_mq, allpeptides_mq, plex, num_threads=args.num_threads)
-        simsi_output.export_simsi_evidence_file(evidence_simsi, args.output_folder, pval)
-        logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
-        logger.info('')
+        if not args.skip_evidence:
+            logger.info(f'Starting SIMSI-Transfer evidence.txt building for {pval}.')
+            evidence_simsi = evidence.build_evidence_grouped(msms_simsi, evidence_mq, allpeptides_mq, plex, num_threads=args.num_threads)
+            simsi_output.export_simsi_evidence_file(evidence_simsi, args.output_folder, pval)
+            logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
+            logger.info('')
+
         del msms_simsi, evidence_simsi
 
     endtime = datetime.now()
