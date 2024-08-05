@@ -17,7 +17,7 @@ PHOSPHO_REGEX = re.compile(r'([STY])\(Phospho \(STY\)\)')
 PROBABILITY_REGEX = re.compile(r'\((\d(?:\.?\d+)?)\)')
 
 
-def transfer(summary_df, ambiguity_decision, max_pep=False, mask=False):
+def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority'):
     """
     Main function for transfers by clustering. Transfers identifications for merged dataframe and adds a column for
     identification type. Transferred columns are Sequence, Modified sequence, Proteins, Gene names, Protein Names,
@@ -40,8 +40,6 @@ def transfer(summary_df, ambiguity_decision, max_pep=False, mask=False):
         mod_seq_func = lambda s: get_consensus_modified_sequence(s, get_most_common_sequence)
     elif ambiguity_decision == 'all':
         mod_seq_func = get_consensus_modified_sequence
-    elif ambiguity_decision == 'all_list':
-        mod_seq_func = utils.csv_list_unique
     else:
         raise ValueError("The parameter 'ambiguity_decision' has to be set on 'all' or 'majority'!")
 
@@ -64,8 +62,6 @@ def transfer(summary_df, ambiguity_decision, max_pep=False, mask=False):
     pep_filtered = pd.Series(np.ones_like(summary_df.index), dtype='bool')
     if max_pep:
         pep_filtered = summary_df['PEP'].astype(float) <= max_pep / 100
-    if ambiguity_decision == 'all_list':
-        summary_df['Modified sequence'] = summary_df['Reverse'].astype(str) + '_' + summary_df['Modified sequence']
     cluster_info_df = summary_df[identified_scans & pep_filtered].groupby('clusterID', as_index=False).agg(agg_funcs)
     # Mark all clusters with a unique identification as transferred ('t').
     # Identifications by MQ will overwrite this column as direct identification ('d') a few lines below.
