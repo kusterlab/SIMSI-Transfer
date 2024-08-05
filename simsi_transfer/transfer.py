@@ -53,7 +53,6 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
                      'Gene Names': utils.psv_list_all,
                      'Protein Names': utils.psv_list_all,
                      'Charge': utils.psv_list_all,
-                     # 'Mass': utils.psv_list_all, ################################################# calculating mass later
                      'Missed cleavages': utils.psv_list_all,
                      'Length': utils.psv_list_all,
                      'Reverse': utils.psv_list_all}
