@@ -108,14 +108,14 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
             summary_df[identification_column] == 't', replacement_dict.keys()] = summary_df.loc[
             summary_df[identification_column] == 't', replacement_dict.values()]
     if ambiguity_decision == 'keep_all':
-        summary_df.loc[:, replacement_dict.keys()] = summary_df.loc[:, replacement_dict.keys()].astype(str)
+        summary_df = summary_df.astype({col: str for col in replacement_dict.keys()})
 
     # The 'grouped_...' columns have made themselves redundant
     summary_df.drop(columns=replacement_dict.values(), inplace=True)
 
     # split-explode steps for pipe-separated entries
     if ambiguity_decision == 'keep_all':
-        subset = agg_funcs.keys()
+        subset = list(agg_funcs.keys())
         for column in subset:
             summary_df[column] = summary_df[column].str.split('||', regex=False)
         summary_df = summary_df.explode(subset)
