@@ -108,7 +108,7 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
             summary_df[identification_column] == 't', replacement_dict.keys()] = summary_df.loc[
             summary_df[identification_column] == 't', replacement_dict.values()]
     if ambiguity_decision == 'keep_all':
-        summary_df[:, replacement_dict.keys()] = summary_df[:, replacement_dict.keys()].astype(str)
+        summary_df.loc[:, replacement_dict.keys()] = summary_df.loc[:, replacement_dict.keys()].astype(str)
 
     # The 'grouped_...' columns have made themselves redundant
     summary_df.drop(columns=replacement_dict.values(), inplace=True)
