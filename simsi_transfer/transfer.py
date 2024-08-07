@@ -104,9 +104,9 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
         # Like 'Merge, and if you find two columns with the same name always use the value that is not NaN!'
         # Then we could do this directly in the merge and wouldn't have to go over the df again here
         # Try pd.DataFrame.combine(). For this the dfs would need to be in the same shape though.
-        summary_df.loc[
-            summary_df[identification_column] == 't', replacement_dict.keys()] = summary_df.loc[
-            summary_df[identification_column] == 't', replacement_dict.values()]
+        summary_df = summary_df.astype({col: 'object' for col in replacement_dict.keys()})
+        for col in replacement_dict.keys():
+            summary_df.loc[summary_df[identification_column] == 't', col] = summary_df.loc[summary_df[identification_column] == 't', 'grouped_' + col]
     if ambiguity_decision == 'keep_all':
         summary_df = summary_df.astype({col: str for col in replacement_dict.keys()})
 
