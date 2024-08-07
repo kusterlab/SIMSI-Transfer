@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 def main(argv):
     args = cli.parse_args(argv)
 
+    # Add argument check; ms2/ms3, ambiguity_decision and so on
+
     pvals = cli.parse_stringencies(args.stringencies)
     meta_input_df = cli.get_input_folders(args)
     tmt_ms_level = cli.parse_tmt_ms_level(args.tmt_ms_level)
@@ -166,8 +168,9 @@ def main(argv):
             simsi_output.export_simsi_evidence_file(evidence_simsi, args.output_folder, pval)
             logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
             logger.info('')
+            del evidence_simsi
 
-        del msms_simsi, evidence_simsi
+        del msms_simsi
 
     endtime = datetime.now()
     logger.info(f'Successfully finished transfers for all stringencies.')
