@@ -1,4 +1,4 @@
-from typing import List, Callable, Any, Union, Set
+from typing import List, Callable, Any
 from pathlib import Path
 import logging
 
@@ -11,7 +11,7 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def csv_list_unique(x: pd.Series) -> Union[str, np.nan]:
+def csv_list_unique(x: pd.Series) -> str:
     """Returns a unique semicolon-separated list from merging multiple semicolon-separated lists."""
     x = remove_nan_values(set(x))
     if len(x) == 1:
@@ -66,7 +66,7 @@ def get_unique_else_nan(input_list: List[Any]) -> Any:
     return np.nan
 
 
-def remove_nan_values(input_list: Union[List[Any], Set[Any]]) -> List[Any]:
+def remove_nan_values(input_list: List[Any]) -> List[Any]:
     """
     Eliminates NaNs from sets or lists, returns list of all other values
     :param input_list: List (or set) of elements
