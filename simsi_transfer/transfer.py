@@ -98,7 +98,7 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
     # Now we have 'd' in every ID that came from MaxQuant and 't' in every ID that came from the clustering
     # And now we copy the contents of the 'grouped_...' columns into the original columns for every row where we have a 't'
     if overwrite:
-        summary_df.loc[:, replacement_dict.keys()] = summary_df.loc[:, replacement_dict.values()]
+        summary_df.loc[:, replacement_dict.keys()] = summary_df.loc[:, replacement_dict.values()].to_numpy()
     else:
         # Aren't all of these cells by definition NaNs? Can we make use of that?
         # Like 'Merge, and if you find two columns with the same name always use the value that is not NaN!'
@@ -106,7 +106,9 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
         # Try pd.DataFrame.combine(). For this the dfs would need to be in the same shape though.
         summary_df.loc[
             summary_df[identification_column] == 't', replacement_dict.keys()] = summary_df.loc[
-            summary_df[identification_column] == 't', replacement_dict.values()]
+            summary_df[identification_column] == 't', replacement_dict.values()].to_numpy()
+    if ambiguity_decision == 'keep_all':
+        summary_df[:, replacement_dict.keys()] = summary_df[:, replacement_dict.keys()].astype(str)
 
     # The 'grouped_...' columns have made themselves redundant
     summary_df.drop(columns=replacement_dict.values(), inplace=True)
