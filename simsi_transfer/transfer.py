@@ -46,16 +46,16 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
         raise ValueError("The parameter 'ambiguity_decision' has to be set on 'all' , 'keep_all', or 'majority'!")
 
     if ambiguity_decision == 'keep_all':
-        agg_funcs = {'Sequence': utils.psv_list_all,
-                     'Modifications': utils.psv_list_all,
-                     'Modified sequence': utils.psv_list_all,
-                     'Proteins': utils.psv_list_all,
-                     'Gene Names': utils.psv_list_all,
-                     'Protein Names': utils.psv_list_all,
-                     'Charge': utils.psv_list_all,
-                     'Missed cleavages': utils.psv_list_all,
-                     'Length': utils.psv_list_all,
-                     'Reverse': utils.psv_list_all}
+        agg_funcs = {'Sequence': utils.list_all,
+                     'Modifications': utils.list_all,
+                     'Modified sequence': utils.list_all,
+                     'Proteins': utils.list_all,
+                     'Gene Names': utils.list_all,
+                     'Protein Names': utils.list_all,
+                     'Charge': utils.list_all,
+                     'Missed cleavages': utils.list_all,
+                     'Length': utils.list_all,
+                     'Reverse': utils.list_all}
     else:
         agg_funcs = {'Sequence': utils.get_unique_else_nan,
                      'Modifications': utils.get_unique_else_nan,
@@ -107,8 +107,6 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
         summary_df = summary_df.astype({col: 'object' for col in replacement_dict.keys()})
         for col in replacement_dict.keys():
             summary_df.loc[summary_df[identification_column] == 't', col] = summary_df.loc[summary_df[identification_column] == 't', 'grouped_' + col]
-    if ambiguity_decision == 'keep_all':
-        summary_df = summary_df.astype({col: str for col in replacement_dict.keys()})
 
     # The 'grouped_...' columns have made themselves redundant
     summary_df.drop(columns=replacement_dict.values(), inplace=True)
@@ -116,8 +114,6 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
     # split-explode steps for pipe-separated entries
     if ambiguity_decision == 'keep_all':
         subset = list(agg_funcs.keys())
-        for column in subset:
-            summary_df[column] = summary_df[column].str.split('||', regex=False)
         summary_df = summary_df.explode(subset)
         summary_df.loc[summary_df['Reverse'] == 'nan', 'Reverse'] = np.nan
 

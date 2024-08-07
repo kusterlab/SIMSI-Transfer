@@ -28,8 +28,8 @@ def csv_unique(s: str) -> str:
     return ";".join(sorted(set([x for x in s.split(";") if len(x) > 0])))
 
 
-def psv_list_all(x: pd.Series):
-    return "||".join(x.astype(str).tolist())
+def list_all(x: pd.Series):
+    return x.tolist()
 
 
 def convert_to_path_list(s):
