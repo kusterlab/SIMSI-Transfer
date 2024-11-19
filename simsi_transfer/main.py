@@ -114,6 +114,7 @@ def main(argv):
 
     logger.info(f'Reading in MaxQuant allPeptides.txt file')
     allpeptides_mq = utils.process_and_concat(mq_txt_folders, mq.read_allpeptides_txt)
+    allpeptides_mq = mq.fill_missing_min_max_scans(allpeptides_mq, msmsscans_mq)
 
     statistics = dict()
 

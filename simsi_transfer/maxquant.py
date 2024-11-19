@@ -174,6 +174,14 @@ def read_allpeptides_txt(mq_txt_folder):
     return allpeptides
 
 
+def fill_missing_min_max_scans(allpeptides, msms):
+    if allpeptides[['Min scan number', 'Max scan number']].isna().any().any():
+        msms_max_scans = msms.groupby('Raw file')['Precursor full scan number'].max()
+        allpeptides['Max scan number'].fillna(allpeptides['Raw file'].map(msms_max_scans), inplace=True)
+        allpeptides['Min scan number'].fillna(1, inplace=True)
+    return allpeptides
+
+
 def get_rawfile_metadata(evidence_txt):
     metadata_columns = ["Raw file", "Experiment", "Fraction"]
     metadata_columns_available = [
