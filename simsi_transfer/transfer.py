@@ -3,12 +3,11 @@ import functools
 import operator
 import re
 import logging
-from typing import List, Union, Callable, Dict, Any
+from typing import List, Callable, Dict
 
 import pandas as pd
 import numpy as np
 
-from .merging_functions import merge_with_msmsscanstxt, merge_with_msmstxt, merge_with_summarytxt
 from .utils import utils
 
 logger = logging.getLogger(__name__)

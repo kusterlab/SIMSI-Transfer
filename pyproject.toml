@@ -16,11 +16,11 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-numpy = "^1.18.1"
+numpy = ">=1.18.1"
 pandas = ">=1.4.0"
 pyteomics = "^4.5.3"
 lxml = "^4.8.0"
-job-pool = ">=0.2.6"
+job-pool = ">=0.3.0"
 pyqt5 = {version = "5.15.7", optional = true}
 pyqt5-qt5 = {version = "5.15.2", optional = true}
 pyarrow = "^14.0.1"
