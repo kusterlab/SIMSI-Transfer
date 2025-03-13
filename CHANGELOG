@@ -1,3 +1,8 @@
+v0.6.3
+- Add total_jobs to JobPools
+- Decrease subprocess logging level to DEBUG
+- Fix unit tests
+
 v0.6.2
 - Update job-pool to v0.3.0
 - Added scaffold for readthedocs documentation
