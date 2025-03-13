@@ -1,3 +1,12 @@
+v0.6.2
+- Update job-pool to v0.3.0
+- Added scaffold for readthedocs documentation
+- Cleaned up test_maxquant.py and test_utils.py; added test for fill_missing_min_max_scans
+- Added fill_missing_min_max_scans function for allpeptides.txt
+- Fixed statistics output if skip_evidence == True
+- Proper type hinting and some more docstrings
+- Added missing parameters to docstrings
+
 v0.6.1
 - Fix missing tmt_ms_level argument for tmt_requantify
 
