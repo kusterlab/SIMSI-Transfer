@@ -18,7 +18,7 @@ def allpeptides_df():
 @pytest.fixture
 def msms_df():
     return pd.DataFrame({
-        'Raw file': ['file1', 'file2', 'file4', 'file5'],
+        'Raw file': ['file1', 'file2', 'file3', 'file4', 'file5'],
         'Precursor full scan number': [111, 112, 113, 114, 115]
     })
 
@@ -26,7 +26,7 @@ def msms_df():
 def test_fill_missing_min_max_scans(allpeptides_df, msms_df):
     result = mq.fill_missing_min_max_scans(allpeptides_df, msms_df)
     expected = pd.DataFrame({
-        'Raw file': ['file1', 'file2', 'file4', 'file5'],
+        'Raw file': ['file1', 'file2', 'file3', 'file4', 'file5'],
         'Min scan number': [1, 2, 1, 1, 5],
         'Max scan number': [101, 112, 103, 114, 105]
     })

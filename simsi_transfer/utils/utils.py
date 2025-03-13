@@ -11,7 +11,7 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def csv_list_unique(x: pd.Series) -> Union[str, np.nan]:
+def csv_list_unique(x: pd.Series) -> Union[str, float]:
     """Returns a unique semicolon-separated list from merging multiple semicolon-separated lists."""
     x = remove_nan_values(set(x))
     if len(x) == 1:
