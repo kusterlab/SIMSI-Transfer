@@ -179,6 +179,8 @@ def fill_missing_min_max_scans(allpeptides, msms):
         msms_max_scans = msms.groupby('Raw file')['Precursor full scan number'].max()
         allpeptides['Max scan number'].fillna(allpeptides['Raw file'].map(msms_max_scans), inplace=True)
         allpeptides['Min scan number'].fillna(1, inplace=True)
+        allpeptides['Max scan number'] = allpeptides['Max scan number'].astype(int)
+        allpeptides['Min scan number'] = allpeptides['Min scan number'].astype(int)
     return allpeptides
 
 
