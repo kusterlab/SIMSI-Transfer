@@ -1,3 +1,6 @@
+v0.6.4
+- Update pyarrow dependency to >=16.0
+
 v0.6.3
 - Add total_jobs to JobPools
 - Decrease subprocess logging level to DEBUG
