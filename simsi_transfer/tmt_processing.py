@@ -113,7 +113,7 @@ def extract_tmt_reporters(
     if num_threads > 1:
         from job_pool import JobPool
 
-        processing_pool = JobPool(processes=num_threads, write_progress_to_logger=True)
+        processing_pool = JobPool(processes=num_threads, write_progress_to_logger=True, total_jobs=len(mzml_files))
 
     for mzml_file, correction_factor_path in zip(mzml_files, correction_factor_paths):
         args = (mzml_file, output_path, correction_factor_path, extraction_level, plex)

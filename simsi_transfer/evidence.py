@@ -40,8 +40,8 @@ def assign_evidence_type(summary: pd.DataFrame, type_column_name: str = "new_typ
 
 def assign_missing_precursors(summary: pd.DataFrame, allpeptides: pd.DataFrame):
     """
-    find precursors in allPeptides.txt for transferred MS2 scans in runs where the 
-    (peptide, charge) combination was previously not identified currently very slow 
+    find precursors in allPeptides.txt for transferred MS2 scans in runs where the
+    (peptide, charge) combination was previously not identified currently very slow
     (~500 MS2 scans / second).
     """
     group_key = ["Raw file", "Charge"]
@@ -164,7 +164,9 @@ def calculate_evidence_columns(summary: pd.DataFrame, plex: int):
     # add semicolon to columns which will be concatenated. this allows us to use the
     # fast "sum" aggfunc instead of a slow custom string function
     concat_cols = ["Proteins", "Leading proteins", "scanID", "summary_ID"]
-    summary[concat_cols] = summary[concat_cols].apply(lambda column: column.astype(str) + ";")
+    summary[concat_cols] = summary[concat_cols].apply(
+        lambda column: column.astype(str) + ";"
+    )
 
     summary_grouped = summary.groupby("evidence_ID")
 
@@ -335,7 +337,11 @@ def build_evidence_grouped(
     if multithreading:
         from job_pool import JobPool
 
-        job_pool = JobPool(processes=num_threads, write_progress_to_logger=True)
+        job_pool = JobPool(
+            processes=num_threads,
+            write_progress_to_logger=True,
+            total_jobs=len(summary_groups),
+        )
 
     # Iterate through each group and merge
     evidences = []
