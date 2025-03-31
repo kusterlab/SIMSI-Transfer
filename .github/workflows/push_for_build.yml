@@ -46,6 +46,7 @@ jobs:
           conda install -c bioconda pyteomics triqler
       - name: Build exe and compress with UPX
         run: |
+          conda init powershell
           cd .\gui_tools\
           & .\build_gui.bat
           cd ..
