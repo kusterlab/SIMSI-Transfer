@@ -1,3 +1,6 @@
+v0.6.5
+- Replace np.NaN with np.nan for pandas 2.0 compatibility
+
 v0.6.4
 - Update pyarrow dependency to >=16.0
 
