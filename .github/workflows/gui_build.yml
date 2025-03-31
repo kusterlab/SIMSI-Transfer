@@ -1,4 +1,4 @@
-name: Push for build
+name: Automatic GUI build
 
 on:
   workflow_dispatch:
@@ -37,7 +37,7 @@ jobs:
           python-version: 3.9
           channels: conda-forge,defaults
           channel-priority: true
-          activate-environment: picked_group_fdr_gui
+          activate-environment: simsi_transfer_gui
       - name: Install dependencies
         shell: bash -el {0}
         run: |
