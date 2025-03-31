@@ -14,7 +14,7 @@ def assign_evidence_type(summary: pd.DataFrame, type_column_name: str = "new_typ
     """
     assign the updated Type column by checking if retention time of MS2 scan is within its evidence precursor rt window
     """
-    summary[type_column_name] = np.NaN
+    summary[type_column_name] = np.nan
     msms_in_rt_window = (
         summary["Retention time"]
         >= summary["Calibrated retention time start"]
@@ -34,7 +34,7 @@ def assign_evidence_type(summary: pd.DataFrame, type_column_name: str = "new_typ
         "Calibrated retention time start",
         "Calibrated retention time finish",
     ]
-    summary.loc[~msms_in_rt_window, del_columns] = np.NaN
+    summary.loc[~msms_in_rt_window, del_columns] = np.nan
     return summary
 
 
@@ -79,7 +79,7 @@ def match_precursor_grouped(
     group_key: List[str],
 ):
     if tuple(msms_scan[group_key]) not in allpeptides_grouped:
-        return ["MSMS", np.NaN]
+        return ["MSMS", np.nan]
     allpeptides = allpeptides_grouped[tuple(msms_scan[group_key])]
     return match_precursor(msms_scan, allpeptides)
 
@@ -93,7 +93,7 @@ def match_precursor(
         & (allpeptides["Max scan number"] >= msms_scan["MS scan number"])
     ]
     if len(precursors.index) == 0:
-        return ["MSMS", np.NaN]
+        return ["MSMS", np.nan]
     return ["MULTI-MSMS", precursors["Intensity"].values[0]]
 
 

@@ -99,7 +99,7 @@ def read_msms_txt(mq_txt_folder):
     for col, dtype in columns.items():
         if col not in msmstxt.columns:
             logger.warning(f"Missing column in msms.txt, filled with numpy NaN: {col}")
-            msmstxt[col] = np.NaN
+            msmstxt[col] = np.nan
             msmstxt[col] = msmstxt[col].astype(dtype)
 
     msmstxt = msmstxt.rename(columns={"Scan number": "scanID"})

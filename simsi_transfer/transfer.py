@@ -115,7 +115,7 @@ def check_ambiguity(sequences: List[str],
     transformed_sequences = transform_sequence(sequences)
     unique_sequences = set(map(str.upper, transformed_sequences))
     if len(unique_sequences) != 1:
-        return np.NaN, np.nan
+        return np.nan, np.nan
     return sequences, transformed_sequences
 
 
