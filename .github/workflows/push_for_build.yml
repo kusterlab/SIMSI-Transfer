@@ -11,8 +11,6 @@ jobs:
     runs-on: windows-latest
     strategy:
       fail-fast: false
-      matrix:
-        python-version: [ '3.9' ]
 
     steps:
       - uses: actions/checkout@v3
@@ -33,19 +31,19 @@ jobs:
           }
 
           Unzip ".\UPX\upx-3.96-win64.zip" ".\UPX\upx-3.96\"
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: Create conda environment
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.9
+          channels: conda-forge,defaults
+          channel-priority: true
+          activate-environment: picked_group_fdr_gui
       - name: Install dependencies
+        shell: bash -el {0}
         run: |
-          C:\Miniconda\condabin\conda.bat env create -f conda_environment.yml
-          C:\Miniconda\condabin\conda.bat init powershell
-          C:\Miniconda\condabin\conda.bat activate simsi_transfer_gui
-      # - name: Avoid MKL dependence
-      #   run: |
-      #     C:\Miniconda\condabin\conda.bat install -c conda-forge nomkl numpy pandas pyqt pyinstaller
-      #     C:\Miniconda\condabin\conda.bat install -c bioconda pyteomics
+          conda install -c conda-forge nomkl
+          conda install -c conda-forge libxml2=2.11.6 lxml numpy scipy pandas pyarrow pyqt pyinstaller tqdm threadpoolctl
+          conda install -c bioconda pyteomics triqler
       - name: Build exe and compress with UPX
         run: |
           cd .\gui_tools\
