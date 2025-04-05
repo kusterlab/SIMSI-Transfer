@@ -43,7 +43,8 @@ jobs:
         run: |
           conda install -c conda-forge nomkl
           conda install -c conda-forge libxml2=2.11.6 lxml numpy scipy pandas pyarrow pyqt pyinstaller tqdm threadpoolctl
-          conda install -c bioconda pyteomics triqler
+          conda install -c bioconda pyteomics
+          pip install job-pool
       - name: Build exe and compress with UPX
         run: |
           conda init powershell
