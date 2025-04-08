@@ -1,6 +1,5 @@
 import sys
-import logging.handlers
-import time
+import logging
 
 # get version number of SIMSI
 __version__ = "0.0.0"
@@ -19,7 +18,7 @@ except ImportError:
     except DistributionNotFound:
         pass
 
-__copyright__ = '''Copyright (c) 2021-2022 Firas Hamood & Matthew The. All rights reserved.
+__copyright__ = '''Copyright (c) 2021-2025 Firas Hamood & Matthew The. All rights reserved.
 Written by Firas Hamood (firas.hamood@tum.de) and Matthew The (matthew.the@tum.de) while at the
 Chair of Proteomics and Bioanalytics at the Technical University of Munich.'''
 
@@ -29,7 +28,7 @@ logger.setLevel(logging.DEBUG)
 if len(logger.handlers) == 0:
     #formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s::%(funcName)s %(message)s")
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    formatter.converter = time.gmtime
+
     # add console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(CONSOLE_LOG_LEVEL)
