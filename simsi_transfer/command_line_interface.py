@@ -58,8 +58,14 @@ def parse_args(argv):
 
     apars.add_argument('--num_threads', type=int, default=min(multiprocessing.cpu_count(), 4), metavar='N',
                        help='''
-                       Number of threads, by default this is equal to the number of CPU cores available on the device.
+                       Number of threads, by default this is equal to min(4, number of CPU cores available on the device).
                        ''')
+    
+    apars.add_argument('--num_threads_per_precursor_bin', type=int, default=0, metavar='N',
+                       help='''
+                       Number of threads per precursor bin in maracluster. If set to 0 (default), no parallelization across precursor bins is applied.
+                       ''')
+    
 
     apars.add_argument('--tmt_reporter_correction_file', default="", metavar="DIR",
                        help='''

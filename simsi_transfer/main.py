@@ -53,6 +53,7 @@ def main(argv):
     logger.info(f"Output folder = {args.output_folder}")
     logger.info(f"Cache folder = {args.cache_folder}")
     logger.info(f"Number of threads = {args.num_threads}")
+    logger.info(f"Number of threads per precursor bin = {args.num_threads_per_precursor_bin}")
     logger.info(f"TMT correction file = {tmt_correction_files}")
     logger.info(f"TMT MS level = {tmt_ms_level}")
     logger.info('')
@@ -74,7 +75,7 @@ def main(argv):
     if not cluster.has_previous_run(cluster_result_folder, mzml_files, pvals):
         logger.info(f'Clustering .mzML files')
         dat_files_folder = args.cache_folder / Path('dat_files')
-        cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, dat_files_folder, args.num_threads)
+        cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, dat_files_folder, args.num_threads, args.num_threads_per_precursor_bin)
     else:
         logger.info("Found previous MaRaCluster run, skipping clustering")
 
