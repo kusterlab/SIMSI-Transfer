@@ -1,3 +1,8 @@
+v0.7.0
+- Add option to parallelize across precursor bins
+- Switch timezone to local time for logging
+- Fix GUI build
+
 v0.6.5
 - Replace np.NaN with np.nan for pandas 2.0 compatibility
 
