@@ -48,7 +48,6 @@ class QTextEditLogger(logging.Handler, QObject):
         # initialize logging.Handler
         super().__init__()
         formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        formatter.converter = time.gmtime
         self.setFormatter(formatter)
 
         # initialize QObject
@@ -70,7 +69,6 @@ class LogHandler(logging.Handler):
     def __init__(self):
         super().__init__()
         formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        formatter.converter = time.gmtime
         self.setFormatter(formatter)
         self.emitter = LogEmitter()
 

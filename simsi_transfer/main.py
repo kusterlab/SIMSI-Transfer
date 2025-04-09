@@ -36,7 +36,6 @@ def main(argv):
     module_name = ".".join(__name__.split(".")[:-1])
     file_logger = logging.FileHandler(args.output_folder / Path('SIMSI.log'))
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    formatter.converter = time.gmtime
     file_logger.setFormatter(formatter)
     logging.getLogger(module_name).addHandler(file_logger)
 
