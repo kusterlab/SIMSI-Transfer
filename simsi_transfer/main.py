@@ -40,8 +40,16 @@ if sys.stderr is None:
 def main(argv):
     args = cli.parse_args(argv)
 
-    # Add argument check; ms2/ms3, ambiguity_decision and so on
+    # Validate ms2/ms3 argument
+    if args.ms_level not in {"ms2", "ms3"}:
+        logger.error("Invalid ms_level argument. Expected 'ms2' or 'ms3'.")
+        sys.exit(1)
 
+    # Validate ambiguity_decision argument
+    valid_ambiguity_decisions = {"keep", "remove", "average"}
+    if args.ambiguity_decision not in valid_ambiguity_decisions:
+        logger.error(f"Invalid ambiguity_decision argument. Expected one of {valid_ambiguity_decisions}.")
+        sys.exit(1)
     pvals = cli.parse_stringencies(args.stringencies)
     meta_input_df = cli.get_input_folders(args)
     tmt_ms_level = cli.parse_tmt_ms_level(args.tmt_ms_level)
