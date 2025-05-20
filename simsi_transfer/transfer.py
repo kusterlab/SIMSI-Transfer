@@ -26,7 +26,9 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
     :param mask: if false, uses "identification" column from summary frame. If set to a value, transfer uses the
     'identification_{mask}' column, needed for the masking analysis
     :param ambiguity_decision: if 'all', returns raw sequences with potential phospho positions when encountering isomer
-    clusters; if 'majority', decides for one sequence by majority vote
+    clusters; if 'majority', decides for one sequence by majority vote, if 'keep_all' make a PSM for every potential
+    peptide sequence.
+    :param overwrite: Option to overwrite already identified spectra with more confident identifications from clustering
     :return: DataFrame with transferred identifications resembling MaxQuant msmsScans.txt
     """
     if mask:

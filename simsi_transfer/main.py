@@ -41,12 +41,12 @@ def main(argv):
     args = cli.parse_args(argv)
 
     # Validate ms2/ms3 argument
-    if args.ms_level not in {"ms2", "ms3"}:
+    if args.tmt_ms_level not in ["ms2", "ms3"]:
         logger.error("Invalid ms_level argument. Expected 'ms2' or 'ms3'.")
         sys.exit(1)
 
     # Validate ambiguity_decision argument
-    valid_ambiguity_decisions = {"keep", "remove", "average"}
+    valid_ambiguity_decisions = ["keep_all", "all", "majority"]
     if args.ambiguity_decision not in valid_ambiguity_decisions:
         logger.error(f"Invalid ambiguity_decision argument. Expected one of {valid_ambiguity_decisions}.")
         sys.exit(1)
