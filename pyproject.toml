@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "simsi_transfer"
-version = "0.6.1"
+version = "0.7.0"
 description = "Software-assisted reduction of missing values in phosphoproteomics and proteomics isobaric labeling data using MS2 spectrum clustering"
 authors = ["Firas Hamood <firas.hamood@tum.de>", "Matthew The <matthew.the@tum.de>"]
 license= "Apache-2.0"
@@ -16,14 +16,14 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-numpy = "^1.18.1"
+numpy = ">=1.18.1"
 pandas = ">=1.4.0"
 pyteomics = "^4.5.3"
 lxml = "^4.8.0"
-job-pool = ">=0.2.6"
+job-pool = ">=0.3.0"
 pyqt5 = {version = "5.15.7", optional = true}
 pyqt5-qt5 = {version = "5.15.2", optional = true}
-pyarrow = ">=14.0.1,<17.0.0"
+pyarrow = ">=16.0.0,<17.0.0"
 tqdm = "^4.66.1"
 
 [tool.poetry.dev-dependencies]

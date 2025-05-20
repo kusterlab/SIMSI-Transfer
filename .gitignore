@@ -12,3 +12,5 @@ htmlcov
 dist
 mprofile*.dat
 data/example
+docs/source/_autosummary
+.qodo

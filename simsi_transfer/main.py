@@ -19,6 +19,24 @@ from .utils import utils
 logger = logging.getLogger(__name__)
 
 
+class NullWriter:
+    softspace = 0
+    encoding = 'UTF-8'
+
+    def write(*args):
+        pass
+
+    def flush(*args):
+        pass
+
+
+# sys.stdout/err is None in GUI mode on Windows.
+if sys.stdout is None:
+    sys.stdout = NullWriter()
+if sys.stderr is None:
+    sys.stderr = NullWriter()
+
+
 def main(argv):
     args = cli.parse_args(argv)
 
@@ -38,7 +56,6 @@ def main(argv):
     module_name = ".".join(__name__.split(".")[:-1])
     file_logger = logging.FileHandler(args.output_folder / Path('SIMSI.log'))
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    formatter.converter = time.gmtime
     file_logger.setFormatter(formatter)
     logging.getLogger(module_name).addHandler(file_logger)
 
@@ -55,6 +72,7 @@ def main(argv):
     logger.info(f"Output folder = {args.output_folder}")
     logger.info(f"Cache folder = {args.cache_folder}")
     logger.info(f"Number of threads = {args.num_threads}")
+    logger.info(f"Number of threads per precursor bin = {args.num_threads_per_precursor_bin}")
     logger.info(f"TMT correction file = {tmt_correction_files}")
     logger.info(f"TMT MS level = {tmt_ms_level}")
     logger.info('')
@@ -76,7 +94,7 @@ def main(argv):
     if not cluster.has_previous_run(cluster_result_folder, mzml_files, pvals):
         logger.info(f'Clustering .mzML files')
         dat_files_folder = args.cache_folder / Path('dat_files')
-        cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, dat_files_folder, args.num_threads)
+        cluster.cluster_mzml_files(mzml_files, pvals, cluster_result_folder, dat_files_folder, args.num_threads, args.num_threads_per_precursor_bin)
     else:
         logger.info("Found previous MaRaCluster run, skipping clustering")
 
@@ -116,6 +134,7 @@ def main(argv):
 
     logger.info(f'Reading in MaxQuant allPeptides.txt file')
     allpeptides_mq = utils.process_and_concat(mq_txt_folders, mq.read_allpeptides_txt)
+    allpeptides_mq = mq.fill_missing_min_max_scans(allpeptides_mq, msmsscans_mq)
 
     statistics = dict()
 

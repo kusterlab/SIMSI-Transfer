@@ -11,7 +11,7 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def csv_list_unique(x: pd.Series) -> str:
+def csv_list_unique(x: pd.Series) -> Union[str, float]:
     """Returns a unique semicolon-separated list from merging multiple semicolon-separated lists."""
     x = remove_nan_values(set(x))
     if len(x) == 1:
@@ -58,7 +58,7 @@ def get_unique_else_nan(input_list: List[Any]) -> Any:
     """
     Returns nan if no unique sequence is found in inputlist, or the sequence if its unique
     :param input_list: List of peptide sequences
-    :return: Returns peptide sequence if it is the only one in the input list, otherwise returns np.NaN
+    :return: Returns peptide sequence if it is the only one in the input list, otherwise returns np.nan
     """
     x = remove_nan_values(set(input_list))
     if len(x) == 1:
@@ -70,7 +70,7 @@ def remove_nan_values(input_list: List[Any]) -> List[Any]:
     """
     Eliminates NaNs from sets or lists, returns list of all other values
     :param input_list: List (or set) of elements
-    :return: List with removed np.NaN values
+    :return: List with removed np.nan values
     """
     return [v for v in input_list if pd.notnull(v)]
 

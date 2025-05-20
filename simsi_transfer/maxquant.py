@@ -99,7 +99,7 @@ def read_msms_txt(mq_txt_folder):
     for col, dtype in columns.items():
         if col not in msmstxt.columns:
             logger.warning(f"Missing column in msms.txt, filled with numpy NaN: {col}")
-            msmstxt[col] = np.NaN
+            msmstxt[col] = np.nan
             msmstxt[col] = msmstxt[col].astype(dtype)
 
     msmstxt = msmstxt.rename(columns={"Scan number": "scanID"})
@@ -171,6 +171,16 @@ def read_allpeptides_txt(mq_txt_folder):
         dtype=columns,
         engine="pyarrow",
     )
+    return allpeptides
+
+
+def fill_missing_min_max_scans(allpeptides, msms):
+    if allpeptides[['Min scan number', 'Max scan number']].isna().any().any():
+        msms_max_scans = msms.groupby('Raw file')['Precursor full scan number'].max()
+        allpeptides['Max scan number'].fillna(allpeptides['Raw file'].map(msms_max_scans), inplace=True)
+        allpeptides['Min scan number'].fillna(1, inplace=True)
+        allpeptides['Max scan number'] = allpeptides['Max scan number'].astype(int)
+        allpeptides['Min scan number'] = allpeptides['Min scan number'].astype(int)
     return allpeptides
 
 
