@@ -19,6 +19,24 @@ from .utils import utils
 logger = logging.getLogger(__name__)
 
 
+class NullWriter:
+    softspace = 0
+    encoding = 'UTF-8'
+
+    def write(*args):
+        pass
+
+    def flush(*args):
+        pass
+
+
+# sys.stdout/err is None in GUI mode on Windows.
+if sys.stdout is None:
+    sys.stdout = NullWriter()
+if sys.stderr is None:
+    sys.stderr = NullWriter()
+
+
 def main(argv):
     args = cli.parse_args(argv)
 
