@@ -16,7 +16,7 @@ PHOSPHO_REGEX = re.compile(r'([STY])\(Phospho \(STY\)\)')
 PROBABILITY_REGEX = re.compile(r'\((\d(?:\.?\d+)?)\)')
 
 
-def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority'):
+def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority', overwrite=False):
     """
     Main function for transfers by clustering. Transfers identifications for merged dataframe and adds a column for
     identification type. Transferred columns are Sequence, Modified sequence, Proteins, Gene names, Protein Names,
@@ -26,7 +26,9 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
     :param mask: if false, uses "identification" column from summary frame. If set to a value, transfer uses the
     'identification_{mask}' column, needed for the masking analysis
     :param ambiguity_decision: if 'all', returns raw sequences with potential phospho positions when encountering isomer
-    clusters; if 'majority', decides for one sequence by majority vote
+    clusters; if 'majority', decides for one sequence by majority vote, if 'keep_all' make a PSM for every potential
+    peptide sequence.
+    :param overwrite: Option to overwrite already identified spectra with more confident identifications from clustering
     :return: DataFrame with transferred identifications resembling MaxQuant msmsScans.txt
     """
     if mask:
@@ -39,29 +41,52 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
         mod_seq_func = lambda s: get_consensus_modified_sequence(s, get_most_common_sequence)
     elif ambiguity_decision == 'all':
         mod_seq_func = get_consensus_modified_sequence
+    elif ambiguity_decision == 'keep_all':
+        mod_seq_func = None
     else:
-        raise ValueError("The parameter 'ambiguity_decision' has to be set on 'all' or 'majority'!")
+        raise ValueError("The parameter 'ambiguity_decision' has to be set on 'all' , 'keep_all', or 'majority'!")
 
-    agg_funcs = {'Sequence': utils.get_unique_else_nan,
-                 'Modifications': utils.get_unique_else_nan,
-                 'Modified sequence': mod_seq_func,
-                 'Phospho (STY) Probabilities': calculate_average_probabilities,
-                 'Proteins': utils.csv_list_unique,
-                 'Gene Names': utils.csv_list_unique,
-                 'Protein Names': utils.csv_list_unique,
-                 'Charge': utils.get_unique_else_nan,
-                 'm/z': 'mean',
-                 'Mass': 'mean',
-                 'Missed cleavages': utils.get_unique_else_nan,
-                 'Length': utils.get_unique_else_nan,
-                 'PEP': 'max',
-                 'Reverse': utils.get_unique_else_nan}
+    if ambiguity_decision == 'keep_all':
+        agg_funcs = {'Sequence': utils.list_all,
+                     'Modifications': utils.list_all,
+                     'Modified sequence': utils.list_all,
+                     'Proteins': utils.list_all,
+                     'Gene Names': utils.list_all,
+                     'Protein Names': utils.list_all,
+                     'Charge': utils.list_all,
+                     'Missed cleavages': utils.list_all,
+                     'Length': utils.list_all,
+                     'Reverse': utils.list_all}
+    else:
+        agg_funcs = {'Sequence': utils.get_unique_else_nan,
+                     'Modifications': utils.get_unique_else_nan,
+                     'Modified sequence': mod_seq_func,
+                     'Phospho (STY) Probabilities': calculate_average_probabilities,
+                     'Proteins': utils.csv_list_unique,
+                     'Gene Names': utils.csv_list_unique,
+                     'Protein Names': utils.csv_list_unique,
+                     'Charge': utils.get_unique_else_nan,
+                     'm/z': 'mean',
+                     'Mass': 'mean',
+                     'Missed cleavages': utils.get_unique_else_nan,
+                     'Length': utils.get_unique_else_nan,
+                     'PEP': 'max',
+                     'Reverse': utils.get_unique_else_nan}
 
     identified_scans = summary_df['Modified sequence'].notna()
     pep_filtered = pd.Series(np.ones_like(summary_df.index), dtype='bool')
     if max_pep:
         pep_filtered = summary_df['PEP'].astype(float) <= max_pep / 100
-    cluster_info_df = summary_df[identified_scans & pep_filtered].groupby('clusterID', as_index=False).agg(agg_funcs)
+    if ambiguity_decision == 'keep_all':
+        clustercolumns = list(agg_funcs.keys())
+        clustercolumns.append('clusterID')
+        filtercolumns = clustercolumns.copy()
+        filtercolumns.remove('Proteins')
+        cluster_info_df = summary_df.loc[identified_scans & pep_filtered, clustercolumns].drop_duplicates(
+            filtercolumns).groupby('clusterID', as_index=False).agg(agg_funcs)
+    else:
+        cluster_info_df = summary_df[identified_scans & pep_filtered].groupby('clusterID', as_index=False).agg(
+            agg_funcs)
     # Mark all clusters with a unique identification as transferred ('t').
     # Identifications by MQ will overwrite this column as direct identification ('d') a few lines below.
     cluster_info_df[identification_column] = np.where(cluster_info_df['Modified sequence'].notna(), 't', None)
@@ -73,15 +98,26 @@ def transfer(summary_df, max_pep=False, mask=False, ambiguity_decision='majority
     summary_df.loc[identified_scans, identification_column] = 'd'
     # Now we have 'd' in every ID that came from MaxQuant and 't' in every ID that came from the clustering
     # And now we copy the contents of the 'grouped_...' columns into the original columns for every row where we have a 't'
-    summary_df.loc[
+    if overwrite:
+        summary_df.loc[:, replacement_dict.keys()] = summary_df.loc[:, replacement_dict.values()]
+    else:
         # Aren't all of these cells by definition NaNs? Can we make use of that?
         # Like 'Merge, and if you find two columns with the same name always use the value that is not NaN!'
         # Then we could do this directly in the merge and wouldn't have to go over the df again here
         # Try pd.DataFrame.combine(). For this the dfs would need to be in the same shape though.
-        summary_df[identification_column] == 't', replacement_dict.keys()] = summary_df.loc[
-        summary_df[identification_column] == 't', replacement_dict.values()].to_numpy()
+        summary_df = summary_df.astype({col: 'object' for col in replacement_dict.keys()})
+        for col in replacement_dict.keys():
+            summary_df.loc[summary_df[identification_column] == 't', col] = summary_df.loc[summary_df[identification_column] == 't', 'grouped_' + col]
+
     # The 'grouped_...' columns have made themselves redundant
     summary_df.drop(columns=replacement_dict.values(), inplace=True)
+
+    # split-explode steps for pipe-separated entries
+    if ambiguity_decision == 'keep_all':
+        subset = list(agg_funcs.keys())
+        summary_df = summary_df.explode(subset)
+        summary_df.loc[summary_df['Reverse'] == 'nan', 'Reverse'] = np.nan
+
     return summary_df
 
 

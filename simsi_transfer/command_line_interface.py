@@ -113,7 +113,8 @@ def parse_args(argv):
                        help='''
                        Determines which modified sequence to set for PTM-ambiguous clusters: 
                        'majority' returns the most frequently observed modified sequence in the cluster.
-                       'all' returns unmodified sequence with all observed PTM positions.
+                       'all' returns unmodified sequence with all observed PTM positions as modified sequence string.
+                       'keep_all' allocates a PSM to unidentified spectra for every peptide identified in their cluster.
                        ''')
 
     apars.add_argument('--add_plotting_columns', default=False, action='store_true',

@@ -23,7 +23,7 @@ lxml = "^4.8.0"
 job-pool = ">=0.3.0"
 pyqt5 = {version = "5.15.7", optional = true}
 pyqt5-qt5 = {version = "5.15.2", optional = true}
-pyarrow = ">=16.0.0"
+pyarrow = ">=16.0.0,<17.0.0"
 tqdm = "^4.66.1"
 
 [tool.poetry.dev-dependencies]

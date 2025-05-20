@@ -1,4 +1,4 @@
-from typing import List, Callable, Any, Union, Set
+from typing import List, Callable, Any
 from pathlib import Path
 import logging
 
@@ -26,6 +26,10 @@ def csv_list_unique(x: pd.Series) -> Union[str, float]:
 
 def csv_unique(s: str) -> str:
     return ";".join(sorted(set([x for x in s.split(";") if len(x) > 0])))
+
+
+def list_all(x: pd.Series):
+    return x.tolist()
 
 
 def convert_to_path_list(s):
@@ -62,7 +66,7 @@ def get_unique_else_nan(input_list: List[Any]) -> Any:
     return np.nan
 
 
-def remove_nan_values(input_list: Union[List[Any], Set[Any]]) -> List[Any]:
+def remove_nan_values(input_list: List[Any]) -> List[Any]:
     """
     Eliminates NaNs from sets or lists, returns list of all other values
     :param input_list: List (or set) of elements
