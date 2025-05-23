@@ -318,11 +318,9 @@ def build_evidence_grouped(
     """
     Optimized merging function to group dataframes by 'Raw file', perform the merge per group,
     and concatenate the results into one dataframe with minimal memory usage.
-    :param summary: intermediate summary dataframe derived by transferring
-    :param evidence: evidence dataframe to build new evidence on
-    :param allpeptides: allpeptides.txt dataframe to get all precursor information
-    :param plex: number of TMT channels
-    :param num_threads: number of threads to use
+    :param tempfile: Temporary processing file, e.g., MaRaCluster clustering dataframe
+    :param msms_df: MaxQuant msms.txt dataframe
+    :return: Merged dataframe
     """
     # logger.debug(f"summary memory usage: {utils.get_dataframe_size(summary)}")
     # logger.debug(f"evidence memory usage: {utils.get_dataframe_size(evidence)}")

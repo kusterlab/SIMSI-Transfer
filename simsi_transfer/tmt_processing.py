@@ -168,12 +168,12 @@ def extract_and_correct_reporters(
             scanseries = pd.Series(index=dfcol, dtype="float32")
 
             if extraction_level == 2:
-                scanseries["scanID"] = re.search(r"scan=(\d+)", item["id"])[1]
+                scanseries["scanID"] = int(re.search(r"scan=(\d+)", item["id"])[1])
             else:
                 # supposed to find parent MS2 spectrum for MS3 by looking into precursorList/precursor/spectrumRef
-                scanseries["scanID"] = re.search(
+                scanseries["scanID"] = int(re.search(
                     r"scan=(\d+)", item["precursorList"]["precursor"][0]["spectrumRef"]
-                )[1]
+                )[1])
 
             if scanseries["scanID"] in seen_scan_ids:
                 logger.warning(

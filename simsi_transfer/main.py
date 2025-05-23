@@ -40,6 +40,16 @@ if sys.stderr is None:
 def main(argv):
     args = cli.parse_args(argv)
 
+    # Validate ms2/ms3 argument
+    if args.tmt_ms_level not in ["ms2", "ms3"]:
+        logger.error("Invalid ms_level argument. Expected 'ms2' or 'ms3'.")
+        sys.exit(1)
+
+    # Validate ambiguity_decision argument
+    valid_ambiguity_decisions = ["keep_all", "all", "majority"]
+    if args.ambiguity_decision not in valid_ambiguity_decisions:
+        logger.error(f"Invalid ambiguity_decision argument. Expected one of {valid_ambiguity_decisions}.")
+        sys.exit(1)
     pvals = cli.parse_stringencies(args.stringencies)
     meta_input_df = cli.get_input_folders(args)
     tmt_ms_level = cli.parse_tmt_ms_level(args.tmt_ms_level)
@@ -185,8 +195,9 @@ def main(argv):
             simsi_output.export_simsi_evidence_file(evidence_simsi, args.output_folder, pval)
             logger.info(f'Finished SIMSI-Transfer evidence.txt building.')
             logger.info('')
+            del evidence_simsi
 
-        del msms_simsi, evidence_simsi
+        del msms_simsi
 
     endtime = datetime.now()
     logger.info(f'Successfully finished transfers for all stringencies.')
