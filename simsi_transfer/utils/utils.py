@@ -1,4 +1,4 @@
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Union
 from pathlib import Path
 import logging
 
