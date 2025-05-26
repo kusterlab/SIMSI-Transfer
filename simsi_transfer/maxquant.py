@@ -160,8 +160,8 @@ def read_allpeptides_txt(mq_txt_folder):
         "m/z": "float32",
         "Retention time": "float32",
         "Retention length": "float32",
-        "Min scan number": "int32",
-        "Max scan number": "int32",
+        "Min scan number": "Int32",
+        "Max scan number": "Int32",
         "Intensity": "float32",
     }
     allpeptides = pd.read_csv(
@@ -179,8 +179,8 @@ def fill_missing_min_max_scans(allpeptides, msms):
         msms_max_scans = msms.groupby('Raw file')['Precursor full scan number'].max()
         allpeptides['Max scan number'].fillna(allpeptides['Raw file'].map(msms_max_scans), inplace=True)
         allpeptides['Min scan number'].fillna(1, inplace=True)
-        allpeptides['Max scan number'] = allpeptides['Max scan number'].astype(int)
-        allpeptides['Min scan number'] = allpeptides['Min scan number'].astype(int)
+        allpeptides['Max scan number'] = allpeptides['Max scan number'].astype("int32")
+        allpeptides['Min scan number'] = allpeptides['Min scan number'].astype("int32")
     return allpeptides
 
 
