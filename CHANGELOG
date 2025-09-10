@@ -1,3 +1,8 @@
+v0.8.0
+- Fixed read_allpeptides_txt() to be fine with NaNs in min and max scan number
+- Bumped pyarrow version to 19.0.1
+- Keep all modseq mode for ProSIMSIt (#31)
+
 v0.7.0
 - Add option to parallelize across precursor bins
 - Switch timezone to local time for logging
