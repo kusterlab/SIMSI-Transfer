@@ -24,7 +24,7 @@ Raw files for TMT-MS2:
 - 19070-008.raw
 
 The MaxQuant results needed as input to SIMSI-Transfer can be downloaded from Zenodo: 
-- [10.5281/zenodo.6365902](https://zenodo.org/record/6365902)
+- [10.5281/zenodo.21533818](https://zenodo.org/record/21533818)
 
 For reference, the original SIMSI-Transfer results (v0.1.0) for this dataset can also be downloaded from Zenodo:
 - [10.5281/zenodo.6365638](https://zenodo.org/record/6365638)
